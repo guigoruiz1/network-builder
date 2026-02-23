@@ -33,7 +33,7 @@ series:
   - ["Gaia Blaze, the Force of the Sun", "Gaia Prominence, the Fierce Force"]
   - ["Gaia Knight, the Force of Earth", "Gaia Drake, the Universal Force"]
   - ["Curse of Dragon", "Curse of Dragonfire"]
-  - ["Buster Whelp of the Destruction Swordsman", "Dragon Buster Destruction Sword", "Robot Buster Destruction Sword", "Wizard Buster Destruction Sword"]
+  - ["Buster Whelp of the Destruction Swordsman", "Dragon Buster Destruction Sword", "Robot Buster Destruction Sword", "Wizard Buster Destruction Sword", "Buster Dragon"]
   
   # Aging (with blue color override)
   - cards: ["Palladium Oracle Mana", "Apprentice Illusion Magician", "Dark Magician Girl", "Magi Magi ☆ Magician Gal"]
@@ -56,6 +56,47 @@ series:
     color: "blue"
   - cards: ["Silent Swordsman LV3", "Silent Swordsman LV5", "Silent Swordsman LV7", "Silent Swordsman"]
     color: "blue"
+
+# Parallel: cards at the same power level
+parallel:
+  # Dark Magician
+  - ["Dark Magician, the Pharaoh's Servant", "Dark Magician", "Dark Magician the Magician of Black Magic"]
+  # Dark Magician Girl
+  - ["Dark Magician Girl", "Dark Magician Girl the Magician's Apprentice"]
+  # Black Luster Soldier - Effect Monsters
+  - ["Black Luster Soldier - Sacred Soldier", "Black Luster Soldier - Envoy of the Beginning", "Black Luster Soldier - Envoy of the Evening Twilight"]
+  # Ebon - Magician
+  - ["Ebon Illusion Magician", "Ebon High Magician"]
+  # Black Luster Soldier - Ritual Monsters
+  - ["Black Luster Soldier - Soldier of Light and Darkness", "Black Luster Soldier - Super Soldier", "Black Luster Soldier - Legendary Swordsman"]
+  # Gandora
+  - ["Gandora the Dragon of Destruction", "Gandora-X the Dragon of Demolition"]
+  # Kuriboh evolutions
+  - ["Kuribabylon", "Kuribandit"]
+  # Silent Swordsman
+  - ["Silent Swordsman", "Silent Swordsman Zero"]
+  # Silent Magician
+  - ["Silent Magician", "Silent Magician Zero"]
+  # Stronghold the Moving Fortress
+  - ["Metalhold the Moving Blockade", "Stronghold the Moving Fortress", "Powerhold the Moving Battery"]
+  # Arcana - Joker
+  - ["Arcana Extra Joker", "Arcana Knight Joker", "Arcana Triumph Joker"]
+  # Gaia
+  - ["Arisen Gaia the Fierce Knight", "Charging Gaia the Fierce Knight", "Swift Gaia the Fierce Knight"]
+  # Curse of Dragon
+  - ["Curse of Dragonfire", "Curse of Dragon, the Cursed Dragon"]
+  # Buster Blader
+  - ["Buster Blader, the Destruction Swordmaster", "Buster Blader"]
+  - ["Protector Whelp of the Destruction Swordsman", "Buster Whelp of the Destruction Swordsman"]
+
+
+  # Commented out entries (can be enabled with or without color override)
+  # Gadgets
+  # - ["Green Gadget", "Red Gadget", "Yellow Gadget"]
+  # Magnet Warriors
+  # - ["Alpha The Magnet Warrior", "Alpha The Electromagnet Warrior"]
+  # - ["Beta The Magnet Warrior", "Beta The Electromagnet Warrior"]
+  # - ["Gamma The Magnet Warrior", "Gamma The Electromagnet Warrior"]
 
 # Convergence: multiple materials combine into a product
 convergence:
@@ -204,47 +245,6 @@ convergence:
   # - materials: ["Green Gadget", "Red Gadget", "Yellow Gadget"]
   #   product: "Stronghold the Moving Fortress"
 
-# Parallel: cards at the same power level
-parallel:
-  # Dark Magician
-  - ["Dark Magician, the Pharaoh's Servant", "Dark Magician", "Dark Magician the Magician of Black Magic"]
-  # Dark Magician Girl
-  - ["Dark Magician Girl", "Dark Magician Girl the Magician's Apprentice"]
-  # Black Luster Soldier - Effect Monsters
-  - ["Black Luster Soldier - Sacred Soldier", "Black Luster Soldier - Envoy of the Beginning", "Black Luster Soldier - Envoy of the Evening Twilight"]
-  # Ebon - Magician
-  - ["Ebon Illusion Magician", "Ebon High Magician"]
-  # Black Luster Soldier - Ritual Monsters
-  - ["Black Luster Soldier - Soldier of Light and Darkness", "Black Luster Soldier - Super Soldier", "Black Luster Soldier - Legendary Swordsman"]
-  # Gandora
-  - ["Gandora the Dragon of Destruction", "Gandora-X the Dragon of Demolition"]
-  # Kuriboh evolutions
-  - ["Kuribabylon", "Kuribandit"]
-  # Silent Swordsman
-  - ["Silent Swordsman", "Silent Swordsman Zero"]
-  # Silent Magician
-  - ["Silent Magician", "Silent Magician Zero"]
-  # Stronghold the Moving Fortress
-  - ["Metalhold the Moving Blockade", "Stronghold the Moving Fortress", "Powerhold the Moving Battery"]
-  # Arcana - Joker
-  - ["Arcana Extra Joker", "Arcana Knight Joker", "Arcana Triumph Joker"]
-  # Gaia
-  - ["Arisen Gaia the Fierce Knight", "Charging Gaia the Fierce Knight", "Swift Gaia the Fierce Knight"]
-  # Curse of Dragon
-  - ["Curse of Dragonfire", "Curse of Dragon, the Cursed Dragon"]
-  # Buster Blader
-  - ["Buster Blader, the Destruction Swordmaster", "Buster Blader"]
-  - ["Protector Whelp of the Destruction Swordsman", "Buster Whelp of the Destruction Swordsman"]
-
-
-  # Commented out entries (can be enabled with or without color override)
-  # Gadgets
-  # - ["Green Gadget", "Red Gadget", "Yellow Gadget"]
-  # Magnet Warriors
-  # - ["Alpha The Magnet Warrior", "Alpha The Electromagnet Warrior"]
-  # - ["Beta The Magnet Warrior", "Beta The Electromagnet Warrior"]
-  # - ["Gamma The Magnet Warrior", "Gamma The Electromagnet Warrior"]
-
 # Divergence: one root card branches into multiple paths
 divergence:
   - root: "Shining Sarcophagus"
@@ -308,3 +308,8 @@ divergence:
   #     - "Kuribah"
   #     - "Kuriboo"
   #     - "Kuribeh"
+
+config:
+  show_buttons: False
+  physics:
+    enabled: True

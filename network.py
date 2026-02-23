@@ -19,25 +19,68 @@ import argparse
 import re
 
 
-# Reference crop parameters (based on 690x1000 example)
-REF_W, REF_H = 690, 1000
-REF_OFFSET = (82, 182)  # (x, y) in reference
-REF_CROP_SIZE = (528, 522)  # (w, h) in reference
+class AttrDict(dict):
+    def __getattr__(self, name):
+        value = self.get(name)
+        if isinstance(value, dict):
+            return AttrDict(value)
+        return value
 
-# Default colors for each operation
-OPERATION_COLORS = {
-    "series": "orange",
-    "convergence": "purple",
-    "parallel": "green",
-    "divergence": "red",
-}
+    def __setattr__(self, name, value):
+        self[name] = value
+
+    def __delattr__(self, name):
+        del self[name]
 
 
-# Node display settings
-DEFAULT_NODE_SIZE = 100
+class Config(AttrDict):
+    def __init__(self, overrides=None):
+        defaults = {
+            "colors": {
+                "series": "orange",
+                "convergence": "purple",
+                "parallel": "green",
+                "divergence": "red",
+            },
+            "sizes": {
+                "ref": (690, 1000),
+                "offset": (82, 182),
+                "crop": (528, 522),
+                "node": 100,
+            },
+            "show_buttons": True,
+            "buttons_filter": ["physics", "interaction"],
+            "physics": {
+                "enabled": True,
+                "repulsion": {
+                    "node_distance": 1000,
+                    "central_gravity": 0.2,
+                    "spring_length": 200,
+                    "spring_strength": 0.015,
+                    "damping": 0.09,
+                },
+            },
+            "network": {
+                "height": "100vh",
+                "width": "100%",
+                "directed": True,
+                "select_menu": True,
+            },
+        }
+        merged = self._deep_merge(defaults, overrides or {})
+        super().__init__(merged)
+
+    def _deep_merge(self, d, u):
+        for k, v in u.items():
+            if isinstance(v, dict) and k in d and isinstance(d[k], dict):
+                d[k] = self._deep_merge(d[k], v)
+            else:
+                d[k] = v
+        return d
+
 
 # Registry of nodes already added to the graph
-nodes = {}
+nodes = set()
 
 
 def sanitize_card_name(name):
@@ -45,7 +88,7 @@ def sanitize_card_name(name):
     return re.sub(r"[^a-zA-Z0-9]", "", name)
 
 
-def _download_card_images_fallback(card_names):
+def _download_card_images_fallback(card_names, config):
     """Fallback method to download and crop card images directly from Yugipedia API.
 
     Used when yugiquery utilities are unavailable. Saves images to `images/<Card_Name>.jpg`.
@@ -100,7 +143,7 @@ def _download_card_images_fallback(card_names):
             from io import BytesIO
 
             img = Image.open(BytesIO(img_resp.content))
-            cropped_img = _crop_section(img, out_size=None)
+            cropped_img = _crop_section(img, config=config, out_size=None)
             cropped_img.save(filename)
             print(f"Downloaded image for '{name}'")
         except Exception as e:
@@ -110,27 +153,11 @@ def _download_card_images_fallback(card_names):
 def _crop_section(
     im,
     *,
-    ref=(REF_W, REF_H),
-    offset=REF_OFFSET,
-    crop_size=REF_CROP_SIZE,
+    config,
     out_size=None,
 ):
-    """Crop Yu-Gi-Oh card artwork section using aspect-ratio scaling.
-
-    Args:
-        im: PIL Image to crop.
-        ref: Reference dimensions (width, height).
-        offset: Crop offset (x, y) in reference dimensions.
-        crop_size: Crop size (width, height) in reference dimensions.
-        out_size: Optional resize dimensions.
-
-    Returns:
-        Cropped image in RGB mode.
-    """
     w, h = im.size
-
-    # Match reference aspect by center-cropping the original image if necessary
-    ref_w, ref_h = ref
+    ref_w, ref_h = config.sizes.ref
     ref_aspect = ref_w / ref_h
     aspect = w / h
     if abs(aspect - ref_aspect) > 1e-6:
@@ -150,11 +177,10 @@ def _crop_section(
             im = im.crop((0, top, w, bottom))
         w, h = im.size
 
-    # Compute ratios from reference
-    ox = offset[0] / ref_w
-    oy = offset[1] / ref_h
-    cw = crop_size[0] / ref_w
-    ch = crop_size[1] / ref_h
+    ox = config.sizes.offset[0] / ref_w
+    oy = config.sizes.offset[1] / ref_h
+    cw = config.sizes.crop[0] / ref_w
+    ch = config.sizes.crop[1] / ref_h
 
     left = int(round(ox * w))
     top = int(round(oy * h))
@@ -179,7 +205,7 @@ def _crop_section(
     return cropped
 
 
-def download_card_images(card_names):
+def download_card_images(card_names, config):
     """Download and crop card images from Yugipedia.
 
     Attempts yugiquery utilities first (async + featured images), falls back to direct API.
@@ -225,9 +251,9 @@ def download_card_images(card_names):
                         with Image.open(filename) as img:
                             cropped_img = yugiquery_crop(
                                 img,
-                                ref=(REF_W, REF_H),
-                                offset=REF_OFFSET,
-                                crop_size=REF_CROP_SIZE,
+                                ref=config.sizes.ref,
+                                offset=config.sizes.offset,
+                                crop_size=config.sizes.crop,
                                 out_size=None,
                             )
                             cropped_img.save(filename)
@@ -239,25 +265,25 @@ def download_card_images(card_names):
         print(
             "[WARN] yugiquery utilities unavailable, falling back to direct API method"
         )
-        _download_card_images_fallback(card_names)
+        _download_card_images_fallback(card_names, config)
 
 
-def add_card_node(name):
+def add_card_node(name, config, net):
     """Add a card node to the network graph with its image."""
     if name not in nodes:
-        nodes[name] = True
+        nodes.add(name)
         net.add_node(
             name,
             title=name,
             shape="image",
             image=f"images/{sanitize_card_name(name)}.jpg",
-            size=DEFAULT_NODE_SIZE,
+            size=config.sizes.node,
             borderWidthSelected=4,
             shapeProperties={"useBorderWithImage": True},
         )
 
 
-def add_edge(src, dst, operation, color=None):
+def add_edge(src, dst, operation, config, net, color=None):
     """Add a styled edge between nodes based on operation type.
 
     Args:
@@ -267,13 +293,9 @@ def add_edge(src, dst, operation, color=None):
         color: Optional color override (defaults to OPERATION_COLORS[operation]).
     """
     if color is None:
-        color = OPERATION_COLORS[operation]
-
-    # parallel edges are undirected; all others are directed
+        color = config.colors[operation]
     arrows = "none" if operation == "parallel" else "to"
-    # parallel edges should not be smooth
     smooth = operation != "parallel"
-
     net.add_edge(
         src,
         dst,
@@ -288,48 +310,39 @@ def add_edge(src, dst, operation, color=None):
 
 
 def build_graph(yaml_path):
-    base_name = os.path.splitext(os.path.basename(yaml_path))[0]
-    html_output = os.path.abspath(f"{base_name}.html")
-
-    # Load YAML
     with open(yaml_path, "r") as f:
         data = yaml.safe_load(f)
+    raw_config = data.get("config", {})
+    if isinstance(raw_config, list):
+        merged_config = {}
+        for entry in raw_config:
+            if isinstance(entry, dict):
+                merged_config.update(entry)
+        raw_config = merged_config
+    config = Config(raw_config)
     all_cards = set()
-
-    # Series (sequential transformations)
     for entry in data.get("series", []):
         cards = entry.get("cards", []) if isinstance(entry, dict) else entry
         for card in cards:
             all_cards.add(card)
-
-    # Convergence (multiple materials -> product)
     for entry in data.get("convergence", []):
         for mat in entry.get("materials", []):
             all_cards.add(mat)
         all_cards.add(entry.get("product"))
-
-    # Parallel (cards at same level)
     for entry in data.get("parallel", []):
         cards = entry.get("cards", []) if isinstance(entry, dict) else entry
         for card in cards:
             all_cards.add(card)
-
-    # Divergence (root -> branches)
     for entry in data.get("divergence", []):
         root = entry.get("root")
         if root:
             all_cards.add(root)
         for branch in entry.get("branches", []):
             all_cards.add(branch)
+    download_card_images(all_cards, config)
 
-    # Ensure all required card images exist
-    download_card_images(all_cards)
+    net = Network(**config.network)
 
-    # Use viewport height so the network fills the browser window
-    global net
-    net = Network(height="100vh", width="100%", directed=True, select_menu=True)
-
-    # --- Series edges (sequential transformations) ---
     for entry in data.get("series", []):
         if isinstance(entry, dict):
             cards = entry.get("cards", [])
@@ -338,22 +351,18 @@ def build_graph(yaml_path):
             cards = entry
             color = None
         for node in cards:
-            add_card_node(node)
+            add_card_node(node, config, net)
         for i in range(len(cards) - 1):
-            add_edge(cards[i], cards[i + 1], "series", color=color)
-
-    # --- Convergence edges (materials -> product) ---
+            add_edge(cards[i], cards[i + 1], "series", config, net, color=color)
     for entry in data.get("convergence", []):
         materials = entry.get("materials", [])
         product = entry.get("product")
         color = entry.get("color")
         for mat in materials:
-            add_card_node(mat)
-        add_card_node(product)
+            add_card_node(mat, config, net)
+        add_card_node(product, config, net)
         for mat in materials:
-            add_edge(mat, product, "convergence", color=color)
-
-    # --- Parallel edges (cards at same level with undirected edges between consecutive members) ---
+            add_edge(mat, product, "convergence", config, net, color=color)
     for entry in data.get("parallel", []):
         if isinstance(entry, dict):
             cards = entry.get("cards", [])
@@ -362,37 +371,30 @@ def build_graph(yaml_path):
             cards = entry
             color = None
         for card in cards:
-            add_card_node(card)
+            add_card_node(card, config, net)
         for i in range(len(cards) - 1):
-            add_edge(cards[i], cards[i + 1], "parallel", color=color)
-
-    # --- Divergence edges (root -> branches) ---
+            add_edge(cards[i], cards[i + 1], "parallel", config, net, color=color)
     for entry in data.get("divergence", []):
         root = entry.get("root")
         branches = entry.get("branches", [])
         color = entry.get("color")
         if not root:
             continue
-        add_card_node(root)
+        add_card_node(root, config, net)
         for branch in branches:
-            add_card_node(branch)
-            add_edge(root, branch, "divergence", color=color)
+            add_card_node(branch, config, net)
+            add_edge(root, branch, "divergence", config, net, color=color)
 
-    # Configure physics via a pyvis Options object so pyvis APIs still work.
-    options_obj = Options()
-    options_obj.physics.enabled = True
-    options_obj.physics.use_repulsion(
-        {
-            "node_distance": 1000,
-            "central_gravity": 0.2,
-            "spring_length": 200,
-            "spring_strength": 0.015,
-            "damping": 0.09,
-        }
-    )
+    options_obj = Options(config.options if "options" in config else {})
+    options_obj.physics.enabled = config.physics.enabled
+    options_obj.physics.use_repulsion(config.physics.repulsion)
     net.options = options_obj
 
-    net.show_buttons(filter_=["physics", "interaction"])
+    if config.show_buttons:
+        net.show_buttons(filter_=config.buttons_filter)
+
+    base_name = os.path.splitext(os.path.basename(yaml_path))[0]
+    html_output = os.path.abspath(f"{base_name}.html")
     net.write_html(html_output)
     print("Saved to:", html_output)
 
@@ -405,5 +407,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
     build_graph(args.yaml_file)
 else:
-    # Default to 'network.yaml' if imported
     build_graph("network.yaml")
