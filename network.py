@@ -61,7 +61,7 @@ class Config(AttrDict):
                 },
             },
             "network": {
-                "height": "100vh",
+                "height": "90vh",
                 "width": "100%",
                 "directed": True,
                 "select_menu": True,
