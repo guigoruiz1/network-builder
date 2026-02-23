@@ -1,0 +1,7 @@
+# Requirements for network.py
+# Graph visualization and card relationship network
+
+pyvis>=0.3.0
+Pillow>=9.0.0
+PyYAML>=6.0
+requests>=2.28.0

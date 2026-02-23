@@ -1,0 +1,310 @@
+# Yu-Gi-Oh! Card Relationship Graph
+# Operations: series, convergence, parallel, divergence
+# 
+# series: Sequential card transformations (evolving/aging)
+# convergence: Multiple materials combining to a product
+# parallel: Cards at the same power level (counterparts)
+# divergence: One root card branching into multiple paths
+
+# Sequential transformations (evolving & aging)
+# Default color: orange (evolving)
+# Override with color: "blue" for aging
+series:
+  # Evolving
+  - ["Black Luster Soldier", "Black Luster Soldier - Soldier of Chaos"]
+  - ["Black Luster Soldier", "Black Luster Soldier - Super Soldier"]
+  - ["Black Luster Soldier", "Black Luster Soldier - Envoy of the Beginning"]
+  - ["Magician of Black Chaos", "Black Chaos the Dark Chaos Magician", "Magician of Black Chaos MAX"]
+  - ["Magician of Black Chaos", "Dark Magician of Chaos"]
+  - ["Magician of Dark Illusion", "Illusion of Chaos", "Ebon Illusion Magician"]
+  - ["Gandora the Dragon of Destruction", "Gandora-G the Dragon of Destruction"]
+  - ["Gandora the Dragon of Destruction", "Gigarays Gandora the Dragon of Destruction"]
+  - ["Summoned Skull", "Skull Archfiend of Lightning"]
+  - ["Kuriboh", "Clear Kuriboh"]
+  - ["Kuribohrn", "Ankuriboh"]
+  - ["The Winged Dragon of Ra - Sphere Mode", "The Winged Dragon of Ra", "The Winged Dragon of Ra - Immortal Phoenix"]
+  - ["Celtic Guardian", "Obnoxious Celtic Guard", "Celtic Guard of Noble Arms"]
+  - ["Stronghold the Moving Fortress", "Stronghold the Hidden Fortress"]
+  - ["The Eye of Timaeus", "The Gaze of Timaeus", "Timaeus the United Dragon", "Legendary Knight Timaeus"]
+  - ["The Claw of Hermos", "Legendary Knight Hermos"]
+  - ["The Fang of Critias", "Legendary Knight Critias"]
+  - ["Gaia The Fierce Knight", "Gaia the Magical Knight"]
+  - ["Gaia The Fierce Knight", "Swift Gaia the Fierce Knight", "Lord Gaia the Fierce Knight"]
+  - ["Gaia Blaze, the Force of the Sun", "Gaia Prominence, the Fierce Force"]
+  - ["Gaia Knight, the Force of Earth", "Gaia Drake, the Universal Force"]
+  - ["Curse of Dragon", "Curse of Dragonfire"]
+  - ["Buster Whelp of the Destruction Swordsman", "Dragon Buster Destruction Sword", "Robot Buster Destruction Sword", "Wizard Buster Destruction Sword"]
+  
+  # Aging (with blue color override)
+  - cards: ["Palladium Oracle Mana", "Apprentice Illusion Magician", "Dark Magician Girl", "Magi Magi ☆ Magician Gal"]
+    color: "blue"
+  - cards: ["Palladium Oracle Mahad", "Magician of Dark Illusion", "Dark Magician", "Dark Eradicator Warlock", "Magician of Chaos", "Magician of Black Chaos", "Sorcerer of Dark Magic", "Dark Sage"]
+    color: "blue"
+  - cards: ["Gaia The Fierce Knight", "Black Luster Soldier"]
+    color: "blue"
+  - cards: ["Gaia the Fierce Knight Origin", "Gaia The Fierce Knight"]
+    color: "blue"
+  - cards: ["Arisen Gaia the Fierce Knight", "Black Luster Soldier - Envoy of the Beginning"]
+    color: "blue"
+  - cards: ["Envoy of Chaos", "Black Luster Soldier - Super Soldier"]
+    color: "blue"
+  - cards: ["Evening Twilight Knight", "Black Luster Soldier - Envoy of the Evening Twilight"]
+    color: "blue"
+  - cards: ["Beginning Knight", "Black Luster Soldier - Envoy of the Beginning"]
+    color: "blue"
+  - cards: ["Silent Magician LV4", "Silent Magician LV8", "Silent Magician"]
+    color: "blue"
+  - cards: ["Silent Swordsman LV3", "Silent Swordsman LV5", "Silent Swordsman LV7", "Silent Swordsman"]
+    color: "blue"
+
+# Convergence: multiple materials combine into a product
+convergence:
+  # Dark Magician Girl
+  - materials: ["Dark Magician Girl", "Timaeus the United Dragon"]
+    product: "Dark Magician Girl the Dragon Knight"
+
+  - materials: ["Dark Magician Girl", "Dark Magician"]
+    product: "The Dark Magicians"
+
+  # Dark Magician
+  - materials: ["Dark Magician", "Timaeus the United Dragon"]
+    product: "Amulet Dragon"
+
+  - materials: ["Dark Magician", "Timaeus the United Dragon"]
+    product: "Timaeus the United Magical Dragon"
+
+  - materials: ["Dark Magician", "Timaeus the United Dragon"]
+    product: "Dark Magician the Dragon Knight"
+
+  - materials: ["Dark Magician", "Buster Blader"]
+    product: "Dark Paladin"
+
+  - materials: ["Dark Magician", "Gaia The Fierce Knight"]
+    product: "Dark Cavalry"
+
+  - materials: ["Dark Magician", "Red-Eyes Black Dragon"]
+    product: "Red-Eyes Dark Dragoon"
+
+  - materials: ["Dark Magician", "Black Luster Soldier"]
+    product: "Master of Chaos"
+
+  - materials: ["Dark Magician", "Gaia the Magical Knight of Dragons"]
+    product: "Dark Magician the Knight of Dragon Magic"
+
+  - materials: ["Dark Magician", "Flame Swordsman"]
+    product: "Dark Flare Knight"
+
+  # Magician of Black Chaos
+  - materials: ["Magician of Black Chaos", "Gandora the Dragon of Destruction"]
+    product: "Dark Magician of Destruction"
+
+  - materials: ["Magician of Black Chaos", "Blue-Eyes Ultimate Dragon"]
+    product: "Dragon Master Magia"
+
+  # Black Luster Soldier
+  - materials: ["Black Luster Soldier", "Blue-Eyes Ultimate Dragon"]
+    product: "Dragon Master Knight"
+
+  - materials: ["Black Luster Soldier - Soldier of Light and Darkness", "Black Chaos the Dark Chaos Magician"]
+    product: "Black Chaos the Ultimate Magical Swordsman"
+
+  # Gaia The Fierce Knight
+  - materials: ["Gaia The Fierce Knight", "Curse of Dragon"]
+    product: "Gaia the Dragon Champion"
+
+  - materials: ["Swift Gaia the Fierce Knight", "Curse of Dragonfire"]
+    product: "Sky Galloping Gaia the Dragon Champion"
+
+  - materials: ["Gaia the Magical Knight", "Curse of Dragon, the Cursed Dragon"]
+    product: "Gaia the Magical Knight of Dragons"
+
+  - materials: ["Gaia the Magical Knight", "Black Luster Soldier"]
+    product: "Soldier Gaia the Fierce Knight"
+    
+  - materials: ["Gaia, the Mid-Knight Sun", "Gaia, the Polar Knight"]
+    product: "Arisen Gaia the Fierce Knight"
+
+  # Summoned Skull
+  - materials: ["Summoned Skull", "Red-Eyes Black Dragon"]
+    product: "Black Skull Dragon"
+
+  # Kuriboh
+  - materials: ["Kuriboh", "Griffore"]
+    product: "Gurifoh"
+    
+  - materials: ["Kuriboh", "Witch of the Black Forest"]
+    product: "Sanwitch"
+    
+  - materials: ["Kuriboh", "Kuribah", "Kuribee", "Kuribeh", "Kuriboo"]
+    product: "Kuribabylon"
+  
+  - materials: ["Kuriboh", "Monster Reborn"]
+    product: "Kuribohrn"
+    
+  - materials: ["Kuriboh", "Relinquished"]
+    product: "Relinkuriboh"
+
+  - materials: ["Kuriboh", "Detonate"]
+    product: "Detonating Kuriboh"
+
+  - materials: ["Kuriboh", "Multiply"]
+    product: "Multiplying Kuriboh!"
+
+  - materials: ["Kuriboh", "Dark Magician"]
+    product: "Magikuriboh"
+
+  - materials: ["Kuriboh", "The Winged Dragon of Ra - Sphere Mode"]
+    product: "Sphere Kuriboh"
+
+  # Celtic Guardian
+  - materials: ["Celtic Guardian", "Mystical Elf"]
+    product: "Mystical Celtic Sage"
+
+  # Gadget
+  - materials: ["Green Gadget", "Red Gadget", "Yellow Gadget"]
+    product: "Gadget Trio"
+
+  # Egyptian gods
+  - materials: ["The Winged Dragon of Ra", "Slifer the Sky Dragon", "Obelisk the Tormentor"]
+    product: "Holactie the Creator of Light"
+
+  # Magnet Warriors
+  - materials: ["Alpha The Magnet Warrior", "Beta The Magnet Warrior", "Gamma The Magnet Warrior"]
+    product: "Valkyrion the Magna Warrior"
+
+  - materials: ["Alpha The Electromagnet Warrior", "Beta The Electromagnet Warrior", "Gamma The Electromagnet Warrior"]
+    product: "Berserkion the Electromagna Warrior"
+
+  - materials: ["Valkyrion the Magna Warrior", "Berserkion the Electromagna Warrior"]
+    product: "Imperion Magnum the Superconductive Battlebot"
+
+  # Poker Cards
+  - materials: ["King's Knight", "Queen's Knight", "Jack's Knight"]
+    product: "Arcana Knight Joker"
+
+  # Hermos
+  - materials: ["Queen's Knight", "The Claw of Hermos"]
+    product: "Goddess Bow"
+
+  - materials: ["Red-Eyes Black Dragon", "The Claw of Hermos"]
+    product: "Red-Eyes Black Dragon Sword"
+
+  # Timaeus
+  - materials: ["Legendary Knight Timaeus", "Legendary Knight Hermos", "Legendary Knight Critias"]
+    product: "Timaeus the Knight of Destiny"
+
+  # Critias
+  - materials: ["Mirror Force", "The Fang of Critias"]
+    product: "Mirror Force Dragon"
+
+  - materials: ["Buster Blader, the Dragon Destroyer Swordsman", "Buster Dragon"]
+    product: "Buster Blader, the Dragon Destroyer Swordsman"
+
+  # Commented out entries (can be enabled with or without color override)
+  # - materials: ["Green Gadget", "Red Gadget", "Yellow Gadget"]
+  #   product: "Stronghold the Moving Fortress"
+
+# Parallel: cards at the same power level
+parallel:
+  # Dark Magician
+  - ["Dark Magician, the Pharaoh's Servant", "Dark Magician", "Dark Magician the Magician of Black Magic"]
+  # Dark Magician Girl
+  - ["Dark Magician Girl", "Dark Magician Girl the Magician's Apprentice"]
+  # Black Luster Soldier - Effect Monsters
+  - ["Black Luster Soldier - Sacred Soldier", "Black Luster Soldier - Envoy of the Beginning", "Black Luster Soldier - Envoy of the Evening Twilight"]
+  # Ebon - Magician
+  - ["Ebon Illusion Magician", "Ebon High Magician"]
+  # Black Luster Soldier - Ritual Monsters
+  - ["Black Luster Soldier - Soldier of Light and Darkness", "Black Luster Soldier - Super Soldier", "Black Luster Soldier - Legendary Swordsman"]
+  # Gandora
+  - ["Gandora the Dragon of Destruction", "Gandora-X the Dragon of Demolition"]
+  # Kuriboh evolutions
+  - ["Kuribabylon", "Kuribandit"]
+  # Silent Swordsman
+  - ["Silent Swordsman", "Silent Swordsman Zero"]
+  # Silent Magician
+  - ["Silent Magician", "Silent Magician Zero"]
+  # Stronghold the Moving Fortress
+  - ["Metalhold the Moving Blockade", "Stronghold the Moving Fortress", "Powerhold the Moving Battery"]
+  # Arcana - Joker
+  - ["Arcana Extra Joker", "Arcana Knight Joker", "Arcana Triumph Joker"]
+  # Gaia
+  - ["Arisen Gaia the Fierce Knight", "Charging Gaia the Fierce Knight", "Swift Gaia the Fierce Knight"]
+  # Curse of Dragon
+  - ["Curse of Dragonfire", "Curse of Dragon, the Cursed Dragon"]
+  # Buster Blader
+  - ["Buster Blader, the Destruction Swordmaster", "Buster Blader"]
+  - ["Protector Whelp of the Destruction Swordsman", "Buster Whelp of the Destruction Swordsman"]
+
+
+  # Commented out entries (can be enabled with or without color override)
+  # Gadgets
+  # - ["Green Gadget", "Red Gadget", "Yellow Gadget"]
+  # Magnet Warriors
+  # - ["Alpha The Magnet Warrior", "Alpha The Electromagnet Warrior"]
+  # - ["Beta The Magnet Warrior", "Beta The Electromagnet Warrior"]
+  # - ["Gamma The Magnet Warrior", "Gamma The Electromagnet Warrior"]
+
+# Divergence: one root card branches into multiple paths
+divergence:
+  - root: "Shining Sarcophagus"
+    branches:
+      - "Dark Magician the Magician of Black Magic"
+      - "Dark Magician Girl the Magician's Apprentice"
+      - "Archfiend's Advent"
+      - "Gandora-G the Dragon of Destruction"
+      - "Gadget Trio"
+      - "Silent Magician Zero"
+      - "Silent Swordsman Zero"
+      - "Stronghold the Hidden Fortress"
+      
+  - root: "Ritual of Light and Darkness"
+    branches:
+      - "Black Luster Soldier - Soldier of Light and Darkness"
+      - "Black Chaos the Dark Chaos Magician"
+      - "Mystical Celtic Sage"
+      - "Skull Archfiend of Chaos"
+      - "Gurifoh"
+
+  - root: "Magnetic Field"
+    branches: 
+      - "Alpha The Magnet Warrior"
+      - "Beta The Magnet Warrior" 
+      - "Gamma The Magnet Warrior"
+      - "Delta The Magnet Warrior" 
+      - "Epsilon The Magnet Warrior"
+
+  - root: "Royal Straight"
+    branches: 
+      - "Royal Straight Slasher"
+      - "King's Knight"
+      - "Queen's Knight"
+      - "Jack's Knight"
+      - "Joker's Knight"
+      - "Imperial Bower"
+
+  - root: "Summoned Skull"
+    branches: 
+      - "Archfiend's Awakening"
+      - "Archfiend's Manifestation"
+      - "Archfiend's Call"
+      - "Archfiend's Ascent"
+      - "Archfiend's Advent"
+      - "Skull Archfiend of Chaos"
+
+  - root: "Gaia The Fierce Knight"
+    branches:
+      - "Gaia Saber, the Lightning Shadow"
+      - "Gaia Dragon, the Thunder Charger"
+      - "Gaia Knight, the Force of Earth"
+      - "Gaia Blaze, the Force of the Sun"
+      - "Gaia Stream, the Graceful Force"
+
+  # Commented out entries (can be enabled with or without color override)
+  # - root: "Five Star Twilight"
+  #   branches:
+  #     - "Kuriboh"
+  #     - "Kuribee"
+  #     - "Kuribah"
+  #     - "Kuriboo"
+  #     - "Kuribeh"
