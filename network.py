@@ -1,6 +1,6 @@
 """
 network.py
-Build an interactive card relationship graph (pyvis) from `network.yaml`.
+Build an interactive relationship network (pyvis) from `network.yaml`.
 
 Usage: run this script inside the project's virtualenv so required
 dependencies (pyvis, pillow, pyyaml, requests) are available.
@@ -87,7 +87,7 @@ class Config(AttrDict):
                 "directed": True,
                 "select_menu": True,
             },
-            "download_images": True,  # Toggle downloading card images
+            "download_images": True,  # Toggle downloading images
         }
         merged = self._deep_merge(defaults, overrides or {})
         super().__init__(merged)
@@ -101,28 +101,28 @@ class Config(AttrDict):
         return d
 
 
-# Registry of nodes already added to the graph
+# Registry of nodes already added to the network
 nodes = set()
 
 
-def sanitize_card_name(name):
+def sanitize_name(name):
     """
-    Sanitize card name for filenames (remove all non-alphanumeric characters).
+    Sanitize name for filenames (remove all non-alphanumeric characters).
     Args:
-        name (str): The card name to sanitize.
+        name (str): The name to sanitize.
     Returns:
         str: Sanitized string suitable for filenames.
     """
     return re.sub(r"[^a-zA-Z0-9]", "", name)
 
 
-def _download_card_images_fallback(card_names, config):
+def _download_images_fallback(names, config):
     """
-    Fallback method to download and crop card images directly from Yugipedia API.
+    Fallback method to download and crop images directly from Yugipedia API.
     Used when yugiquery utilities are unavailable. Saves images to `images/<Card_Name>.jpg`.
     Existing files are skipped.
     Args:
-        card_names (Iterable[str]): Card names to download.
+        names (Iterable[str]): Card names to download.
         config (Config): Configuration object for cropping.
     """
     image_dir = "images"
@@ -137,8 +137,8 @@ def _download_card_images_fallback(card_names, config):
     }
     base_url = "https://yugipedia.com/api.php"
 
-    for name in sorted(card_names):
-        filename = f"{image_dir}/{sanitize_card_name(name)}.jpg"
+    for name in sorted(names):
+        filename = f"{image_dir}/{sanitize_name(name)}.jpg"
         if os.path.exists(filename):
             continue  # Already downloaded
         # Query for the card's image via MediaWiki API
@@ -245,13 +245,13 @@ def _crop_section(
     return cropped
 
 
-def download_card_images(card_names, config):
+def download_images(names, config):
     """
     Download and crop card images from Yugipedia.
     Attempts yugiquery utilities first (async + featured images), falls back to direct API.
     Saves to `images/<Card_Name>.jpg`. Skips existing files.
     Args:
-        card_names (Iterable[str]): Card names to download.
+        names (Iterable[str]): Card names to download.
         config (Config): Configuration object for cropping.
     """
     # Try to use yugiquery
@@ -260,7 +260,7 @@ def download_card_images(card_names, config):
         from yugiquery.utils.image import crop_section as yugiquery_crop
 
         # Fetch the featured image filenames
-        file_names = fetch_featured_images(*card_names)
+        file_names = fetch_featured_images(*names)
         image_dir = "images"
 
         # Download them (only if we got filenames)
@@ -287,8 +287,8 @@ def download_card_images(card_names, config):
                         print(f"[WARN] Failed to download: {result.get('file_name')}")
 
             # Crop the downloaded images
-            for name in card_names:
-                filename = f"{image_dir}/{sanitize_card_name(name)}.jpg"
+            for name in names:
+                filename = f"{image_dir}/{sanitize_name(name)}.jpg"
                 if os.path.exists(filename):
                     try:
                         with Image.open(filename) as img:
@@ -308,42 +308,7 @@ def download_card_images(card_names, config):
         print(
             "[WARN] yugiquery utilities unavailable, falling back to direct API method"
         )
-        _download_card_images_fallback(card_names, config)
-
-
-def add_node(name, config, net):
-    """
-    Add a node to the network graph with its image.
-    Args:
-        name (str): Card name.
-        config (Config): Configuration object.
-        net (Network): pyvis Network object.
-    """
-    if name not in nodes:
-        nodes.add(name)
-        node_kwargs = config.node.copy() if hasattr(config, "node") else {}
-        node_kwargs["title"] = name
-        node_kwargs["image"] = f"images/{sanitize_card_name(name)}.jpg"
-        net.add_node(name, **node_kwargs)
-
-
-def add_edge(src, dst, operation, edge_kwargs, net):
-    """
-    Add a styled edge between nodes based on operation type, using edge_kwargs for all options.
-    Args:
-        src (str): Source node name.
-        dst (str): Destination node name.
-        operation (str): One of "series", "convergence", "parallel", "divergence".
-        edge_kwargs (dict): All edge options (merged from config.edge and YAML overrides).
-        net (Network): pyvis Network object.
-    """
-    # Always set these
-    edge_kwargs = edge_kwargs.copy()  # Defensive copy
-    edge_kwargs["arrows"] = "none" if operation == "parallel" else "to"
-    edge_kwargs["smooth"] = operation != "parallel"
-    if "title" not in edge_kwargs or not edge_kwargs["title"]:
-        edge_kwargs["title"] = operation
-    net.add_edge(src, dst, **edge_kwargs)
+        _download_images_fallback(names, config)
 
 
 def set_physics_options(physics_obj, config):
@@ -450,9 +415,210 @@ def set_options(config):
     return options
 
 
-def build_graph(yaml_path):
+# --- Graph construction utilities ---
+
+
+def add_node(name, node_kwargs, net):
+    if name not in nodes:
+        nodes.add(name)
+        net.add_node(name, **node_kwargs)
+
+
+def add_edge(src, dst, operation, edge_kwargs, net):
     """
-    Build an interactive card relationship graph from a YAML file.
+    Add a styled edge between nodes based on operation type, using edge_kwargs for all options.
+    Args:
+        src (str): Source node name.
+        dst (str): Destination node name.
+        operation (str): One of "series", "convergence", "parallel", "divergence".
+        edge_kwargs (dict): All edge options (merged from config.edge and YAML overrides).
+        net (Network): pyvis Network object.
+    """
+    # Always set these
+    edge_kwargs = edge_kwargs.copy()  # Defensive copy
+    edge_kwargs["arrows"] = "none" if operation == "parallel" else "to"
+    edge_kwargs["smooth"] = operation != "parallel"
+    if "title" not in edge_kwargs or not edge_kwargs["title"]:
+        edge_kwargs["title"] = operation
+    net.add_edge(src, dst, **edge_kwargs)
+
+
+def add_linear_edges(data, config, net, operation):
+    """
+    Add edges for 'series' or 'parallel' relationships.
+    Args:
+        data: The section data (series or parallel).
+        config: Config object.
+        net: Network object.
+        operation: 'series' or 'parallel'.
+    """
+    if isinstance(data, dict) and "items" in data:
+        data = data["items"]
+    for entry in data:
+        if isinstance(entry, dict) and "items" in entry:
+            edge_kwargs = config.edge.copy() if hasattr(config, "edge") else {}
+            if "color" in entry:
+                edge_kwargs["color"] = entry["color"]
+            else:
+                edge_kwargs["color"] = config.colors[operation]
+            if "title" in entry:
+                edge_kwargs["title"] = entry["title"]
+            items = entry["items"]
+            if isinstance(items, list) and all(isinstance(sub, list) for sub in items):
+                for sublist in items:
+                    for i in range(len(sublist) - 1):
+                        add_edge(
+                            sublist[i], sublist[i + 1], operation, edge_kwargs, net
+                        )
+            else:
+                for i in range(len(items) - 1):
+                    add_edge(items[i], items[i + 1], operation, edge_kwargs, net)
+        else:
+            items = entry
+            edge_kwargs = config.edge.copy() if hasattr(config, "edge") else {}
+            edge_kwargs["color"] = config.colors[operation]
+            for i in range(len(items) - 1):
+                add_edge(items[i], items[i + 1], operation, edge_kwargs, net)
+
+
+def add_branching_edges(data, config, net, operation):
+    """
+    Add edges for 'convergence' or 'divergence' relationships.
+    Args:
+        data: The section data (convergence or divergence).
+        config: Config object.
+        net: Network object.
+        operation: 'convergence' or 'divergence'.
+    """
+    if operation == "convergence":
+        from_key = "materials"
+        to_key = "product"
+        to_many = False
+    elif operation == "divergence":
+        from_key = "root"
+        to_key = "branches"
+        to_many = True
+    else:
+        raise ValueError(f"Unknown operation: {operation}")
+
+    flat_entries = []
+    if isinstance(data, list):
+        for block in data:
+            block_title = block.get("title") if isinstance(block, dict) else None
+            block_items = (
+                block.get("items")
+                if isinstance(block, dict) and "items" in block
+                else None
+            )
+            if block_items:
+                for entry in block_items:
+                    entry_title = (
+                        entry.get("title") if isinstance(entry, dict) else None
+                    )
+                    from_vals = (
+                        entry.get(from_key, []) if isinstance(entry, dict) else []
+                    )
+                    to_val = entry.get(to_key) if isinstance(entry, dict) else None
+                    edge_kwargs = config.edge.copy() if hasattr(config, "edge") else {}
+                    edge_kwargs["color"] = entry.get("color", config.colors[operation])
+                    edge_kwargs["title"] = entry_title or block_title
+                    if to_many:
+                        if not from_vals:
+                            continue
+                        for target in to_val or []:
+                            add_edge(from_vals, target, operation, edge_kwargs, net)
+                    else:
+                        for source in from_vals:
+                            add_edge(source, to_val, operation, edge_kwargs, net)
+            else:
+                flat_entries.append(block)
+    elif isinstance(data, dict) and "items" in data:
+        block_title = data.get("title")
+        for entry in data["items"]:
+            entry_title = entry.get("title") if isinstance(entry, dict) else None
+            from_vals = entry.get(from_key, []) if isinstance(entry, dict) else []
+            to_val = entry.get(to_key) if isinstance(entry, dict) else None
+            edge_kwargs = config.edge.copy() if hasattr(config, "edge") else {}
+            edge_kwargs["color"] = entry.get("color", config.colors[operation])
+            edge_kwargs["title"] = entry_title or block_title
+            if to_many:
+                if not from_vals:
+                    continue
+                for target in to_val or []:
+                    add_edge(from_vals, target, operation, edge_kwargs, net)
+            else:
+                for source in from_vals:
+                    add_edge(source, to_val, operation, edge_kwargs, net)
+    else:
+        flat_entries = data
+    for entry in flat_entries:
+        from_vals = entry.get(from_key, []) if isinstance(entry, dict) else []
+        to_val = entry.get(to_key) if isinstance(entry, dict) else None
+        edge_kwargs = config.edge.copy() if hasattr(config, "edge") else {}
+        edge_kwargs["color"] = entry.get("color", config.colors[operation])
+        edge_kwargs["title"] = entry.get("title")
+        if to_many:
+            if not from_vals:
+                continue
+            for target in to_val or []:
+                add_edge(from_vals, target, operation, edge_kwargs, net)
+        else:
+            for source in from_vals:
+                add_edge(source, to_val, operation, edge_kwargs, net)
+
+
+def collect_items_from_block(block, section):
+
+    def flatten_items(items):
+        if isinstance(items, str):
+            yield items
+        elif isinstance(items, list):
+            for el in items:
+                yield from flatten_items(el)
+        elif items is not None:
+            yield items
+
+    items_set = set()
+    if section in ["series", "parallel"]:
+        if isinstance(block, dict) and "items" in block:
+            items = block["items"]
+            items_set.update(flatten_items(items))
+        else:
+            items_set.update(flatten_items(block))
+    elif section == "convergence":
+        if isinstance(block, dict) and "items" in block:
+            for entry in block["items"]:
+                items_set.update(flatten_items(entry.get("materials", [])))
+                product = entry.get("product")
+                if product:
+                    items_set.add(product)
+        else:
+            items_set.update(flatten_items(block.get("materials", [])))
+            product = block.get("product")
+            if product:
+                items_set.add(product)
+    elif section == "divergence":
+        if isinstance(block, dict) and "items" in block:
+            for entry in block["items"]:
+                root = entry.get("root")
+                if root:
+                    items_set.add(root)
+                items_set.update(flatten_items(entry.get("branches", [])))
+        else:
+            root = block.get("root") if isinstance(block, dict) else None
+            if root:
+                items_set.add(root)
+            branches = block.get("branches", []) if isinstance(block, dict) else []
+            items_set.update(flatten_items(branches))
+    return items_set
+
+
+# --- Main network construction function ---
+
+
+def build_network(yaml_path):
+    """
+    Build an interactive relationship network from a YAML file.
     Loads configuration, downloads images, adds nodes and edges, and applies all options.
     Args:
         yaml_path (str): Path to the YAML configuration file.
@@ -472,246 +638,33 @@ def build_graph(yaml_path):
         raw_config = merged_config
     config = Config(raw_config)
 
-    # Collect all unique item names from all sections (flatten lists)
     all_items = set()
+    for section in ["series", "parallel", "convergence", "divergence"]:
+        for block in data.get(section, []):
+            all_items.update(collect_items_from_block(block, section))
 
-    def flatten_items(items):
-        if isinstance(items, str):
-            yield items
-        elif isinstance(items, list):
-            for el in items:
-                yield from flatten_items(el)
-        elif items is not None:
-            yield items
-
-    # Collect items from all sections
-    for section, key in [("series", "items"), ("parallel", "items")]:
-        for entry in data.get(section, []):
-            items = entry.get(key, []) if isinstance(entry, dict) else entry
-            all_items.update(flatten_items(items))
-
-    for entry in data.get("convergence", []):
-        all_items.update(flatten_items(entry.get("materials", [])))
-        product = entry.get("product")
-        if product:
-            all_items.add(product)
-
-    for entry in data.get("divergence", []):
-        root = entry.get("root")
-        if root:
-            all_items.add(root)
-        all_items.update(flatten_items(entry.get("branches", [])))
-
-    # Create the pyvis Network object
     net = Network(**config.network)
-
-    for item in sorted(all_items):
-        add_node(item, config, net)  # Add to nodes set for image downloading
-
-    # Download images if enabled in config
-    if config.get("download_images", True):
-        download_card_images(all_items, config)
-
-    # --- SERIES ---
-    series_data = data.get("series", [])
-    if isinstance(series_data, dict) and "items" in series_data:
-        series_data = series_data["items"]
-    for entry in series_data:
-        if isinstance(entry, dict) and "items" in entry:
-            edge_kwargs = config.edge.copy() if hasattr(config, "edge") else {}
-            if "color" in entry:
-                edge_kwargs["color"] = entry["color"]
-            else:
-                edge_kwargs["color"] = config.colors["series"]
-            if "title" in entry:
-                edge_kwargs["title"] = entry["title"]
-            items = entry["items"]
-            # items can be a list of lists or a flat list
-            if isinstance(items, list) and all(isinstance(sub, list) for sub in items):
-                for sublist in items:
-                    for node in sublist:
-                        add_node(node, config, net)
-                    for i in range(len(sublist) - 1):
-                        add_edge(sublist[i], sublist[i + 1], "series", edge_kwargs, net)
-            else:
-                for node in items:
-                    add_node(node, config, net)
-                for i in range(len(items) - 1):
-                    add_edge(items[i], items[i + 1], "series", edge_kwargs, net)
-        else:
-            items = entry
-            edge_kwargs = config.edge.copy() if hasattr(config, "edge") else {}
-            edge_kwargs["color"] = config.colors["series"]
-            for node in items:
-                add_node(node, config, net)
-            for i in range(len(items) - 1):
-                add_edge(items[i], items[i + 1], "series", edge_kwargs, net)
-
-    # --- PARALLEL ---
-    parallel_data = data.get("parallel", [])
-    if isinstance(parallel_data, dict) and "items" in parallel_data:
-        parallel_data = parallel_data["items"]
-    for entry in parallel_data:
-        if isinstance(entry, dict) and "items" in entry:
-            edge_kwargs = config.edge.copy() if hasattr(config, "edge") else {}
-            if "color" in entry:
-                edge_kwargs["color"] = entry["color"]
-            else:
-                edge_kwargs["color"] = config.colors["parallel"]
-            if "title" in entry:
-                edge_kwargs["title"] = entry["title"]
-            items = entry["items"]
-            if isinstance(items, list) and all(isinstance(sub, list) for sub in items):
-                for sublist in items:
-                    for node in sublist:
-                        add_node(node, config, net)
-                    for i in range(len(sublist) - 1):
-                        add_edge(
-                            sublist[i], sublist[i + 1], "parallel", edge_kwargs, net
-                        )
-            else:
-                for node in items:
-                    add_node(node, config, net)
-                for i in range(len(items) - 1):
-                    add_edge(items[i], items[i + 1], "parallel", edge_kwargs, net)
-        else:
-            items = entry
-            edge_kwargs = config.edge.copy() if hasattr(config, "edge") else {}
-            edge_kwargs["color"] = config.colors["parallel"]
-            for node in items:
-                add_node(node, config, net)
-            for i in range(len(items) - 1):
-                add_edge(items[i], items[i + 1], "parallel", edge_kwargs, net)
-
-    # --- CONVERGENCE ---
-    convergence_data = data.get("convergence", [])
-    block_entries = []
-    flat_entries = []
-    if isinstance(convergence_data, list):
-        for block in convergence_data:
-            block_title = block.get("title") if isinstance(block, dict) else None
-            block_items = (
-                block.get("items")
-                if isinstance(block, dict) and "items" in block
-                else None
-            )
-            if block_items:
-                for entry in block_items:
-                    entry_title = (
-                        entry.get("title") if isinstance(entry, dict) else None
-                    )
-                    materials = (
-                        entry.get("materials", []) if isinstance(entry, dict) else []
-                    )
-                    product = entry.get("product") if isinstance(entry, dict) else None
-                    edge_kwargs = config.edge.copy() if hasattr(config, "edge") else {}
-                    edge_kwargs["color"] = entry.get(
-                        "color", config.colors["convergence"]
-                    )
-                    edge_kwargs["title"] = entry_title or block_title
-                    for mat in materials:
-                        add_node(mat, config, net)
-                    add_node(product, config, net)
-                    for mat in materials:
-                        add_edge(mat, product, "convergence", edge_kwargs, net)
-            else:
-                flat_entries.append(block)
-    elif isinstance(convergence_data, dict) and "items" in convergence_data:
-        block_title = convergence_data.get("title")
-        for entry in convergence_data["items"]:
-            entry_title = entry.get("title") if isinstance(entry, dict) else None
-            materials = entry.get("materials", []) if isinstance(entry, dict) else []
-            product = entry.get("product") if isinstance(entry, dict) else None
-            edge_kwargs = config.edge.copy() if hasattr(config, "edge") else {}
-            edge_kwargs["color"] = entry.get("color", config.colors["convergence"])
-            edge_kwargs["title"] = entry_title or block_title
-            for mat in materials:
-                add_node(mat, config, net)
-            add_node(product, config, net)
-            for mat in materials:
-                add_edge(mat, product, "convergence", edge_kwargs, net)
-    else:
-        flat_entries = convergence_data
-    for entry in flat_entries:
-        materials = entry.get("materials", []) if isinstance(entry, dict) else []
-        product = entry.get("product") if isinstance(entry, dict) else None
-        edge_kwargs = config.edge.copy() if hasattr(config, "edge") else {}
-        edge_kwargs["color"] = entry.get("color", config.colors["convergence"])
-        edge_kwargs["title"] = entry.get("title")
-        for mat in materials:
-            add_node(mat, config, net)
-        add_node(product, config, net)
-        for mat in materials:
-            add_edge(mat, product, "convergence", edge_kwargs, net)
-
-    # --- DIVERGENCE ---
-    divergence_data = data.get("divergence", [])
-    block_entries = []
-    flat_entries = []
-    if isinstance(divergence_data, list):
-        for block in divergence_data:
-            block_title = block.get("title") if isinstance(block, dict) else None
-            block_items = (
-                block.get("items")
-                if isinstance(block, dict) and "items" in block
-                else None
-            )
-            if block_items:
-                for entry in block_items:
-                    entry_title = (
-                        entry.get("title") if isinstance(entry, dict) else None
-                    )
-                    root = entry.get("root") if isinstance(entry, dict) else None
-                    branches = (
-                        entry.get("branches", []) if isinstance(entry, dict) else []
-                    )
-                    edge_kwargs = config.edge.copy() if hasattr(config, "edge") else {}
-                    edge_kwargs["color"] = entry.get(
-                        "color", config.colors["divergence"]
-                    )
-                    edge_kwargs["title"] = entry_title or block_title
-                    if not root:
-                        continue
-                    add_node(root, config, net)
-                    for branch in branches:
-                        add_node(branch, config, net)
-                        add_edge(root, branch, "divergence", edge_kwargs, net)
-            else:
-                flat_entries.append(block)
-    elif isinstance(divergence_data, dict) and "items" in divergence_data:
-        block_title = divergence_data.get("title")
-        for entry in divergence_data["items"]:
-            entry_title = entry.get("title") if isinstance(entry, dict) else None
-            root = entry.get("root") if isinstance(entry, dict) else None
-            branches = entry.get("branches", []) if isinstance(entry, dict) else []
-            edge_kwargs = config.edge.copy() if hasattr(config, "edge") else {}
-            edge_kwargs["color"] = entry.get("color", config.colors["divergence"])
-            edge_kwargs["title"] = entry_title or block_title
-            if not root:
-                continue
-            add_node(root, config, net)
-            for branch in branches:
-                add_node(branch, config, net)
-                add_edge(root, branch, "divergence", edge_kwargs, net)
-    else:
-        flat_entries = divergence_data
-    for entry in flat_entries:
-        root = entry.get("root") if isinstance(entry, dict) else None
-        branches = entry.get("branches", []) if isinstance(entry, dict) else []
-        edge_kwargs = config.edge.copy() if hasattr(config, "edge") else {}
-        edge_kwargs["color"] = entry.get("color", config.colors["divergence"])
-        edge_kwargs["title"] = entry.get("title")
-        if not root:
-            continue
-        add_node(root, config, net)
-        for branch in branches:
-            add_node(branch, config, net)
-            add_edge(root, branch, "divergence", edge_kwargs, net)
-
-    # Apply all options from config
     net.options = set_options(config)
 
-    # Show interactive buttons if enabled
+    node_kwargs = config.node.copy() if hasattr(config, "node") else {}
+    for item in sorted(all_items):
+        node_kwargs["title"] = item
+        node_kwargs["image"] = f"images/{sanitize_name(item)}.jpg"
+        add_node(item, node_kwargs, net)
+
+    if config.get("download_images", True):
+        download_images(all_items, config)
+
+    for operation in ["series", "parallel"]:
+        add_linear_edges(data.get(operation, []), config, net, operation)
+    for operation in ["convergence", "divergence"]:
+        add_branching_edges(
+            data.get(operation, []),
+            config,
+            net,
+            operation=operation,
+        )
+
     if config.buttons.show:
         net.show_buttons(filter_=config.buttons.filter)
 
@@ -720,7 +673,7 @@ def build_graph(yaml_path):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Build an interactive card relationship graph from a YAML file."
+        description="Build an interactive relationship network from a YAML file."
     )
     parser.add_argument(
         "yaml_file",
@@ -729,7 +682,7 @@ if __name__ == "__main__":
         help="Path to the network YAML file.",
     )
     args = parser.parse_args()
-    net = build_graph(args.yaml_file)
+    net = build_network(args.yaml_file)
 
     base_name = os.path.splitext(os.path.basename(args.yaml_file))[0]
     html_output = os.path.abspath(f"{base_name}.html")
