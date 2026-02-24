@@ -51,11 +51,21 @@ class Config(AttrDict):
                 "parallel": "green",
                 "divergence": "red",
             },
+            "node": {
+                "shape": "image",
+                "size": 100,
+                "borderWidthSelected": 4,
+                "shapeProperties": {"useBorderWithImage": True},
+            },
+            "edge": {
+                "arrowStrikethrough": False,
+                "arrowScaleFactor": 2,
+                "width": 4,
+            },
             "sizes": {
                 "ref": (690, 1000),
                 "offset": (82, 182),
                 "crop": (528, 522),
-                "node": 100,
             },
             "buttons": {
                 "show": False,
@@ -301,9 +311,9 @@ def download_card_images(card_names, config):
         _download_card_images_fallback(card_names, config)
 
 
-def add_card_node(name, config, net):
+def add_node(name, config, net):
     """
-    Add a card node to the network graph with its image.
+    Add a node to the network graph with its image.
     Args:
         name (str): Card name.
         config (Config): Configuration object.
@@ -311,43 +321,29 @@ def add_card_node(name, config, net):
     """
     if name not in nodes:
         nodes.add(name)
-        net.add_node(
-            name,
-            title=name,
-            shape="image",
-            image=f"images/{sanitize_card_name(name)}.jpg",
-            size=config.sizes.node,
-            borderWidthSelected=4,
-            shapeProperties={"useBorderWithImage": True},
-        )
+        node_kwargs = config.node.copy() if hasattr(config, "node") else {}
+        node_kwargs["title"] = name
+        node_kwargs["image"] = f"images/{sanitize_card_name(name)}.jpg"
+        net.add_node(name, **node_kwargs)
 
 
-def add_edge(src, dst, operation, config, net, color=None):
+def add_edge(src, dst, operation, edge_kwargs, net):
     """
-    Add a styled edge between nodes based on operation type.
+    Add a styled edge between nodes based on operation type, using edge_kwargs for all options.
     Args:
         src (str): Source node name.
         dst (str): Destination node name.
         operation (str): One of "series", "convergence", "parallel", "divergence".
-        config (Config): Configuration object.
+        edge_kwargs (dict): All edge options (merged from config.edge and YAML overrides).
         net (Network): pyvis Network object.
-        color (str, optional): Optional color override.
     """
-    if color is None:
-        color = config.colors[operation]
-    arrows = "none" if operation == "parallel" else "to"
-    smooth = operation != "parallel"
-    net.add_edge(
-        src,
-        dst,
-        color=color,
-        title=operation,
-        arrows=arrows,
-        arrowStrikethrough=False,
-        arrowScaleFactor=2,
-        width=4,
-        smooth=smooth,
-    )
+    # Always set these
+    edge_kwargs = edge_kwargs.copy()  # Defensive copy
+    edge_kwargs["arrows"] = "none" if operation == "parallel" else "to"
+    edge_kwargs["smooth"] = operation != "parallel"
+    if "title" not in edge_kwargs or not edge_kwargs["title"]:
+        edge_kwargs["title"] = operation
+    net.add_edge(src, dst, **edge_kwargs)
 
 
 def set_physics_options(physics_obj, config):
@@ -476,82 +472,241 @@ def build_graph(yaml_path):
         raw_config = merged_config
     config = Config(raw_config)
 
-    # Collect all unique item names from all sections
+    # Collect all unique item names from all sections (flatten lists)
     all_items = set()
-    for entry in data.get("series", []):
-        items = entry.get("items", []) if isinstance(entry, dict) else entry
-        for item in items:
-            all_items.add(item)
+
+    def flatten_items(items):
+        if isinstance(items, str):
+            yield items
+        elif isinstance(items, list):
+            for el in items:
+                yield from flatten_items(el)
+        elif items is not None:
+            yield items
+
+    # Collect items from all sections
+    for section, key in [("series", "items"), ("parallel", "items")]:
+        for entry in data.get(section, []):
+            items = entry.get(key, []) if isinstance(entry, dict) else entry
+            all_items.update(flatten_items(items))
 
     for entry in data.get("convergence", []):
-        for mat in entry.get("materials", []):
-            all_items.add(mat)
-        all_items.add(entry.get("product"))
-
-    for entry in data.get("parallel", []):
-        items = entry.get("items", []) if isinstance(entry, dict) else entry
-        for item in items:
-            all_items.add(item)
+        all_items.update(flatten_items(entry.get("materials", [])))
+        product = entry.get("product")
+        if product:
+            all_items.add(product)
 
     for entry in data.get("divergence", []):
         root = entry.get("root")
         if root:
             all_items.add(root)
-        for branch in entry.get("branches", []):
-            all_items.add(branch)
+        all_items.update(flatten_items(entry.get("branches", [])))
+
+    # Create the pyvis Network object
+    net = Network(**config.network)
+
+    for item in sorted(all_items):
+        add_node(item, config, net)  # Add to nodes set for image downloading
 
     # Download images if enabled in config
     if config.get("download_images", True):
         download_card_images(all_items, config)
 
-    # Create the pyvis Network object
-    net = Network(**config.network)
-
-    # Add nodes and edges for each relationship type
-    for entry in data.get("series", []):
-        if isinstance(entry, dict):
-            items = entry.get("items", [])
-            color = entry.get("color")
+    # --- SERIES ---
+    series_data = data.get("series", [])
+    if isinstance(series_data, dict) and "items" in series_data:
+        series_data = series_data["items"]
+    for entry in series_data:
+        if isinstance(entry, dict) and "items" in entry:
+            edge_kwargs = config.edge.copy() if hasattr(config, "edge") else {}
+            if "color" in entry:
+                edge_kwargs["color"] = entry["color"]
+            else:
+                edge_kwargs["color"] = config.colors["series"]
+            if "title" in entry:
+                edge_kwargs["title"] = entry["title"]
+            items = entry["items"]
+            # items can be a list of lists or a flat list
+            if isinstance(items, list) and all(isinstance(sub, list) for sub in items):
+                for sublist in items:
+                    for node in sublist:
+                        add_node(node, config, net)
+                    for i in range(len(sublist) - 1):
+                        add_edge(sublist[i], sublist[i + 1], "series", edge_kwargs, net)
+            else:
+                for node in items:
+                    add_node(node, config, net)
+                for i in range(len(items) - 1):
+                    add_edge(items[i], items[i + 1], "series", edge_kwargs, net)
         else:
             items = entry
-            color = None
-        for node in items:
-            add_card_node(node, config, net)
-        for i in range(len(items) - 1):
-            add_edge(items[i], items[i + 1], "series", config, net, color=color)
+            edge_kwargs = config.edge.copy() if hasattr(config, "edge") else {}
+            edge_kwargs["color"] = config.colors["series"]
+            for node in items:
+                add_node(node, config, net)
+            for i in range(len(items) - 1):
+                add_edge(items[i], items[i + 1], "series", edge_kwargs, net)
 
-    for entry in data.get("convergence", []):
-        materials = entry.get("materials", [])
-        product = entry.get("product")
-        color = entry.get("color")
-        for mat in materials:
-            add_card_node(mat, config, net)
-        add_card_node(product, config, net)
-        for mat in materials:
-            add_edge(mat, product, "convergence", config, net, color=color)
-
-    for entry in data.get("parallel", []):
-        if isinstance(entry, dict):
-            items = entry.get("items", [])
-            color = entry.get("color")
+    # --- PARALLEL ---
+    parallel_data = data.get("parallel", [])
+    if isinstance(parallel_data, dict) and "items" in parallel_data:
+        parallel_data = parallel_data["items"]
+    for entry in parallel_data:
+        if isinstance(entry, dict) and "items" in entry:
+            edge_kwargs = config.edge.copy() if hasattr(config, "edge") else {}
+            if "color" in entry:
+                edge_kwargs["color"] = entry["color"]
+            else:
+                edge_kwargs["color"] = config.colors["parallel"]
+            if "title" in entry:
+                edge_kwargs["title"] = entry["title"]
+            items = entry["items"]
+            if isinstance(items, list) and all(isinstance(sub, list) for sub in items):
+                for sublist in items:
+                    for node in sublist:
+                        add_node(node, config, net)
+                    for i in range(len(sublist) - 1):
+                        add_edge(
+                            sublist[i], sublist[i + 1], "parallel", edge_kwargs, net
+                        )
+            else:
+                for node in items:
+                    add_node(node, config, net)
+                for i in range(len(items) - 1):
+                    add_edge(items[i], items[i + 1], "parallel", edge_kwargs, net)
         else:
             items = entry
-            color = None
-        for item in items:
-            add_card_node(item, config, net)
-        for i in range(len(items) - 1):
-            add_edge(items[i], items[i + 1], "parallel", config, net, color=color)
+            edge_kwargs = config.edge.copy() if hasattr(config, "edge") else {}
+            edge_kwargs["color"] = config.colors["parallel"]
+            for node in items:
+                add_node(node, config, net)
+            for i in range(len(items) - 1):
+                add_edge(items[i], items[i + 1], "parallel", edge_kwargs, net)
 
-    for entry in data.get("divergence", []):
-        root = entry.get("root")
-        branches = entry.get("branches", [])
-        color = entry.get("color")
+    # --- CONVERGENCE ---
+    convergence_data = data.get("convergence", [])
+    block_entries = []
+    flat_entries = []
+    if isinstance(convergence_data, list):
+        for block in convergence_data:
+            block_title = block.get("title") if isinstance(block, dict) else None
+            block_items = (
+                block.get("items")
+                if isinstance(block, dict) and "items" in block
+                else None
+            )
+            if block_items:
+                for entry in block_items:
+                    entry_title = (
+                        entry.get("title") if isinstance(entry, dict) else None
+                    )
+                    materials = (
+                        entry.get("materials", []) if isinstance(entry, dict) else []
+                    )
+                    product = entry.get("product") if isinstance(entry, dict) else None
+                    edge_kwargs = config.edge.copy() if hasattr(config, "edge") else {}
+                    edge_kwargs["color"] = entry.get(
+                        "color", config.colors["convergence"]
+                    )
+                    edge_kwargs["title"] = entry_title or block_title
+                    for mat in materials:
+                        add_node(mat, config, net)
+                    add_node(product, config, net)
+                    for mat in materials:
+                        add_edge(mat, product, "convergence", edge_kwargs, net)
+            else:
+                flat_entries.append(block)
+    elif isinstance(convergence_data, dict) and "items" in convergence_data:
+        block_title = convergence_data.get("title")
+        for entry in convergence_data["items"]:
+            entry_title = entry.get("title") if isinstance(entry, dict) else None
+            materials = entry.get("materials", []) if isinstance(entry, dict) else []
+            product = entry.get("product") if isinstance(entry, dict) else None
+            edge_kwargs = config.edge.copy() if hasattr(config, "edge") else {}
+            edge_kwargs["color"] = entry.get("color", config.colors["convergence"])
+            edge_kwargs["title"] = entry_title or block_title
+            for mat in materials:
+                add_node(mat, config, net)
+            add_node(product, config, net)
+            for mat in materials:
+                add_edge(mat, product, "convergence", edge_kwargs, net)
+    else:
+        flat_entries = convergence_data
+    for entry in flat_entries:
+        materials = entry.get("materials", []) if isinstance(entry, dict) else []
+        product = entry.get("product") if isinstance(entry, dict) else None
+        edge_kwargs = config.edge.copy() if hasattr(config, "edge") else {}
+        edge_kwargs["color"] = entry.get("color", config.colors["convergence"])
+        edge_kwargs["title"] = entry.get("title")
+        for mat in materials:
+            add_node(mat, config, net)
+        add_node(product, config, net)
+        for mat in materials:
+            add_edge(mat, product, "convergence", edge_kwargs, net)
+
+    # --- DIVERGENCE ---
+    divergence_data = data.get("divergence", [])
+    block_entries = []
+    flat_entries = []
+    if isinstance(divergence_data, list):
+        for block in divergence_data:
+            block_title = block.get("title") if isinstance(block, dict) else None
+            block_items = (
+                block.get("items")
+                if isinstance(block, dict) and "items" in block
+                else None
+            )
+            if block_items:
+                for entry in block_items:
+                    entry_title = (
+                        entry.get("title") if isinstance(entry, dict) else None
+                    )
+                    root = entry.get("root") if isinstance(entry, dict) else None
+                    branches = (
+                        entry.get("branches", []) if isinstance(entry, dict) else []
+                    )
+                    edge_kwargs = config.edge.copy() if hasattr(config, "edge") else {}
+                    edge_kwargs["color"] = entry.get(
+                        "color", config.colors["divergence"]
+                    )
+                    edge_kwargs["title"] = entry_title or block_title
+                    if not root:
+                        continue
+                    add_node(root, config, net)
+                    for branch in branches:
+                        add_node(branch, config, net)
+                        add_edge(root, branch, "divergence", edge_kwargs, net)
+            else:
+                flat_entries.append(block)
+    elif isinstance(divergence_data, dict) and "items" in divergence_data:
+        block_title = divergence_data.get("title")
+        for entry in divergence_data["items"]:
+            entry_title = entry.get("title") if isinstance(entry, dict) else None
+            root = entry.get("root") if isinstance(entry, dict) else None
+            branches = entry.get("branches", []) if isinstance(entry, dict) else []
+            edge_kwargs = config.edge.copy() if hasattr(config, "edge") else {}
+            edge_kwargs["color"] = entry.get("color", config.colors["divergence"])
+            edge_kwargs["title"] = entry_title or block_title
+            if not root:
+                continue
+            add_node(root, config, net)
+            for branch in branches:
+                add_node(branch, config, net)
+                add_edge(root, branch, "divergence", edge_kwargs, net)
+    else:
+        flat_entries = divergence_data
+    for entry in flat_entries:
+        root = entry.get("root") if isinstance(entry, dict) else None
+        branches = entry.get("branches", []) if isinstance(entry, dict) else []
+        edge_kwargs = config.edge.copy() if hasattr(config, "edge") else {}
+        edge_kwargs["color"] = entry.get("color", config.colors["divergence"])
+        edge_kwargs["title"] = entry.get("title")
         if not root:
             continue
-        add_card_node(root, config, net)
+        add_node(root, config, net)
         for branch in branches:
-            add_card_node(branch, config, net)
-            add_edge(root, branch, "divergence", config, net, color=color)
+            add_node(branch, config, net)
+            add_edge(root, branch, "divergence", edge_kwargs, net)
 
     # Apply all options from config
     net.options = set_options(config)
