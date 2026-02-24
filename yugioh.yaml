@@ -16,7 +16,8 @@ series:
   - ["Black Luster Soldier", "Black Luster Soldier - Envoy of the Beginning"]
   - ["Magician of Black Chaos", "Black Chaos the Dark Chaos Magician", "Magician of Black Chaos MAX"]
   - ["Magician of Black Chaos", "Dark Magician of Chaos"]
-  - ["Magician of Dark Illusion", "Illusion of Chaos", "Ebon Illusion Magician"]
+  - ["Magician of Dark Illusion", "Illusion of Chaos"]
+  - ["Ebon Illusion Magician", "Ebon High Magician"]
   - ["Gandora the Dragon of Destruction", "Gandora-G the Dragon of Destruction"]
   - ["Gandora the Dragon of Destruction", "Gigarays Gandora the Dragon of Destruction"]
   - ["Summoned Skull", "Skull Archfiend of Lightning"]
@@ -33,7 +34,6 @@ series:
   - ["Gaia Blaze, the Force of the Sun", "Gaia Prominence, the Fierce Force"]
   - ["Gaia Knight, the Force of Earth", "Gaia Drake, the Universal Force"]
   - ["Curse of Dragon", "Curse of Dragonfire"]
-  - ["Buster Whelp of the Destruction Swordsman", "Dragon Buster Destruction Sword", "Robot Buster Destruction Sword", "Wizard Buster Destruction Sword", "Buster Dragon"]
   
   # Aging (with blue color override)
   - cards: ["Palladium Oracle Mana", "Apprentice Illusion Magician", "Dark Magician Girl", "Magi Magi ☆ Magician Gal"]
@@ -56,6 +56,8 @@ series:
     color: "blue"
   - cards: ["Silent Swordsman LV3", "Silent Swordsman LV5", "Silent Swordsman LV7", "Silent Swordsman"]
     color: "blue"
+  - cards: ["Buster Whelp of the Destruction Swordsman", "Dragon Buster Destruction Sword", "Wizard Buster Destruction Sword", "Robot Buster Destruction Sword", "Buster Dragon"]
+    color: "blue"
 
 # Parallel: cards at the same power level
 parallel:
@@ -66,7 +68,7 @@ parallel:
   # Black Luster Soldier - Effect Monsters
   - ["Black Luster Soldier - Sacred Soldier", "Black Luster Soldier - Envoy of the Beginning", "Black Luster Soldier - Envoy of the Evening Twilight"]
   # Ebon - Magician
-  - ["Ebon Illusion Magician", "Ebon High Magician"]
+  - ["Ebon Illusion Magician",  "Illusion of Chaos"]
   # Black Luster Soldier - Ritual Monsters
   - ["Black Luster Soldier - Soldier of Light and Darkness", "Black Luster Soldier - Super Soldier", "Black Luster Soldier - Legendary Swordsman"]
   # Gandora
@@ -310,6 +312,18 @@ divergence:
   #     - "Kuribeh"
 
 config:
-  show_buttons: False
+  # --- CONFIG STRUCTURE ---
+  # buttons: (dict) pyvis options menu settings
+  #   show: (bool) Show the pyvis options menu (default: False)
+  #   filter: (list) Which button groups to show in the menu (default: ["physics", "interaction"])
+  # colors: (dict) Default edge colors for each operation type (series, convergence, parallel, divergence)
+  # sizes: (dict) Image and node sizing (ref, offset, crop, node)
+  # network: (dict) pyvis Network() constructor options (height, width, directed, select_menu)
+  # physics: (dict) Physics simulation options (enabled, repulsion, etc)
+  #   enabled: (bool) Enable/disable physics simulation
+  #   repulsion: (dict) Repulsion physics settings (node_distance, central_gravity, etc)
+  # You can override any of these fields in your YAML config.
+  buttons:
+    show: True
   physics:
     enabled: True

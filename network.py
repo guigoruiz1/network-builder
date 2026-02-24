@@ -48,8 +48,10 @@ class Config(AttrDict):
                 "crop": (528, 522),
                 "node": 100,
             },
-            "show_buttons": True,
-            "buttons_filter": ["physics", "interaction"],
+            "buttons": {
+                "show": False,
+                "filter": ["physics", "interaction"],
+            },
             "physics": {
                 "enabled": True,
                 "repulsion": {
@@ -385,26 +387,31 @@ def build_graph(yaml_path):
             add_card_node(branch, config, net)
             add_edge(root, branch, "divergence", config, net, color=color)
 
-    options_obj = Options(config.options if "options" in config else {})
-    options_obj.physics.enabled = config.physics.enabled
-    options_obj.physics.use_repulsion(config.physics.repulsion)
-    net.options = options_obj
+    options = Options()
+    options.physics.enabled = config.physics.enabled
+    options.physics.use_repulsion(config.physics.repulsion)
+    net.options = options
 
-    if config.show_buttons:
-        net.show_buttons(filter_=config.buttons_filter)
+    if config.buttons.show:
+        net.show_buttons(filter_=config.buttons.filter)
 
-    base_name = os.path.splitext(os.path.basename(yaml_path))[0]
-    html_output = os.path.abspath(f"{base_name}.html")
-    net.write_html(html_output)
-    print("Saved to:", html_output)
+    return net
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Build an interactive card relationship graph from a YAML file."
     )
-    parser.add_argument("yaml_file", help="Path to the network YAML file.")
+    parser.add_argument(
+        "yaml_file",
+        default="network.yaml",
+        nargs="?",
+        help="Path to the network YAML file.",
+    )
     args = parser.parse_args()
-    build_graph(args.yaml_file)
-else:
-    build_graph("network.yaml")
+    net = build_graph(args.yaml_file)
+
+    base_name = os.path.splitext(os.path.basename(args.yaml_file))[0]
+    html_output = os.path.abspath(f"{base_name}.html")
+    net.write_html(html_output)
+    print("Saved to:", html_output)
