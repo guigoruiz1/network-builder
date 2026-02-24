@@ -12,6 +12,7 @@
 series:
   - title: "Evolving"
     items:
+      - ["Dark Magician","Dark Magician, the Pharaoh's Servant"]
       - ["Black Luster Soldier", "Black Luster Soldier - Soldier of Chaos"]
       - ["Black Luster Soldier", "Black Luster Soldier - Super Soldier"]
       - ["Black Luster Soldier", "Black Luster Soldier - Envoy of the Beginning"]
@@ -87,7 +88,7 @@ series:
 parallel:
     - title: "Counterparts"
       items:
-        - ["Dark Magician, the Pharaoh's Servant", "Dark Magician", "Dark Magician the Magician of Black Magic"]
+        - ["Dark Magician", "Dark Magician the Magician of Black Magic"]
         - ["Dark Magician Girl", "Dark Magician Girl the Magician's Apprentice"]
         - ["Black Luster Soldier - Sacred Soldier", "Black Luster Soldier - Envoy of the Beginning", "Black Luster Soldier - Envoy of the Evening Twilight"]
         - ["Ebon Illusion Magician",  "Illusion of Chaos"]
@@ -267,6 +268,7 @@ divergence:
             - "Silent Magician Zero"
             - "Silent Swordsman Zero"
             - "Stronghold the Hidden Fortress"
+
         - root: "Ritual of Light and Darkness"
           branches:
             - "Black Luster Soldier - Soldier of Light and Darkness"
@@ -274,6 +276,7 @@ divergence:
             - "Mystical Celtic Sage"
             - "Skull Archfiend of Chaos"
             - "Gurifoh"
+
         - root: "Magnetic Field"
           branches: 
             - "Alpha The Magnet Warrior"
@@ -281,6 +284,7 @@ divergence:
             - "Gamma The Magnet Warrior"
             - "Delta The Magnet Warrior" 
             - "Epsilon The Magnet Warrior"
+
         - root: "Royal Straight"
           branches: 
             - "Royal Straight Slasher"
@@ -290,6 +294,7 @@ divergence:
             - "Joker's Knight"
             - "Imperial Bower"
         - root: "Summoned Skull"
+
           branches: 
             - "Archfiend's Awakening"
             - "Archfiend's Manifestation"
@@ -297,6 +302,7 @@ divergence:
             - "Archfiend's Ascent"
             - "Archfiend's Advent"
             - "Skull Archfiend of Chaos"
+
         - root: "Gaia The Fierce Knight"
           branches:
             - "Gaia Saber, the Lightning Shadow"
@@ -304,6 +310,15 @@ divergence:
             - "Gaia Knight, the Force of Earth"
             - "Gaia Blaze, the Force of the Sun"
             - "Gaia Stream, the Graceful Force"
+
+        - root: "Dark Magician Girl"
+          branches: 
+            - "Berry Magician Girl"
+            - "Lemon Magician Girl"
+            - "Apple Magician Girl"
+            - "Chocolate Magician Girl"
+            - "Kiwi Magician Girl"
+
 
         # Commented out entries (can be enabled with or without color override)
         # - root: "Five Star Twilight"
@@ -361,3 +376,4 @@ config:
   # ====================================================
   buttons:
     show: False
+  download_images: True
