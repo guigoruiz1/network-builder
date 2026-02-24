@@ -17,7 +17,6 @@ series:
   - ["Magician of Black Chaos", "Black Chaos the Dark Chaos Magician", "Magician of Black Chaos MAX"]
   - ["Magician of Black Chaos", "Dark Magician of Chaos"]
   - ["Magician of Dark Illusion", "Illusion of Chaos"]
-  - ["Ebon Illusion Magician", "Ebon High Magician"]
   - ["Gandora the Dragon of Destruction", "Gandora-G the Dragon of Destruction"]
   - ["Gandora the Dragon of Destruction", "Gigarays Gandora the Dragon of Destruction"]
   - ["Summoned Skull", "Skull Archfiend of Lightning"]
@@ -36,27 +35,29 @@ series:
   - ["Curse of Dragon", "Curse of Dragonfire"]
   
   # Aging (with blue color override)
-  - cards: ["Palladium Oracle Mana", "Apprentice Illusion Magician", "Dark Magician Girl", "Magi Magi ☆ Magician Gal"]
+  - items: ["Palladium Oracle Mana", "Apprentice Illusion Magician", "Dark Magician Girl", "Magi Magi ☆ Magician Gal"]
     color: "blue"
-  - cards: ["Palladium Oracle Mahad", "Magician of Dark Illusion", "Dark Magician", "Dark Eradicator Warlock", "Magician of Chaos", "Magician of Black Chaos", "Sorcerer of Dark Magic", "Dark Sage"]
+  - items: ["Palladium Oracle Mahad", "Magician of Dark Illusion", "Dark Magician", "Dark Eradicator Warlock", "Magician of Chaos", "Magician of Black Chaos", "Sorcerer of Dark Magic", "Dark Sage"]
     color: "blue"
-  - cards: ["Gaia The Fierce Knight", "Black Luster Soldier"]
+  - cards: ["Ebon Illusion Magician", "Ebon High Magician"]
     color: "blue"
-  - cards: ["Gaia the Fierce Knight Origin", "Gaia The Fierce Knight"]
+  - items: ["Gaia The Fierce Knight", "Black Luster Soldier"]
     color: "blue"
-  - cards: ["Arisen Gaia the Fierce Knight", "Black Luster Soldier - Envoy of the Beginning"]
+  - items: ["Gaia the Fierce Knight Origin", "Gaia The Fierce Knight"]
     color: "blue"
-  - cards: ["Envoy of Chaos", "Black Luster Soldier - Super Soldier"]
+  - items: ["Arisen Gaia the Fierce Knight", "Black Luster Soldier - Envoy of the Beginning"]
     color: "blue"
-  - cards: ["Evening Twilight Knight", "Black Luster Soldier - Envoy of the Evening Twilight"]
+  - items: ["Envoy of Chaos", "Black Luster Soldier - Super Soldier"]
     color: "blue"
-  - cards: ["Beginning Knight", "Black Luster Soldier - Envoy of the Beginning"]
+  - items: ["Evening Twilight Knight", "Black Luster Soldier - Envoy of the Evening Twilight"]
     color: "blue"
-  - cards: ["Silent Magician LV4", "Silent Magician LV8", "Silent Magician"]
+  - items: ["Beginning Knight", "Black Luster Soldier - Envoy of the Beginning"]
     color: "blue"
-  - cards: ["Silent Swordsman LV3", "Silent Swordsman LV5", "Silent Swordsman LV7", "Silent Swordsman"]
+  - items: ["Silent Magician LV4", "Silent Magician LV8", "Silent Magician"]
     color: "blue"
-  - cards: ["Buster Whelp of the Destruction Swordsman", "Dragon Buster Destruction Sword", "Wizard Buster Destruction Sword", "Robot Buster Destruction Sword", "Buster Dragon"]
+  - items: ["Silent Swordsman LV3", "Silent Swordsman LV5", "Silent Swordsman LV7", "Silent Swordsman"]
+    color: "blue"
+  - items: ["Buster Whelp of the Destruction Swordsman", "Dragon Buster Destruction Sword", "Wizard Buster Destruction Sword", "Robot Buster Destruction Sword", "Buster Dragon"]
     color: "blue"
 
 # Parallel: cards at the same power level
@@ -312,18 +313,49 @@ divergence:
   #     - "Kuribeh"
 
 config:
-  # --- CONFIG STRUCTURE ---
-  # buttons: (dict) pyvis options menu settings
-  #   show: (bool) Show the pyvis options menu (default: False)
-  #   filter: (list) Which button groups to show in the menu (default: ["physics", "interaction"])
-  # colors: (dict) Default edge colors for each operation type (series, convergence, parallel, divergence)
-  # sizes: (dict) Image and node sizing (ref, offset, crop, node)
-  # network: (dict) pyvis Network() constructor options (height, width, directed, select_menu)
-  # physics: (dict) Physics simulation options (enabled, repulsion, etc)
-  #   enabled: (bool) Enable/disable physics simulation
-  #   repulsion: (dict) Repulsion physics settings (node_distance, central_gravity, etc)
+  # ================= CONFIG STRUCTURE =================
+  # This section controls all global and visual options for the graph.
   # You can override any of these fields in your YAML config.
+  #
+  # buttons: (dict)
+  #   show: (bool) Show the pyvis options menu (default: False)
+  #   filter: (list[str]) Which button groups to show in the menu (e.g. ["physics", "interaction"])
+  # colors: (dict)
+  #   series: (str) Edge color for series (default: orange)
+  #   convergence: (str) Edge color for convergence (default: purple)
+  #   parallel: (str) Edge color for parallel (default: green)
+  #   divergence: (str) Edge color for divergence (default: red)
+  # sizes: (dict)
+  #   ref: (tuple[int, int]) Reference image size (default: [690, 1000])
+  #   offset: (tuple[int, int]) Crop offset (default: [82, 182])
+  #   crop: (tuple[int, int]) Crop size (default: [528, 522])
+  #   node: (int) Node size (default: 100)
+  # network: (dict)
+  #   height: (str) Graph height (default: "90vh")
+  #   width: (str) Graph width (default: "100%")
+  #   directed: (bool) Directed edges (default: True)
+  #   select_menu: (bool) Show select menu (default: True)
+  # physics: (dict)
+  #   enabled: (bool) Enable/disable physics simulation (default: True)
+  #   repulsion: (dict) Repulsion solver settings
+  #   forceAtlas2Based: (dict) (optional) Force Atlas 2 solver settings
+  #   barnesHut: (dict) (optional) Barnes-Hut solver settings
+  #   hierarchicalRepulsion: (dict) (optional) Hierarchical repulsion settings
+  #   stabilization: (bool) Toggle stabilization (default: True)
+  # edges: (dict)
+  #   smooth_type: (str) Edge smoothness type (e.g. "dynamic", "continuous")
+  #   inherit_colors: (bool|str) Inherit edge color from node (True, False, "from", "to")
+  # layout: (dict)
+  #   randomSeed: (int) Random seed for layout
+  #   improvedLayout: (bool) Use improved layout
+  #   hierarchical: (dict) Hierarchical layout options
+  # interaction: (dict)
+  #   hideEdgesOnDrag: (bool)
+  #   hideNodesOnDrag: (bool)
+  #   dragNodes: (bool)
+  # configure: (dict)
+  #   enabled: (bool) Enable the option editor
+  #   filter: (list[str]) Which options to show in the editor
+  # ====================================================
   buttons:
-    show: True
-  physics:
-    enabled: True
+    show: False

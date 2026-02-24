@@ -20,6 +20,11 @@ import re
 
 
 class AttrDict(dict):
+    """
+    Dictionary subclass that allows attribute-style access to keys, recursively.
+    Useful for deep config objects.
+    """
+
     def __getattr__(self, name):
         value = self.get(name)
         if isinstance(value, dict):
@@ -34,6 +39,10 @@ class AttrDict(dict):
 
 
 class Config(AttrDict):
+    """
+    Configuration object that merges user overrides with defaults and allows deep attribute access.
+    """
+
     def __init__(self, overrides=None):
         defaults = {
             "colors": {
@@ -68,6 +77,7 @@ class Config(AttrDict):
                 "directed": True,
                 "select_menu": True,
             },
+            "download_images": True,  # Toggle downloading card images
         }
         merged = self._deep_merge(defaults, overrides or {})
         super().__init__(merged)
@@ -86,15 +96,24 @@ nodes = set()
 
 
 def sanitize_card_name(name):
-    """Sanitize card name for filenames (remove all non-alphanumeric characters)."""
+    """
+    Sanitize card name for filenames (remove all non-alphanumeric characters).
+    Args:
+        name (str): The card name to sanitize.
+    Returns:
+        str: Sanitized string suitable for filenames.
+    """
     return re.sub(r"[^a-zA-Z0-9]", "", name)
 
 
 def _download_card_images_fallback(card_names, config):
-    """Fallback method to download and crop card images directly from Yugipedia API.
-
+    """
+    Fallback method to download and crop card images directly from Yugipedia API.
     Used when yugiquery utilities are unavailable. Saves images to `images/<Card_Name>.jpg`.
     Existing files are skipped.
+    Args:
+        card_names (Iterable[str]): Card names to download.
+        config (Config): Configuration object for cropping.
     """
     image_dir = "images"
     if not os.path.exists(image_dir):
@@ -158,6 +177,15 @@ def _crop_section(
     config,
     out_size=None,
 ):
+    """
+    Crop a PIL image to the configured section and optionally resize.
+    Args:
+        im (PIL.Image): The image to crop.
+        config (Config): Configuration object with crop parameters.
+        out_size (tuple or None): Optional output size (width, height).
+    Returns:
+        PIL.Image: Cropped (and possibly resized) image.
+    """
     w, h = im.size
     ref_w, ref_h = config.sizes.ref
     ref_aspect = ref_w / ref_h
@@ -208,10 +236,13 @@ def _crop_section(
 
 
 def download_card_images(card_names, config):
-    """Download and crop card images from Yugipedia.
-
+    """
+    Download and crop card images from Yugipedia.
     Attempts yugiquery utilities first (async + featured images), falls back to direct API.
     Saves to `images/<Card_Name>.jpg`. Skips existing files.
+    Args:
+        card_names (Iterable[str]): Card names to download.
+        config (Config): Configuration object for cropping.
     """
     # Try to use yugiquery
     try:
@@ -271,7 +302,13 @@ def download_card_images(card_names, config):
 
 
 def add_card_node(name, config, net):
-    """Add a card node to the network graph with its image."""
+    """
+    Add a card node to the network graph with its image.
+    Args:
+        name (str): Card name.
+        config (Config): Configuration object.
+        net (Network): pyvis Network object.
+    """
     if name not in nodes:
         nodes.add(name)
         net.add_node(
@@ -286,13 +323,15 @@ def add_card_node(name, config, net):
 
 
 def add_edge(src, dst, operation, config, net, color=None):
-    """Add a styled edge between nodes based on operation type.
-
+    """
+    Add a styled edge between nodes based on operation type.
     Args:
-        src: Source node name.
-        dst: Destination node name.
-        operation: One of "series", "convergence", "parallel", "divergence".
-        color: Optional color override (defaults to OPERATION_COLORS[operation]).
+        src (str): Source node name.
+        dst (str): Destination node name.
+        operation (str): One of "series", "convergence", "parallel", "divergence".
+        config (Config): Configuration object.
+        net (Network): pyvis Network object.
+        color (str, optional): Optional color override.
     """
     if color is None:
         color = config.colors[operation]
@@ -311,9 +350,123 @@ def add_edge(src, dst, operation, config, net, color=None):
     )
 
 
+def set_physics_options(physics_obj, config):
+    """
+    Apply physics-related configuration to the pyvis Physics object.
+    Supports enabling/disabling physics, selecting solvers, and toggling stabilization.
+    """
+    physics_obj.enabled = config.get("enabled", True)
+    # Set physics solvers if present in config
+    if config.get("repulsion"):
+        physics_obj.use_repulsion(config.repulsion)
+    if config.get("forceAtlas2Based"):
+        physics_obj.use_force_atlas_2based(config.forceAtlas2Based)
+    if config.get("barnesHut"):
+        physics_obj.use_barnes_hut(config.barnesHut)
+    if config.get("hierarchicalRepulsion"):
+        physics_obj.use_hrepulsion(config.hierarchicalRepulsion)
+    # Toggle stabilization if specified (expects a boolean)
+    if config.get("stabilization") is not None:
+        physics_obj.toggle_stabilization(bool(config.stabilization))
+
+
+def set_edge_options(edges_obj, config):
+    """
+    Apply edge-related configuration to the pyvis EdgeOptions object.
+    Supports toggling smoothness type and color inheritance.
+    """
+    if config.get("smooth_type"):
+        edges_obj.toggle_smoothness(config.smooth_type)
+    if config.get("inherit_colors") is not None:
+        edges_obj.inherit_colors(config.inherit_colors)
+
+
+def set_layout_options(layout_obj, config):
+    """
+    Apply layout-related configuration to the pyvis Layout object.
+    Supports random seed, improved layout, and hierarchical layout options.
+    """
+    if config.get("randomSeed") is not None:
+        layout_obj.randomSeed = config.randomSeed
+    if config.get("improvedLayout") is not None:
+        layout_obj.improvedLayout = config.improvedLayout
+    # Hierarchical layout options
+    if config.get("hierarchical"):
+        hier = config.hierarchical
+        if hier.get("enabled") is not None:
+            layout_obj.hierarchical.enabled = hier.enabled
+        if hier.get("levelSeparation") is not None:
+            layout_obj.set_separation(hier.levelSeparation)
+        if hier.get("treeSpacing") is not None:
+            layout_obj.set_tree_spacing(hier.treeSpacing)
+        if hier.get("edgeMinimization") is not None:
+            layout_obj.set_edge_minimization(hier.edgeMinimization)
+        if hier.get("blockShifting") is not None:
+            layout_obj.hierarchical.blockShifting = hier.blockShifting
+        if hier.get("parentCentralization") is not None:
+            layout_obj.hierarchical.parentCentralization = hier.parentCentralization
+        if hier.get("sortMethod") is not None:
+            layout_obj.hierarchical.sortMethod = hier.sortMethod
+
+
+def set_interaction_options(interaction_obj, config):
+    """
+    Apply interaction-related configuration to the pyvis Interaction object.
+    Supports toggling drag and hide options for nodes and edges.
+    """
+    if config.get("hideEdgesOnDrag") is not None:
+        interaction_obj.hideEdgesOnDrag = config.hideEdgesOnDrag
+    if config.get("hideNodesOnDrag") is not None:
+        interaction_obj.hideNodesOnDrag = config.hideNodesOnDrag
+    if config.get("dragNodes") is not None:
+        interaction_obj.dragNodes = config.dragNodes
+
+
+def set_configure_options(configure_obj, config):
+    """
+    Apply configure-related configuration to the pyvis Configure object.
+    Supports enabling the option editor and setting filters.
+    """
+    if config.get("enabled") is not None:
+        configure_obj.enabled = config.enabled
+    if config.get("filter") is not None:
+        configure_obj.filter = config.filter
+
+
+def set_options(config):
+    """
+    Create and configure a pyvis Options object using the provided config.
+    Delegates to helper functions for each sub-object (physics, edges, layout, interaction, configure).
+    Returns:
+        options (Options): A fully configured pyvis Options object.
+    """
+    options = Options()
+    if config.get("physics"):
+        set_physics_options(options.physics, config.physics)
+    if config.get("edges"):
+        set_edge_options(options.edges, config.edges)
+    if config.get("layout"):
+        set_layout_options(options.layout, config.layout)
+    if config.get("interaction"):
+        set_interaction_options(options.interaction, config.interaction)
+    if config.get("configure"):
+        set_configure_options(options.configure, config.configure)
+    return options
+
+
 def build_graph(yaml_path):
+    """
+    Build an interactive card relationship graph from a YAML file.
+    Loads configuration, downloads images, adds nodes and edges, and applies all options.
+    Args:
+        yaml_path (str): Path to the YAML configuration file.
+    Returns:
+        Network: Configured pyvis Network object.
+    """
     with open(yaml_path, "r") as f:
         data = yaml.safe_load(f)
+
+    # Load and merge config overrides
     raw_config = data.get("config", {})
     if isinstance(raw_config, list):
         merged_config = {}
@@ -322,40 +475,51 @@ def build_graph(yaml_path):
                 merged_config.update(entry)
         raw_config = merged_config
     config = Config(raw_config)
-    all_cards = set()
+
+    # Collect all unique item names from all sections
+    all_items = set()
     for entry in data.get("series", []):
-        cards = entry.get("cards", []) if isinstance(entry, dict) else entry
-        for card in cards:
-            all_cards.add(card)
+        items = entry.get("items", []) if isinstance(entry, dict) else entry
+        for item in items:
+            all_items.add(item)
+
     for entry in data.get("convergence", []):
         for mat in entry.get("materials", []):
-            all_cards.add(mat)
-        all_cards.add(entry.get("product"))
+            all_items.add(mat)
+        all_items.add(entry.get("product"))
+
     for entry in data.get("parallel", []):
-        cards = entry.get("cards", []) if isinstance(entry, dict) else entry
-        for card in cards:
-            all_cards.add(card)
+        items = entry.get("items", []) if isinstance(entry, dict) else entry
+        for item in items:
+            all_items.add(item)
+
     for entry in data.get("divergence", []):
         root = entry.get("root")
         if root:
-            all_cards.add(root)
+            all_items.add(root)
         for branch in entry.get("branches", []):
-            all_cards.add(branch)
-    download_card_images(all_cards, config)
+            all_items.add(branch)
 
+    # Download images if enabled in config
+    if config.get("download_images", True):
+        download_card_images(all_items, config)
+
+    # Create the pyvis Network object
     net = Network(**config.network)
 
+    # Add nodes and edges for each relationship type
     for entry in data.get("series", []):
         if isinstance(entry, dict):
-            cards = entry.get("cards", [])
+            items = entry.get("items", [])
             color = entry.get("color")
         else:
-            cards = entry
+            items = entry
             color = None
-        for node in cards:
+        for node in items:
             add_card_node(node, config, net)
-        for i in range(len(cards) - 1):
-            add_edge(cards[i], cards[i + 1], "series", config, net, color=color)
+        for i in range(len(items) - 1):
+            add_edge(items[i], items[i + 1], "series", config, net, color=color)
+
     for entry in data.get("convergence", []):
         materials = entry.get("materials", [])
         product = entry.get("product")
@@ -365,17 +529,19 @@ def build_graph(yaml_path):
         add_card_node(product, config, net)
         for mat in materials:
             add_edge(mat, product, "convergence", config, net, color=color)
+
     for entry in data.get("parallel", []):
         if isinstance(entry, dict):
-            cards = entry.get("cards", [])
+            items = entry.get("items", [])
             color = entry.get("color")
         else:
-            cards = entry
+            items = entry
             color = None
-        for card in cards:
-            add_card_node(card, config, net)
-        for i in range(len(cards) - 1):
-            add_edge(cards[i], cards[i + 1], "parallel", config, net, color=color)
+        for item in items:
+            add_card_node(item, config, net)
+        for i in range(len(items) - 1):
+            add_edge(items[i], items[i + 1], "parallel", config, net, color=color)
+
     for entry in data.get("divergence", []):
         root = entry.get("root")
         branches = entry.get("branches", [])
@@ -387,11 +553,10 @@ def build_graph(yaml_path):
             add_card_node(branch, config, net)
             add_edge(root, branch, "divergence", config, net, color=color)
 
-    options = Options()
-    options.physics.enabled = config.physics.enabled
-    options.physics.use_repulsion(config.physics.repulsion)
-    net.options = options
+    # Apply all options from config
+    net.options = set_options(config)
 
+    # Show interactive buttons if enabled
     if config.buttons.show:
         net.show_buttons(filter_=config.buttons.filter)
 
