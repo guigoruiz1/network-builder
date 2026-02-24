@@ -375,5 +375,11 @@ config:
   #   filter: (list[str]) Which options to show in the editor
   # ====================================================
   buttons:
-    show: False
+    show: True
+
   download_images: True
+  node:
+    scale: True
+    scale_factor: 10
+  interaction:
+    navigationButtons: True

@@ -267,6 +267,8 @@ class Config(AttrDict):
                 "divergence": "red",
             },
             "node": {
+                "scale": False,  # Toggle scaling node size by degree
+                "scale_factor": 10,  # Factor for scaling node size by degree
                 "shape": "image",
                 "size": 100,
                 "borderWidthSelected": 4,
@@ -274,8 +276,7 @@ class Config(AttrDict):
             },
             "edge": {
                 "arrowStrikethrough": False,
-                "arrowScaleFactor": 2,
-                "width": 4,
+                "width": 20,
             },
             "sizes": {
                 "ref": (690, 1000),
@@ -302,7 +303,8 @@ class Config(AttrDict):
                 "directed": True,
                 "select_menu": True,
             },
-            "download_images": True,  # Toggle downloading images
+            "download_images": False,  # Toggle downloading images
+            # "scale_nodes": False,  # Toggle scaling node size by degree
         }
         merged = self._deep_merge(defaults, overrides or {})
         super().__init__(merged)
@@ -324,19 +326,35 @@ def set_physics_options(physics_obj, config):
     Apply physics-related configuration to the pyvis Physics object.
     Supports enabling/disabling physics, selecting solvers, and toggling stabilization.
     """
-    physics_obj.enabled = config.get("enabled", True)
-    # Set physics solvers if present in config
+    # Handle special keys with methods/logic
+    if config.get("enabled") is not None:
+        physics_obj.enabled = config["enabled"]
+    else:
+        physics_obj.enabled = True
     if config.get("repulsion"):
-        physics_obj.use_repulsion(config.repulsion)
+        physics_obj.use_repulsion(config["repulsion"])
     if config.get("forceAtlas2Based"):
-        physics_obj.use_force_atlas_2based(config.forceAtlas2Based)
+        physics_obj.use_force_atlas_2based(config["forceAtlas2Based"])
     if config.get("barnesHut"):
-        physics_obj.use_barnes_hut(config.barnesHut)
+        physics_obj.use_barnes_hut(config["barnesHut"])
     if config.get("hierarchicalRepulsion"):
-        physics_obj.use_hrepulsion(config.hierarchicalRepulsion)
-    # Toggle stabilization if specified (expects a boolean)
+        physics_obj.use_hrepulsion(config["hierarchicalRepulsion"])
     if config.get("stabilization") is not None:
-        physics_obj.toggle_stabilization(bool(config.stabilization))
+        physics_obj.toggle_stabilization(bool(config["stabilization"]))
+
+    # Set all other attributes generically
+    handled = {
+        "enabled",
+        "repulsion",
+        "forceAtlas2Based",
+        "barnesHut",
+        "hierarchicalRepulsion",
+        "stabilization",
+    }
+    for attr, value in config.items():
+        if attr in handled or value is None:
+            continue
+        setattr(physics_obj, attr, value)
 
 
 def set_edge_options(edges_obj, config):
@@ -344,10 +362,18 @@ def set_edge_options(edges_obj, config):
     Apply edge-related configuration to the pyvis EdgeOptions object.
     Supports toggling smoothness type and color inheritance.
     """
+    # Handle special keys with methods/logic
     if config.get("smooth_type"):
-        edges_obj.toggle_smoothness(config.smooth_type)
+        edges_obj.toggle_smoothness(config["smooth_type"])
     if config.get("inherit_colors") is not None:
-        edges_obj.inherit_colors(config.inherit_colors)
+        edges_obj.inherit_colors(config["inherit_colors"])
+
+    # Set all other attributes generically
+    handled = {"smooth_type", "inherit_colors"}
+    for attr, value in config.items():
+        if attr in handled or value is None:
+            continue
+        setattr(edges_obj, attr, value)
 
 
 def set_layout_options(layout_obj, config):
@@ -355,51 +381,26 @@ def set_layout_options(layout_obj, config):
     Apply layout-related configuration to the pyvis Layout object.
     Supports random seed, improved layout, and hierarchical layout options.
     """
-    if config.get("randomSeed") is not None:
-        layout_obj.randomSeed = config.randomSeed
-    if config.get("improvedLayout") is not None:
-        layout_obj.improvedLayout = config.improvedLayout
-    # Hierarchical layout options
-    if config.get("hierarchical"):
-        hier = config.hierarchical
-        if hier.get("enabled") is not None:
-            layout_obj.hierarchical.enabled = hier.enabled
+    # Set all non-hierarchical attributes
+    for attr, value in config.items():
+        if attr == "hierarchical" or value is None:
+            continue
+        setattr(layout_obj, attr, value)
+
+    # Handle hierarchical layout options
+    hier = config.get("hierarchical")
+    if hier:
+        handled = {"levelSeparation", "treeSpacing", "edgeMinimization"}
         if hier.get("levelSeparation") is not None:
-            layout_obj.set_separation(hier.levelSeparation)
+            layout_obj.set_separation(hier["levelSeparation"])
         if hier.get("treeSpacing") is not None:
-            layout_obj.set_tree_spacing(hier.treeSpacing)
+            layout_obj.set_tree_spacing(hier["treeSpacing"])
         if hier.get("edgeMinimization") is not None:
-            layout_obj.set_edge_minimization(hier.edgeMinimization)
-        if hier.get("blockShifting") is not None:
-            layout_obj.hierarchical.blockShifting = hier.blockShifting
-        if hier.get("parentCentralization") is not None:
-            layout_obj.hierarchical.parentCentralization = hier.parentCentralization
-        if hier.get("sortMethod") is not None:
-            layout_obj.hierarchical.sortMethod = hier.sortMethod
-
-
-def set_interaction_options(interaction_obj, config):
-    """
-    Apply interaction-related configuration to the pyvis Interaction object.
-    Supports toggling drag and hide options for nodes and edges.
-    """
-    if config.get("hideEdgesOnDrag") is not None:
-        interaction_obj.hideEdgesOnDrag = config.hideEdgesOnDrag
-    if config.get("hideNodesOnDrag") is not None:
-        interaction_obj.hideNodesOnDrag = config.hideNodesOnDrag
-    if config.get("dragNodes") is not None:
-        interaction_obj.dragNodes = config.dragNodes
-
-
-def set_configure_options(configure_obj, config):
-    """
-    Apply configure-related configuration to the pyvis Configure object.
-    Supports enabling the option editor and setting filters.
-    """
-    if config.get("enabled") is not None:
-        configure_obj.enabled = config.enabled
-    if config.get("filter") is not None:
-        configure_obj.filter = config.filter
+            layout_obj.set_edge_minimization(hier["edgeMinimization"])
+        for attr, value in hier.items():
+            if attr in handled or value is None:
+                continue
+            setattr(layout_obj.hierarchical, attr, value)
 
 
 def set_options(config):
@@ -409,25 +410,24 @@ def set_options(config):
     Returns:
         options (Options): A fully configured pyvis Options object.
     """
-    options = Options()
+    options = Options(layout=config.get("layout") is not None)
     if config.get("physics"):
         set_physics_options(options.physics, config.physics)
     if config.get("edges"):
         set_edge_options(options.edges, config.edges)
     if config.get("layout"):
         set_layout_options(options.layout, config.layout)
-    if config.get("interaction"):
-        set_interaction_options(options.interaction, config.interaction)
-    if config.get("configure"):
-        set_configure_options(options.configure, config.configure)
+
+    for obj in ["interaction", "configure"]:
+        if config.get(obj):
+            for attr, value in getattr(config, obj).items():
+                if value is not None:
+                    setattr(getattr(options, obj), attr, value)
+
     return options
 
 
 # --- Graph construction utilities ---
-
-
-def add_node(name, node_kwargs, net):
-    net.add_node(name, **node_kwargs)
 
 
 def add_edge(src, dst, operation, edge_kwargs, net):
@@ -656,10 +656,14 @@ def build_network(yaml_path):
         download_images(all_items, config)
 
     node_kwargs = config.node.copy() if hasattr(config, "node") else {}
+    node_scale = node_kwargs.pop(
+        "scale", None
+    )  # Remove scaling options from node kwargs
+    node_scale_factor = node_kwargs.pop("scale_factor", None)
     for item in sorted(all_items):
         node_kwargs["title"] = item
         node_kwargs["image"] = f"images/{image_filename(item)}.jpg"
-        add_node(item, node_kwargs, net)
+        net.add_node(item, **node_kwargs)
 
     for operation in ["series", "parallel"]:
         add_linear_edges(data.get(operation, []), config, net, operation)
@@ -670,6 +674,17 @@ def build_network(yaml_path):
             net,
             operation=operation,
         )
+
+    # --- Post-processing: scale node size by degree ---
+    if node_scale:
+        adj_list = net.get_adj_list()
+        for node in net.nodes:
+            node_id = node["id"]
+            base_size = node["size"]
+            degree = len(adj_list.get(node_id, [])) + 1
+            scale_factor = node_scale_factor
+            print(f"Node {node_id} has {degree} connections")
+            node["size"] = base_size + scale_factor * degree
 
     if config.buttons.show:
         net.show_buttons(filter_=config.buttons.filter)
