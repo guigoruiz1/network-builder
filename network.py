@@ -1,253 +1,9 @@
-"""
-network.py
-
-Builds an interactive relationship network from a YAML configuration file using pyvis.
-
-Features:
-    - Visualizes card evolutions, fusions, parallels, and archetype branches.
-    - Customizable edge colors, smoothness, and titles per relationship type.
-    - Node size scales by degree (number of connections).
-    - Card images downloaded and cropped automatically.
-    - Interactive controls (physics, layout, navigation buttons).
-    - Configurable via YAML for easy extension.
-
-Usage:
-    1. Run: python network.py network.yaml
-    2. Open network.html in your browser.
-
-Dependencies: pyvis, pillow, pyyaml, requests
-
-Outputs:
-    - network.html (interactive network visualization)
-    - images/ (card images)
-"""
-
 import yaml
 import os
-import re
-import asyncio
-from PIL import Image
-import requests
 from pyvis.options import Options
 from pyvis.network import Network
 import argparse
-
-
-# --- Filename sanitization utility ---
-
-
-def image_filename(name):
-    """
-    Sanitize a card name for use as a filename by removing all non-alphanumeric characters.
-
-    Args:
-        name (str): Card name to sanitize.
-    Returns:
-        str: Sanitized filename string.
-    """
-    return re.sub(r"[^a-zA-Z0-9]", "", name)
-
-
-# --- Image downloading and cropping utilities ---
-
-
-def _crop_section(
-    im,
-    *,
-    config,
-    out_size=None,
-):
-    """
-    Crop a PIL image to the configured section and optionally resize.
-
-    Args:
-        im (PIL.Image): Image to crop.
-        config (Config): Configuration object with crop parameters.
-        out_size (tuple or None): Optional output size (width, height).
-    Returns:
-        PIL.Image: Cropped and optionally resized image.
-    """
-    w, h = im.size
-    ref_w, ref_h = config.sizes.ref
-    ref_aspect = ref_w / ref_h
-    aspect = w / h
-    if abs(aspect - ref_aspect) > 1e-6:
-        if aspect > ref_aspect:
-            # image is wider -> crop width
-            new_w = int(round(h * ref_aspect))
-            new_w = min(new_w, w)
-            left = max(0, (w - new_w) // 2)
-            right = left + new_w
-            im = im.crop((left, 0, right, h))
-        else:
-            # image is taller -> crop height
-            new_h = int(round(w / ref_aspect))
-            new_h = min(new_h, h)
-            top = max(0, (h - new_h) // 2)
-            bottom = top + new_h
-            im = im.crop((0, top, w, bottom))
-        w, h = im.size
-
-    ox = config.sizes.offset[0] / ref_w
-    oy = config.sizes.offset[1] / ref_h
-    cw = config.sizes.crop[0] / ref_w
-    ch = config.sizes.crop[1] / ref_h
-
-    left = int(round(ox * w))
-    top = int(round(oy * h))
-    right = left + int(round(cw * w))
-    bottom = top + int(round(ch * h))
-
-    # Clamp to image bounds and shift if necessary
-    if right > w:
-        right = w
-        left = max(0, w - int(round(cw * w)))
-    if bottom > h:
-        bottom = h
-        top = max(0, h - int(round(ch * h)))
-
-    cropped = im.crop((left, top, right, bottom))
-    if out_size:
-        resampling = Image.Resampling.LANCZOS
-        cropped = cropped.resize(out_size, resampling)
-    if cropped.mode != "RGB":
-        cropped = cropped.convert("RGB")
-
-    return cropped
-
-
-def _download_images_fallback(names, config):
-    """
-    Download and crop card images directly from Yugipedia API (fallback method).
-    Used when yugiquery utilities are unavailable. Saves images to images/<Card_Name>.jpg.
-    Skips existing files.
-
-    Args:
-        names (Iterable[str]): Card names to download.
-        config (Config): Configuration object for cropping.
-    """
-    image_dir = "images"
-    if not os.path.exists(image_dir):
-        os.makedirs(image_dir)
-
-    session = requests.Session()
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/116.0.0.0 Safari/537.36"
-    }
-    base_url = "https://yugipedia.com/api.php"
-
-    for name in sorted(names):
-        filename = f"{image_dir}/{image_filename(name)}.jpg"
-        if os.path.exists(filename):
-            continue  # Already downloaded
-        # Query for the card's image via MediaWiki API
-        params = {
-            "action": "query",
-            "format": "json",
-            "prop": "pageimages",
-            "titles": name,
-            "piprop": "original",
-        }
-        try:
-            resp = session.get(base_url, params=params, headers=headers, timeout=10)
-            resp.raise_for_status()
-            data_json = resp.json()
-            pages = data_json.get("query", {}).get("pages", {})
-            # Find the image URL
-            image_url = None
-            for page in pages.values():
-                original = page.get("original")
-                thumbnail = page.get("thumbnail")
-                if original and "source" in original:
-                    image_url = original["source"]
-                elif thumbnail and "original" in thumbnail:
-                    image_url = thumbnail["original"]
-            if not image_url:
-                print(f"[WARN] No image found for '{name}'")
-                continue
-            # Download the image
-            img_resp = session.get(image_url, headers=headers, timeout=10)
-            img_resp.raise_for_status()
-
-            # Open, crop, and save the image
-            from io import BytesIO
-
-            img = Image.open(BytesIO(img_resp.content))
-            cropped_img = _crop_section(img, config=config, out_size=None)
-            cropped_img.save(filename)
-            print(f"Downloaded image for '{name}'")
-        except Exception as e:
-            print(f"[ERROR] Failed to download image for '{name}': {e}")
-
-
-def download_images(names, config):
-    """
-    Download and crop card images from Yugipedia.
-    Attempts yugiquery utilities first (async + featured images), falls back to direct API.
-    Saves images to images/<Card_Name>.jpg. Skips existing files.
-
-    Args:
-        names (Iterable[str]): Card names to download.
-        config (Config): Configuration object for cropping.
-    """
-    # Try to use yugiquery
-    try:
-        from yugiquery.utils.api import fetch_featured_images, download_media
-        from yugiquery.utils.image import crop_section as yugiquery_crop
-
-        # Fetch the featured image filenames
-        file_names = fetch_featured_images(*names)
-        image_dir = "images"
-
-        # Download them (only if we got filenames)
-        if file_names:
-            results = asyncio.run(download_media(*file_names, output_path=image_dir))
-
-            # Print download results
-            if results is not None and len(results) > 0:
-                succeeded = [
-                    r
-                    for r in results
-                    if isinstance(r, dict) and r.get("status") == "success"
-                ]
-                failed = [
-                    r
-                    for r in results
-                    if isinstance(r, dict) and r.get("status") == "failed"
-                ]
-                print(
-                    f"Downloaded {len(succeeded)}/{len(results)} images using yugiquery"
-                )
-                if failed:
-                    for result in failed:
-                        print(f"[WARN] Failed to download: {result.get('file_name')}")
-
-            # Crop the downloaded images
-            for name in names:
-                filename = f"{image_dir}/{image_filename(name)}.jpg"
-                if os.path.exists(filename):
-                    try:
-                        with Image.open(filename) as img:
-                            cropped_img = yugiquery_crop(
-                                img,
-                                ref=config.sizes.ref,
-                                offset=config.sizes.offset,
-                                crop_size=config.sizes.crop,
-                                out_size=None,
-                            )
-                            cropped_img.save(filename)
-                    except Exception as e:
-                        print(f"[WARN] Failed to crop image for '{name}': {e}")
-        else:
-            print("[WARN] No image filenames found")
-    except:
-        print(
-            "[WARN] yugiquery utilities unavailable, falling back to direct API method"
-        )
-        _download_images_fallback(names, config)
-
+from imageManager import download_images, image_filename
 
 # --- Configuration utilities ---
 
@@ -268,11 +24,6 @@ class Config:
             "convergence": {"edge": {"color": "purple", "smooth": True}},
             "parallel": {"edge": {"color": "green", "smooth": False}},
             "divergence": {"edge": {"color": "red", "smooth": True}},
-        },
-        "sizes": {
-            "ref": (690, 1000),
-            "offset": (82, 182),
-            "crop": (528, 522),
         },
         "buttons": {
             "show": False,
@@ -407,13 +158,14 @@ def set_layout_options(layout_obj, config):
             setattr(layout_obj.hierarchical, attr, value)
 
 
-def set_options(config):
+def set_options():
     """
-    Create and configure a pyvis Options object using the provided config.
+    Create and configure a pyvis Options object using the global config.
     Delegates to helper functions for each sub-object (physics, edges, layout, interaction, configure).
     Returns:
         Options: Fully configured pyvis Options object.
     """
+    global config
     options = Options(layout=config.get("layout") is not None)
     # Use dictionary-style access for sub-objects
     if config.get("physics"):
@@ -436,7 +188,7 @@ def set_options(config):
 # --- Graph construction utilities ---
 
 
-def get_kwargs(entry_style, config, operation, block_style={}, config_key="edge"):
+def get_kwargs(entry_style, operation, block_style={}, config_key="edge"):
     """
     Merge styling options from config and YAML overrides for a given relationship entry.
 
@@ -449,6 +201,7 @@ def get_kwargs(entry_style, config, operation, block_style={}, config_key="edge"
     Returns:
         dict: Keyword arguments for pyvis.
     """
+    global config
     base = config.get(config_key, {})
     op = config.get("operation", {}).get(operation, {}) if operation else {}
     op = op.get(config_key, {})
@@ -458,7 +211,7 @@ def get_kwargs(entry_style, config, operation, block_style={}, config_key="edge"
     return merged
 
 
-def add_linear_edges(data, config, net, operation):
+def add_linear_edges(data, net, operation):
     """
     Add edges for 'series' or 'parallel' relationships.
 
@@ -476,7 +229,6 @@ def add_linear_edges(data, config, net, operation):
         style = entry.get("edge", {}) if isinstance(entry, dict) else {}
         edge_kwargs = get_kwargs(
             entry_style=style,
-            config=config,
             operation=operation,
             config_key="edge",
         )
@@ -501,7 +253,7 @@ def add_linear_edges(data, config, net, operation):
                 net.add_edge(items[i], items[i + 1], **edge_kwargs)
 
 
-def add_branching_edges(data, config, net, operation):
+def add_branching_edges(data, net, operation):
     """
     Add edges for 'convergence' or 'divergence' relationships.
 
@@ -534,7 +286,6 @@ def add_branching_edges(data, config, net, operation):
         # Handle title separately
         edge_kwargs = get_kwargs(
             entry_style=style,
-            config=config,
             operation=operation,
             block_style=block_style,
             config_key="edge",
@@ -575,9 +326,7 @@ def add_branching_edges(data, config, net, operation):
         add_entry(entry)
 
 
-def get_nodes(
-    data, operations=["series", "parallel", "convergence", "divergence"], config={}
-):
+def get_nodes(data, operations=["series", "parallel", "convergence", "divergence"]):
     """
     Collect all unique node names from the YAML data across all relationship sections.
     Merges any node-specific kwargs from the blocks and entries, including block-level and entry-level node styles.
@@ -606,7 +355,6 @@ def get_nodes(
         # Merge: global node config < operation-level < block-level < entry-level
         node_kwargs = get_kwargs(
             entry_style=entry_style,
-            config=config,
             operation=section,
             block_style=block_style,
             config_key="node",
@@ -696,33 +444,31 @@ def build_network(yaml_path):
     """
     Build an interactive relationship network from a YAML file.
     Loads configuration, downloads images, adds nodes and edges, applies all options, and scales node sizes.
-
     Args:
         yaml_path (str): Path to the YAML configuration file.
     Returns:
         Network: Configured pyvis Network object.
     """
+    global config
     with open(yaml_path, "r") as f:
         data = yaml.safe_load(f)
-
     config = Config.load(config=data.get("config", {}))
 
     node_info = get_nodes(
         data=data,
         operations=["series", "parallel", "convergence", "divergence"],
-        config=config,
     )
 
     net = Network(**config["network"])
-    net.options = set_options(config=config)
+    net.options = set_options()
 
-    if config.get("download_images", True):
+    if config.get("download_images", False):
         download_images(names=node_info.keys(), config=config)
 
     global_node_kwargs = config["node"].copy()
-    node_scale = global_node_kwargs.pop("scale", None)
-    node_scale_factor = global_node_kwargs.pop("scale_factor", None)
-    node_print_table = global_node_kwargs.pop("print_table", False)
+    node_scale = global_node_kwargs.pop("scale", False)
+    node_scale_factor = global_node_kwargs.pop("scale_factor", 10)
+    node_print_table = global_node_kwargs.pop("table", False)
 
     for item in sorted(node_info.keys()):
         node_info[item]["title"] = item
@@ -730,13 +476,10 @@ def build_network(yaml_path):
         net.add_node(item, **node_info[item])
 
     for operation in ["series", "parallel"]:
-        add_linear_edges(
-            data=data.get(operation, []), config=config, net=net, operation=operation
-        )
+        add_linear_edges(data=data.get(operation, []), net=net, operation=operation)
     for operation in ["convergence", "divergence"]:
         add_branching_edges(
             data=data.get(operation, []),
-            config=config,
             net=net,
             operation=operation,
         )
@@ -750,6 +493,8 @@ def build_network(yaml_path):
 
     return net
 
+
+config = Config()  # Global config variable
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -765,6 +510,6 @@ if __name__ == "__main__":
     net = build_network(args.yaml_file)
 
     base_name = os.path.splitext(os.path.basename(args.yaml_file))[0]
-    html_output = os.path.abspath(f"{base_name}.html")
-    net.write_html(html_output)
-    print("Network saved to:", html_output)
+    output_path = os.path.abspath(f"{base_name}.html")
+    net.write_html(output_path)
+    print("Network saved to:", output_path)
