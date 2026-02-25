@@ -264,10 +264,10 @@ class Config:
         },
         "edge": {"arrowStrikethrough": False, "width": 20},
         "operation": {
-            "series": {"color": "orange", "smooth": True},
-            "convergence": {"color": "purple", "smooth": True},
-            "parallel": {"color": "green", "smooth": False},
-            "divergence": {"color": "red", "smooth": True},
+            "series": {"edge": {"color": "orange", "smooth": True}},
+            "convergence": {"edge": {"color": "purple", "smooth": True}},
+            "parallel": {"edge": {"color": "green", "smooth": False}},
+            "divergence": {"edge": {"color": "red", "smooth": True}},
         },
         "sizes": {
             "ref": (690, 1000),
@@ -291,7 +291,7 @@ class Config:
         "network": {
             "height": "90vh",
             "width": "100%",
-            "directed": True,
+            "directed": False,
             "select_menu": True,
         },
         "download_images": False,
@@ -436,34 +436,26 @@ def set_options(config):
 # --- Graph construction utilities ---
 
 
-def get_edge_kwargs(entry, config, operation, block={}):
+def get_kwargs(entry_style, config, operation, block_style={}, config_key="edge"):
     """
-    Merge edge styling options from config and YAML overrides for a given relationship entry.
+    Merge styling options from config and YAML overrides for a given relationship entry.
 
     Args:
-        entry (dict): Relationship entry from YAML.
+        entry_style (dict): Entry level style overrides.
         config (dict): Configuration dictionary.
         operation (str): Relationship type (series, parallel, convergence, divergence).
-        block (dict): Optional block-level overrides.
+        block_style (dict): Optional block-level style overrides.
+        config_key (str): Which config key to use ('edge' or 'node').
     Returns:
-        dict: Edge keyword arguments for pyvis.
+        dict: Keyword arguments for pyvis.
     """
-    edge_kwargs = config["edge"].copy() if "edge" in config else {}
-    edge_kwargs["color"] = (
-        entry["color"]
-        if "color" in entry
-        else block.get("color") or config["operation"].get(operation, {}).get("color")
-    )
-    edge_kwargs["smooth"] = (
-        entry["smooth"]
-        if "smooth" in entry
-        else block.get("smooth")
-        or config["operation"].get(operation, {}).get("smooth", False)
-    )
-    edge_kwargs["title"] = (
-        entry["title"] if "title" in entry else block.get("title", operation)
-    )
-    return edge_kwargs
+    base = config.get(config_key, {})
+    op = config.get("operation", {}).get(operation, {}) if operation else {}
+    op = op.get(config_key, {})
+    merged = Config.deep_merge_dicts(base, op)
+    merged = Config.deep_merge_dicts(merged, block_style)
+    merged = Config.deep_merge_dicts(merged, entry_style)
+    return merged
 
 
 def add_linear_edges(data, config, net, operation):
@@ -480,8 +472,20 @@ def add_linear_edges(data, config, net, operation):
         data = data["items"]
 
     for entry in data:
-        edge_kwargs = get_edge_kwargs(entry=entry, config=config, operation=operation)
-        edge_kwargs["arrows"] = "none" if operation == "parallel" else "to"
+        # Extract edge style from entry['edge'] if present, else empty dict
+        style = entry.get("edge", {}) if isinstance(entry, dict) else {}
+        edge_kwargs = get_kwargs(
+            entry_style=style,
+            config=config,
+            operation=operation,
+            config_key="edge",
+        )
+        # Handle title separately
+        edge_kwargs["title"] = (
+            entry.get("title") if isinstance(entry, dict) else operation
+        )
+        if "arrows" not in edge_kwargs:
+            edge_kwargs["arrows"] = "none" if operation == "parallel" else "to"
         if isinstance(entry, dict) and "items" in entry:
             items = entry["items"]
             if isinstance(items, list) and all(isinstance(sub, list) for sub in items):
@@ -518,14 +522,27 @@ def add_branching_edges(data, config, net, operation):
     else:
         raise ValueError(f"Unknown operation: {operation}")
 
-    def add_entry(entry, block=None):
+    def add_entry(entry, block={}):
         if not isinstance(entry, dict):
             return
         from_vals = entry.get(from_key, [])
         to_val = entry.get(to_key)
-        edge_kwargs = get_edge_kwargs(
-            entry=entry, config=config, operation=operation, block=block or {}
+        # Extract edge style from entry['edge'] if present, else empty dict
+        style = entry.get("edge", {})
+        # Extract block style from block['edge'] if present, else empty dict
+        block_style = block.get("edge", {})
+        # Handle title separately
+        edge_kwargs = get_kwargs(
+            entry_style=style,
+            config=config,
+            operation=operation,
+            block_style=block_style,
+            config_key="edge",
         )
+        edge_kwargs["title"] = entry.get("title", block.get("title", operation))
+        if "arrows" not in edge_kwargs:
+            edge_kwargs["arrows"] = "to"
+
         if to_many:
             if not from_vals:
                 return
@@ -558,12 +575,22 @@ def add_branching_edges(data, config, net, operation):
         add_entry(entry)
 
 
-def collect_items_from_block(block, section):
+def get_nodes(
+    data, operations=["series", "parallel", "convergence", "divergence"], config={}
+):
+    """
+    Collect all unique node names from the YAML data across all relationship sections.
+    Merges any node-specific kwargs from the blocks and entries, including block-level and entry-level node styles.
+
+    Args:
+        data: The entire YAML data dictionary.
+        operations: List of operation sections to process.
+        config: The loaded config dict (for merging global/operation-level node config).
+    Returns:
+        dict: Mapping of node names to their merged kwargs.
+    """
 
     def flatten_items(items):
-        """
-        Recursively flatten nested lists and strings to yield all card names.
-        """
         if isinstance(items, str):
             yield items
         elif isinstance(items, list):
@@ -572,43 +599,75 @@ def collect_items_from_block(block, section):
         elif items is not None:
             yield items
 
-    items_set = set()
-    # Collect all card names for node creation based on section type
-    if section in ["series", "parallel"]:
-        if isinstance(block, dict) and "items" in block:
-            items = block["items"]
-            items_set.update(flatten_items(items))
+    node_info = {}
+    global_node_kwargs = data.get("config", {}).get("node", {})
+
+    def add_node(name, entry_style, block_style, section):
+        # Merge: global node config < operation-level < block-level < entry-level
+        node_kwargs = get_kwargs(
+            entry_style=entry_style,
+            config=config,
+            operation=section,
+            block_style=block_style,
+            config_key="node",
+        )
+        node_kwargs = Config.deep_merge_dicts(global_node_kwargs, node_kwargs)
+        if name not in node_info:
+            node_info[name] = node_kwargs
         else:
-            items_set.update(flatten_items(block))
-    elif section == "convergence":
-        if isinstance(block, dict) and "items" in block:
-            for entry in block["items"]:
-                items_set.update(flatten_items(entry.get("materials", [])))
-                product = entry.get("product")
-                if product:
-                    items_set.add(product)
-        else:
-            items_set.update(flatten_items(block.get("materials", [])))
-            product = block.get("product")
-            if product:
-                items_set.add(product)
-    elif section == "divergence":
-        if isinstance(block, dict) and "items" in block:
-            for entry in block["items"]:
-                root = entry.get("root")
-                if root:
-                    items_set.add(root)
-                items_set.update(flatten_items(entry.get("branches", [])))
-        else:
-            root = block.get("root") if isinstance(block, dict) else None
-            if root:
-                items_set.add(root)
-            branches = block.get("branches", []) if isinstance(block, dict) else []
-            items_set.update(flatten_items(branches))
-    return items_set
+            node_info[name] = Config.deep_merge_dicts(node_info[name], node_kwargs)
+
+    for section in operations:
+        for block in data.get(section, []):
+            block_node_style = block.get("node", {}) if isinstance(block, dict) else {}
+            if section in ["series", "parallel"]:
+                if isinstance(block, dict) and "items" in block:
+                    items = block["items"]
+                    for name in flatten_items(items):
+                        add_node(name, {}, block_node_style, section)
+                else:
+                    for name in flatten_items(block):
+                        add_node(name, {}, block_node_style, section)
+            elif section == "convergence":
+                if isinstance(block, dict) and "items" in block:
+                    for entry in block["items"]:
+                        entry_node_style = entry.get("node", {})
+                        for name in flatten_items(entry.get("materials", [])):
+                            add_node(name, entry_node_style, block_node_style, section)
+                        product = entry.get("product")
+                        if product:
+                            add_node(
+                                product, entry_node_style, block_node_style, section
+                            )
+                else:
+                    for name in flatten_items(block.get("materials", [])):
+                        add_node(name, {}, block_node_style, section)
+                    product = block.get("product") if isinstance(block, dict) else None
+                    if product:
+                        add_node(product, {}, block_node_style, section)
+            elif section == "divergence":
+                if isinstance(block, dict) and "items" in block:
+                    for entry in block["items"]:
+                        entry_node_style = entry.get("node", {})
+                        root = entry.get("root")
+                        if root:
+                            add_node(root, entry_node_style, block_node_style, section)
+                        for name in flatten_items(entry.get("branches", [])):
+                            add_node(name, entry_node_style, block_node_style, section)
+                else:
+                    root = block.get("root") if isinstance(block, dict) else None
+                    if root:
+                        add_node(root, {}, block_node_style, section)
+                    branches = (
+                        block.get("branches", []) if isinstance(block, dict) else []
+                    )
+                    for name in flatten_items(branches):
+                        add_node(name, {}, block_node_style, section)
+
+    return node_info
 
 
-def scale_nodes(net, scale_factor=10):
+def scale_nodes(net, scale_factor=10, print_table=False):
     adj_list = net.get_adj_list()
     node_degrees = []
     for node in net.nodes:
@@ -619,14 +678,15 @@ def scale_nodes(net, scale_factor=10):
         node_degrees.append((str(node_id), degree))
 
     # Print table header
-    col1 = "Node"
-    col2 = "Edges"
-    width1 = max(len(col1), max(len(n) for n, _ in node_degrees))
-    width2 = max(len(col2), max(len(str(d)) for _, d in node_degrees))
-    print(f"\n{col1:<{width1}} | {col2:<{width2}}")
-    print(f"{'-'*width1}-+-{'-'*width2}")
-    for n, d in node_degrees:
-        print(f"{n:<{width1}} | {d+1:<{width2}}")
+    if print_table:
+        col1 = "Node"
+        col2 = "Edges"
+        width1 = max(len(col1), max(len(n) for n, _ in node_degrees))
+        width2 = max(len(col2), max(len(str(d)) for _, d in node_degrees))
+        print(f"\n{col1:<{width1}} | {col2:<{width2}}")
+        print(f"{'-'*width1}-+-{'-'*width2}")
+        for n, d in node_degrees:
+            print(f"{n:<{width1}} | {d:<{width2}}")
 
 
 # --- Main network construction function ---
@@ -645,40 +705,45 @@ def build_network(yaml_path):
     with open(yaml_path, "r") as f:
         data = yaml.safe_load(f)
 
-    config = Config.load(data.get("config", {}))
+    config = Config.load(config=data.get("config", {}))
 
-    all_items = set()
-    for section in ["series", "parallel", "convergence", "divergence"]:
-        for block in data.get(section, []):
-            all_items.update(collect_items_from_block(block, section))
+    node_info = get_nodes(
+        data=data,
+        operations=["series", "parallel", "convergence", "divergence"],
+        config=config,
+    )
 
     net = Network(**config["network"])
-    net.options = set_options(config)
+    net.options = set_options(config=config)
 
     if config.get("download_images", True):
-        download_images(all_items, config)
+        download_images(names=node_info.keys(), config=config)
 
-    node_kwargs = config["node"].copy()
-    node_scale = node_kwargs.pop("scale", None)
-    node_scale_factor = node_kwargs.pop("scale_factor", None)
-    for item in sorted(all_items):
-        node_kwargs["title"] = item
-        node_kwargs["image"] = f"images/{image_filename(item)}.jpg"
-        net.add_node(item, **node_kwargs)
+    global_node_kwargs = config["node"].copy()
+    node_scale = global_node_kwargs.pop("scale", None)
+    node_scale_factor = global_node_kwargs.pop("scale_factor", None)
+    node_print_table = global_node_kwargs.pop("print_table", False)
+
+    for item in sorted(node_info.keys()):
+        node_info[item]["title"] = item
+        node_info[item]["image"] = f"images/{image_filename(item)}.jpg"
+        net.add_node(item, **node_info[item])
 
     for operation in ["series", "parallel"]:
-        add_linear_edges(data.get(operation, []), config, net, operation)
+        add_linear_edges(
+            data=data.get(operation, []), config=config, net=net, operation=operation
+        )
     for operation in ["convergence", "divergence"]:
         add_branching_edges(
-            data.get(operation, []),
-            config,
-            net,
+            data=data.get(operation, []),
+            config=config,
+            net=net,
             operation=operation,
         )
 
     # --- Post-processing: scale node size by degree ---
     if node_scale:
-        scale_nodes(net, scale_factor=node_scale_factor)
+        scale_nodes(net, scale_factor=node_scale_factor, print_table=node_print_table)
 
     if config["buttons"]["show"]:
         net.show_buttons(filter_=config["buttons"]["filter"])
