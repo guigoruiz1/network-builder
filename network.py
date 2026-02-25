@@ -252,85 +252,71 @@ def download_images(names, config):
 # --- Configuration utilities ---
 
 
-class AttrDict(dict):
-    """
-    Dictionary subclass that allows attribute-style access to keys, recursively.
-    Useful for deep config objects and YAML configs.
-    """
-
-    def __getattr__(self, name):
-        value = self.get(name)
-        if isinstance(value, dict):
-            return AttrDict(value)
-        return value
-
-    def __setattr__(self, name, value):
-        self[name] = value
-
-    def __delattr__(self, name):
-        del self[name]
-
-
-class Config(AttrDict):
-    """
-    Configuration object that merges user overrides with defaults and allows deep attribute access.
-    Used for all visual and behavioral settings.
-    """
-
-    def __init__(self, overrides=None):
-        defaults = {
-            "node": {
-                "scale": False,  # Toggle scaling node size by degree
-                "scale_factor": 10,  # Factor for scaling node size by degree
-                "shape": "image",
-                "size": 100,
-                "borderWidthSelected": 4,
-                "shapeProperties": {"useBorderWithImage": True},
+class Config:
+    default = {
+        "node": {
+            "scale": False,
+            "scale_factor": 10,
+            "shape": "image",
+            "size": 100,
+            "borderWidthSelected": 4,
+            "shapeProperties": {"useBorderWithImage": True},
+        },
+        "edge": {"arrowStrikethrough": False, "width": 20},
+        "operation": {
+            "series": {"color": "orange", "smooth": True},
+            "convergence": {"color": "purple", "smooth": True},
+            "parallel": {"color": "green", "smooth": False},
+            "divergence": {"color": "red", "smooth": True},
+        },
+        "sizes": {
+            "ref": (690, 1000),
+            "offset": (82, 182),
+            "crop": (528, 522),
+        },
+        "buttons": {
+            "show": False,
+            "filter": ["physics", "interaction"],
+        },
+        "physics": {
+            "enabled": True,
+            "repulsion": {
+                "node_distance": 1000,
+                "central_gravity": 0.2,
+                "spring_length": 200,
+                "spring_strength": 0.015,
+                "damping": 0.50,
             },
-            "edge": {"arrowStrikethrough": False, "width": 20},
-            "operation": {
-                "series": {"color": "orange", "smooth": True},
-                "convergence": {"color": "purple", "smooth": True},
-                "parallel": {"color": "green", "smooth": False},
-                "divergence": {"color": "red", "smooth": True},
-            },
-            "sizes": {
-                "ref": (690, 1000),
-                "offset": (82, 182),
-                "crop": (528, 522),
-            },
-            "buttons": {
-                "show": False,
-                "filter": ["physics", "interaction"],
-            },
-            "physics": {
-                "enabled": True,
-                "repulsion": {
-                    "node_distance": 1000,
-                    "central_gravity": 0.2,
-                    "spring_length": 200,
-                    "spring_strength": 0.015,
-                    "damping": 0.50,
-                },
-            },
-            "network": {
-                "height": "90vh",
-                "width": "100%",
-                "directed": True,
-                "select_menu": True,
-            },
-            "download_images": False,  # Toggle downloading images
-        }
-        merged = self._deep_merge(defaults, overrides or {})
-        super().__init__(merged)
+        },
+        "network": {
+            "height": "90vh",
+            "width": "100%",
+            "directed": True,
+            "select_menu": True,
+        },
+        "download_images": False,
+    }
 
-    def _deep_merge(self, d, u):
-        for k, v in u.items():
-            if isinstance(v, dict) and k in d and isinstance(d[k], dict):
-                d[k] = self._deep_merge(d[k], v)
+    @staticmethod
+    def deep_merge_dicts(a, b):
+        result = dict(a)
+        for k, v in b.items():
+            if k in result and isinstance(result[k], dict) and isinstance(v, dict):
+                result[k] = Config.deep_merge_dicts(result[k], v)
             else:
-                d[k] = v
-        return d
+                result[k] = v
+        return result
+
+    @classmethod
+    def load(cls, config):
+
+        if isinstance(config, list):
+            merged_config = {}
+            for entry in config:
+                if isinstance(entry, dict):
+                    merged_config.update(entry)
+            config = merged_config
+        return cls.deep_merge_dicts(cls.default, config)
 
 
 # --- Options configuration utilities ---
@@ -345,8 +331,7 @@ def set_physics_options(physics_obj, config):
     # Handle special keys with methods/logic
     if config.get("enabled") is not None:
         physics_obj.enabled = config["enabled"]
-    else:
-        physics_obj.enabled = True
+
     if config.get("repulsion"):
         physics_obj.use_repulsion(config["repulsion"])
     if config.get("forceAtlas2Based"):
@@ -430,16 +415,18 @@ def set_options(config):
         Options: Fully configured pyvis Options object.
     """
     options = Options(layout=config.get("layout") is not None)
+    # Use dictionary-style access for sub-objects
     if config.get("physics"):
-        set_physics_options(options.physics, config.physics)
+        set_physics_options(options["physics"], config["physics"])
     if config.get("edges"):
-        set_edge_options(options.edges, config.edges)
+        set_edge_options(options["edges"], config["edges"])
     if config.get("layout"):
-        set_layout_options(options.layout, config.layout)
+        set_layout_options(options["layout"], config["layout"])
 
     for obj in ["interaction", "configure"]:
-        if config.get(obj):
-            for attr, value in getattr(config, obj).items():
+        val = config.get(obj)
+        if val:
+            for attr, value in val.items():
                 if value is not None:
                     setattr(getattr(options, obj), attr, value)
 
@@ -455,23 +442,23 @@ def get_edge_kwargs(entry, config, operation, block={}):
 
     Args:
         entry (dict): Relationship entry from YAML.
-        config (Config): Configuration object.
+        config (dict): Configuration dictionary.
         operation (str): Relationship type (series, parallel, convergence, divergence).
         block (dict): Optional block-level overrides.
     Returns:
         dict: Edge keyword arguments for pyvis.
     """
-    edge_kwargs = config.edge.copy() if hasattr(config, "edge") else {}
+    edge_kwargs = config["edge"].copy() if "edge" in config else {}
     edge_kwargs["color"] = (
         entry["color"]
         if "color" in entry
-        else block.get("color") or config.operation.get(operation, {}).get("color")
+        else block.get("color") or config["operation"].get(operation, {}).get("color")
     )
     edge_kwargs["smooth"] = (
         entry["smooth"]
         if "smooth" in entry
         else block.get("smooth")
-        or config.operation.get(operation, {}).get("smooth", False)
+        or config["operation"].get(operation, {}).get("smooth", False)
     )
     edge_kwargs["title"] = (
         entry["title"] if "title" in entry else block.get("title", operation)
@@ -621,6 +608,27 @@ def collect_items_from_block(block, section):
     return items_set
 
 
+def scale_nodes(net, scale_factor=10):
+    adj_list = net.get_adj_list()
+    node_degrees = []
+    for node in net.nodes:
+        node_id = node["id"]
+        base_size = node["size"]
+        degree = len(adj_list.get(node_id, []))
+        node["size"] = base_size + scale_factor * degree
+        node_degrees.append((str(node_id), degree))
+
+    # Print table header
+    col1 = "Node"
+    col2 = "Edges"
+    width1 = max(len(col1), max(len(n) for n, _ in node_degrees))
+    width2 = max(len(col2), max(len(str(d)) for _, d in node_degrees))
+    print(f"\n{col1:<{width1}} | {col2:<{width2}}")
+    print(f"{'-'*width1}-+-{'-'*width2}")
+    for n, d in node_degrees:
+        print(f"{n:<{width1}} | {d+1:<{width2}}")
+
+
 # --- Main network construction function ---
 
 
@@ -637,31 +645,21 @@ def build_network(yaml_path):
     with open(yaml_path, "r") as f:
         data = yaml.safe_load(f)
 
-    # Load and merge config overrides
-    raw_config = data.get("config", {})
-    if isinstance(raw_config, list):
-        merged_config = {}
-        for entry in raw_config:
-            if isinstance(entry, dict):
-                merged_config.update(entry)
-        raw_config = merged_config
-    config = Config(raw_config)
+    config = Config.load(data.get("config", {}))
 
     all_items = set()
     for section in ["series", "parallel", "convergence", "divergence"]:
         for block in data.get(section, []):
             all_items.update(collect_items_from_block(block, section))
 
-    net = Network(**config.network)
+    net = Network(**config["network"])
     net.options = set_options(config)
 
     if config.get("download_images", True):
         download_images(all_items, config)
 
-    node_kwargs = config.node.copy() if hasattr(config, "node") else {}
-    node_scale = node_kwargs.pop(
-        "scale", None
-    )  # Remove scaling options from node kwargs
+    node_kwargs = config["node"].copy()
+    node_scale = node_kwargs.pop("scale", None)
     node_scale_factor = node_kwargs.pop("scale_factor", None)
     for item in sorted(all_items):
         node_kwargs["title"] = item
@@ -680,28 +678,10 @@ def build_network(yaml_path):
 
     # --- Post-processing: scale node size by degree ---
     if node_scale:
-        adj_list = net.get_adj_list()
-        node_degrees = []
-        for node in net.nodes:
-            node_id = node["id"]
-            base_size = node["size"]
-            degree = len(adj_list.get(node_id, []))
-            scale_factor = node_scale_factor
-            node["size"] = base_size + scale_factor * degree
-            node_degrees.append((str(node_id), degree))
+        scale_nodes(net, scale_factor=node_scale_factor)
 
-        # Print table header
-        col1 = "Node"
-        col2 = "Edges"
-        width1 = max(len(col1), max(len(n) for n, _ in node_degrees))
-        width2 = max(len(col2), max(len(str(d)) for _, d in node_degrees))
-        print(f"\n{col1:<{width1}} | {col2:<{width2}}")
-        print(f"{'-'*width1}-+-{'-'*width2}")
-        for n, d in node_degrees:
-            print(f"{n:<{width1}} | {d+1:<{width2}}")
-
-    if config.buttons.show:
-        net.show_buttons(filter_=config.buttons.filter)
+    if config["buttons"]["show"]:
+        net.show_buttons(filter_=config["buttons"]["filter"])
 
     return net
 
