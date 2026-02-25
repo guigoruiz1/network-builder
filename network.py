@@ -1,11 +1,25 @@
 """
 network.py
-Build an interactive relationship network (pyvis) from `network.yaml`.
 
-Usage: run this script inside the project's virtualenv so required
-dependencies (pyvis, pillow, pyyaml, requests) are available.
+Builds an interactive relationship network from a YAML configuration file using pyvis.
 
-Outputs: `network.html` and cached images in the `images/` folder.
+Features:
+    - Visualizes card evolutions, fusions, parallels, and archetype branches.
+    - Customizable edge colors, smoothness, and titles per relationship type.
+    - Node size scales by degree (number of connections).
+    - Card images downloaded and cropped automatically.
+    - Interactive controls (physics, layout, navigation buttons).
+    - Configurable via YAML for easy extension.
+
+Usage:
+    1. Run: python network.py network.yaml
+    2. Open network.html in your browser.
+
+Dependencies: pyvis, pillow, pyyaml, requests
+
+Outputs:
+    - network.html (interactive network visualization)
+    - images/ (card images)
 """
 
 import yaml
@@ -24,11 +38,12 @@ import argparse
 
 def image_filename(name):
     """
-    Sanitize name for filenames (remove all non-alphanumeric characters).
+    Sanitize a card name for use as a filename by removing all non-alphanumeric characters.
+
     Args:
-        name (str): The name to sanitize.
+        name (str): Card name to sanitize.
     Returns:
-        str: Sanitized string suitable for filenames.
+        str: Sanitized filename string.
     """
     return re.sub(r"[^a-zA-Z0-9]", "", name)
 
@@ -44,12 +59,13 @@ def _crop_section(
 ):
     """
     Crop a PIL image to the configured section and optionally resize.
+
     Args:
-        im (PIL.Image): The image to crop.
+        im (PIL.Image): Image to crop.
         config (Config): Configuration object with crop parameters.
         out_size (tuple or None): Optional output size (width, height).
     Returns:
-        PIL.Image: Cropped (and possibly resized) image.
+        PIL.Image: Cropped and optionally resized image.
     """
     w, h = im.size
     ref_w, ref_h = config.sizes.ref
@@ -102,9 +118,10 @@ def _crop_section(
 
 def _download_images_fallback(names, config):
     """
-    Fallback method to download and crop images directly from Yugipedia API.
-    Used when yugiquery utilities are unavailable. Saves images to `images/<Card_Name>.jpg`.
-    Existing files are skipped.
+    Download and crop card images directly from Yugipedia API (fallback method).
+    Used when yugiquery utilities are unavailable. Saves images to images/<Card_Name>.jpg.
+    Skips existing files.
+
     Args:
         names (Iterable[str]): Card names to download.
         config (Config): Configuration object for cropping.
@@ -169,7 +186,8 @@ def download_images(names, config):
     """
     Download and crop card images from Yugipedia.
     Attempts yugiquery utilities first (async + featured images), falls back to direct API.
-    Saves to `images/<Card_Name>.jpg`. Skips existing files.
+    Saves images to images/<Card_Name>.jpg. Skips existing files.
+
     Args:
         names (Iterable[str]): Card names to download.
         config (Config): Configuration object for cropping.
@@ -237,7 +255,7 @@ def download_images(names, config):
 class AttrDict(dict):
     """
     Dictionary subclass that allows attribute-style access to keys, recursively.
-    Useful for deep config objects.
+    Useful for deep config objects and YAML configs.
     """
 
     def __getattr__(self, name):
@@ -256,6 +274,7 @@ class AttrDict(dict):
 class Config(AttrDict):
     """
     Configuration object that merges user overrides with defaults and allows deep attribute access.
+    Used for all visual and behavioral settings.
     """
 
     def __init__(self, overrides=None):
@@ -301,7 +320,6 @@ class Config(AttrDict):
                 "select_menu": True,
             },
             "download_images": False,  # Toggle downloading images
-            # "scale_nodes": False,  # Toggle scaling node size by degree
         }
         merged = self._deep_merge(defaults, overrides or {})
         super().__init__(merged)
@@ -322,6 +340,7 @@ def set_physics_options(physics_obj, config):
     """
     Apply physics-related configuration to the pyvis Physics object.
     Supports enabling/disabling physics, selecting solvers, and toggling stabilization.
+    Sets additional attributes generically.
     """
     # Handle special keys with methods/logic
     if config.get("enabled") is not None:
@@ -358,6 +377,7 @@ def set_edge_options(edges_obj, config):
     """
     Apply edge-related configuration to the pyvis EdgeOptions object.
     Supports toggling smoothness type and color inheritance.
+    Sets additional attributes generically.
     """
     # Handle special keys with methods/logic
     if config.get("smooth_type"):
@@ -377,6 +397,7 @@ def set_layout_options(layout_obj, config):
     """
     Apply layout-related configuration to the pyvis Layout object.
     Supports random seed, improved layout, and hierarchical layout options.
+    Sets additional attributes generically.
     """
     # Set all non-hierarchical attributes
     for attr, value in config.items():
@@ -406,7 +427,7 @@ def set_options(config):
     Create and configure a pyvis Options object using the provided config.
     Delegates to helper functions for each sub-object (physics, edges, layout, interaction, configure).
     Returns:
-        options (Options): A fully configured pyvis Options object.
+        Options: Fully configured pyvis Options object.
     """
     options = Options(layout=config.get("layout") is not None)
     if config.get("physics"):
@@ -429,6 +450,17 @@ def set_options(config):
 
 
 def get_edge_kwargs(entry, config, operation, block={}):
+    """
+    Merge edge styling options from config and YAML overrides for a given relationship entry.
+
+    Args:
+        entry (dict): Relationship entry from YAML.
+        config (Config): Configuration object.
+        operation (str): Relationship type (series, parallel, convergence, divergence).
+        block (dict): Optional block-level overrides.
+    Returns:
+        dict: Edge keyword arguments for pyvis.
+    """
     edge_kwargs = config.edge.copy() if hasattr(config, "edge") else {}
     edge_kwargs["color"] = (
         entry["color"]
@@ -450,11 +482,12 @@ def get_edge_kwargs(entry, config, operation, block={}):
 def add_linear_edges(data, config, net, operation):
     """
     Add edges for 'series' or 'parallel' relationships.
+
     Args:
-        data: The section data (series or parallel).
-        config: Config object.
-        net: Network object.
-        operation: 'series' or 'parallel'.
+        data: Section data (series or parallel).
+        config (Config): Configuration object.
+        net (Network): pyvis Network object.
+        operation (str): 'series' or 'parallel'.
     """
     if isinstance(data, dict) and "items" in data:
         data = data["items"]
@@ -480,11 +513,12 @@ def add_linear_edges(data, config, net, operation):
 def add_branching_edges(data, config, net, operation):
     """
     Add edges for 'convergence' or 'divergence' relationships.
+
     Args:
-        data: The section data (convergence or divergence).
-        config: Config object.
-        net: Network object.
-        operation: 'convergence' or 'divergence'.
+        data: Section data (convergence or divergence).
+        config (Config): Configuration object.
+        net (Network): pyvis Network object.
+        operation (str): 'convergence' or 'divergence'.
     """
     if operation == "convergence":
         from_key = "materials"
@@ -540,6 +574,9 @@ def add_branching_edges(data, config, net, operation):
 def collect_items_from_block(block, section):
 
     def flatten_items(items):
+        """
+        Recursively flatten nested lists and strings to yield all card names.
+        """
         if isinstance(items, str):
             yield items
         elif isinstance(items, list):
@@ -549,6 +586,7 @@ def collect_items_from_block(block, section):
             yield items
 
     items_set = set()
+    # Collect all card names for node creation based on section type
     if section in ["series", "parallel"]:
         if isinstance(block, dict) and "items" in block:
             items = block["items"]
@@ -589,7 +627,8 @@ def collect_items_from_block(block, section):
 def build_network(yaml_path):
     """
     Build an interactive relationship network from a YAML file.
-    Loads configuration, downloads images, adds nodes and edges, and applies all options.
+    Loads configuration, downloads images, adds nodes and edges, applies all options, and scales node sizes.
+
     Args:
         yaml_path (str): Path to the YAML configuration file.
     Returns:
@@ -669,7 +708,7 @@ def build_network(yaml_path):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Build an interactive relationship network from a YAML file."
+        description="Build an interactive relationship network from a YAML file using pyvis."
     )
     parser.add_argument(
         "yaml_file",
