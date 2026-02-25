@@ -35,10 +35,16 @@ series:
       - ["Gaia Blaze, the Force of the Sun", "Gaia Prominence, the Fierce Force"]
       - ["Gaia Knight, the Force of Earth", "Gaia Drake, the Universal Force"]
       - ["Curse of Dragon", "Curse of Dragonfire"]
+      - ["Gazelle the King of Mythical Beasts", "Gazelle the King of Mythical Claws"]
+      - ["Berfomet", "Big-Winged Berfomet"]
+      - ["Chimera the Flying Mythical Beast", "Chimera the King of Phantom Beasts"]
+      - ["Breaker the Magical Warrior", "Breaker the Dark Magical Warrior"]
+      - ["Breaker the Magical Warrior", "Day-Breaker the Shining Magical Warrior"]
+      - ["Magician's Valkyria", "Dark Magician Girl"]
 
   - title: "Aging: Mana to Magi Magi"
     color: "blue"
-    items: ["Palladium Oracle Mana", "Apprentice Illusion Magician", "Dark Magician Girl", "Magi Magi ☆ Magician Gal"]
+    items: ["Palladium Oracle Mana", "Apprentice Illusion Magician", "Dark Magician Girl", "Magi Magi ☆ Magician Gal", "Old Vindictive Magician"]
 
   - title: "Aging: Mahad to Dark Sage"
     color: "blue"
@@ -103,6 +109,7 @@ parallel:
         - ["Curse of Dragonfire", "Curse of Dragon, the Cursed Dragon"]
         - ["Buster Blader, the Destruction Swordmaster", "Buster Blader"]
         - ["Protector Whelp of the Destruction Swordsman", "Buster Whelp of the Destruction Swordsman"]
+        - ["Breaker the Magical Warrior", "Defender, the Magical Knight"]
 
 
   # Commented out entries (can be enabled with or without color override)
@@ -170,6 +177,18 @@ convergence:
         
         - materials: ["Legendary Knight Timaeus", "Legendary Knight Hermos", "Legendary Knight Critias"]
           product: "Timaeus the Knight of Destiny"
+
+        - materials: ["Gazelle the King of Mythical Beasts", "Berfomet"]
+          product: "Chimera the Flying Mythical Beast"
+
+        - materials: ["Chimera the King of Phantom Beasts", "Cornfield Coatl", "Mirror Swordknight"]
+          product: "Chimera the Illusion Beast"
+
+        - materials: ["Big-Winged Berfomet", "Mirror Swordknight"]
+          product: "Berfomet the Mythical King of Phantom Beasts"
+
+        - materials: ["Gazelle the King of Mythical Claws", "Big-Winged Berfomet"]
+          product:  "Chimera the King of Phantom Beasts"
         
     - title: "The Eye of Timaeus"
       items:
@@ -376,10 +395,9 @@ config:
   # ====================================================
   buttons:
     show: True
-
-  download_images: True
   node:
     scale: True
     scale_factor: 10
   interaction:
     navigationButtons: True
+  download_images: True

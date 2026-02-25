@@ -260,12 +260,6 @@ class Config(AttrDict):
 
     def __init__(self, overrides=None):
         defaults = {
-            "colors": {
-                "series": "orange",
-                "convergence": "purple",
-                "parallel": "green",
-                "divergence": "red",
-            },
             "node": {
                 "scale": False,  # Toggle scaling node size by degree
                 "scale_factor": 10,  # Factor for scaling node size by degree
@@ -274,9 +268,12 @@ class Config(AttrDict):
                 "borderWidthSelected": 4,
                 "shapeProperties": {"useBorderWithImage": True},
             },
-            "edge": {
-                "arrowStrikethrough": False,
-                "width": 20,
+            "edge": {"arrowStrikethrough": False, "width": 20},
+            "operation": {
+                "series": {"color": "orange", "smooth": True},
+                "convergence": {"color": "purple", "smooth": True},
+                "parallel": {"color": "green", "smooth": False},
+                "divergence": {"color": "red", "smooth": True},
             },
             "sizes": {
                 "ref": (690, 1000),
@@ -294,7 +291,7 @@ class Config(AttrDict):
                     "central_gravity": 0.2,
                     "spring_length": 200,
                     "spring_strength": 0.015,
-                    "damping": 0.09,
+                    "damping": 0.50,
                 },
             },
             "network": {
@@ -390,13 +387,14 @@ def set_layout_options(layout_obj, config):
     # Handle hierarchical layout options
     hier = config.get("hierarchical")
     if hier:
-        handled = {"levelSeparation", "treeSpacing", "edgeMinimization"}
         if hier.get("levelSeparation") is not None:
             layout_obj.set_separation(hier["levelSeparation"])
         if hier.get("treeSpacing") is not None:
             layout_obj.set_tree_spacing(hier["treeSpacing"])
         if hier.get("edgeMinimization") is not None:
             layout_obj.set_edge_minimization(hier["edgeMinimization"])
+
+        handled = {"levelSeparation", "treeSpacing", "edgeMinimization"}
         for attr, value in hier.items():
             if attr in handled or value is None:
                 continue
@@ -430,23 +428,23 @@ def set_options(config):
 # --- Graph construction utilities ---
 
 
-def add_edge(src, dst, operation, edge_kwargs, net):
-    """
-    Add a styled edge between nodes based on operation type, using edge_kwargs for all options.
-    Args:
-        src (str): Source node name.
-        dst (str): Destination node name.
-        operation (str): One of "series", "convergence", "parallel", "divergence".
-        edge_kwargs (dict): All edge options (merged from config.edge and YAML overrides).
-        net (Network): pyvis Network object.
-    """
-    # Always set these
-    edge_kwargs = edge_kwargs.copy()  # Defensive copy
-    edge_kwargs["arrows"] = "none" if operation == "parallel" else "to"
-    edge_kwargs["smooth"] = operation != "parallel"
-    if "title" not in edge_kwargs or not edge_kwargs["title"]:
-        edge_kwargs["title"] = operation
-    net.add_edge(src, dst, **edge_kwargs)
+def get_edge_kwargs(entry, config, operation, block={}):
+    edge_kwargs = config.edge.copy() if hasattr(config, "edge") else {}
+    edge_kwargs["color"] = (
+        entry["color"]
+        if "color" in entry
+        else block.get("color") or config.operation.get(operation, {}).get("color")
+    )
+    edge_kwargs["smooth"] = (
+        entry["smooth"]
+        if "smooth" in entry
+        else block.get("smooth")
+        or config.operation.get(operation, {}).get("smooth", False)
+    )
+    edge_kwargs["title"] = (
+        entry["title"] if "title" in entry else block.get("title", operation)
+    )
+    return edge_kwargs
 
 
 def add_linear_edges(data, config, net, operation):
@@ -460,31 +458,23 @@ def add_linear_edges(data, config, net, operation):
     """
     if isinstance(data, dict) and "items" in data:
         data = data["items"]
+
     for entry in data:
+        edge_kwargs = get_edge_kwargs(entry=entry, config=config, operation=operation)
+        edge_kwargs["arrows"] = "none" if operation == "parallel" else "to"
         if isinstance(entry, dict) and "items" in entry:
-            edge_kwargs = config.edge.copy() if hasattr(config, "edge") else {}
-            if "color" in entry:
-                edge_kwargs["color"] = entry["color"]
-            else:
-                edge_kwargs["color"] = config.colors[operation]
-            if "title" in entry:
-                edge_kwargs["title"] = entry["title"]
             items = entry["items"]
             if isinstance(items, list) and all(isinstance(sub, list) for sub in items):
                 for sublist in items:
                     for i in range(len(sublist) - 1):
-                        add_edge(
-                            sublist[i], sublist[i + 1], operation, edge_kwargs, net
-                        )
+                        net.add_edge(sublist[i], sublist[i + 1], **edge_kwargs)
             else:
                 for i in range(len(items) - 1):
-                    add_edge(items[i], items[i + 1], operation, edge_kwargs, net)
+                    net.add_edge(items[i], items[i + 1], **edge_kwargs)
         else:
             items = entry
-            edge_kwargs = config.edge.copy() if hasattr(config, "edge") else {}
-            edge_kwargs["color"] = config.colors[operation]
             for i in range(len(items) - 1):
-                add_edge(items[i], items[i + 1], operation, edge_kwargs, net)
+                net.add_edge(items[i], items[i + 1], **edge_kwargs)
 
 
 def add_branching_edges(data, config, net, operation):
@@ -507,10 +497,26 @@ def add_branching_edges(data, config, net, operation):
     else:
         raise ValueError(f"Unknown operation: {operation}")
 
+    def add_entry(entry, block=None):
+        if not isinstance(entry, dict):
+            return
+        from_vals = entry.get(from_key, [])
+        to_val = entry.get(to_key)
+        edge_kwargs = get_edge_kwargs(
+            entry=entry, config=config, operation=operation, block=block or {}
+        )
+        if to_many:
+            if not from_vals:
+                return
+            for target in to_val or []:
+                net.add_edge(from_vals, target, **edge_kwargs)
+        else:
+            for source in from_vals:
+                net.add_edge(source, to_val, **edge_kwargs)
+
     flat_entries = []
     if isinstance(data, list):
         for block in data:
-            block_title = block.get("title") if isinstance(block, dict) else None
             block_items = (
                 block.get("items")
                 if isinstance(block, dict) and "items" in block
@@ -518,59 +524,17 @@ def add_branching_edges(data, config, net, operation):
             )
             if block_items:
                 for entry in block_items:
-                    entry_title = (
-                        entry.get("title") if isinstance(entry, dict) else None
-                    )
-                    from_vals = (
-                        entry.get(from_key, []) if isinstance(entry, dict) else []
-                    )
-                    to_val = entry.get(to_key) if isinstance(entry, dict) else None
-                    edge_kwargs = config.edge.copy() if hasattr(config, "edge") else {}
-                    edge_kwargs["color"] = entry.get("color", config.colors[operation])
-                    edge_kwargs["title"] = entry_title or block_title
-                    if to_many:
-                        if not from_vals:
-                            continue
-                        for target in to_val or []:
-                            add_edge(from_vals, target, operation, edge_kwargs, net)
-                    else:
-                        for source in from_vals:
-                            add_edge(source, to_val, operation, edge_kwargs, net)
+                    add_entry(entry, block)
             else:
                 flat_entries.append(block)
     elif isinstance(data, dict) and "items" in data:
-        block_title = data.get("title")
         for entry in data["items"]:
-            entry_title = entry.get("title") if isinstance(entry, dict) else None
-            from_vals = entry.get(from_key, []) if isinstance(entry, dict) else []
-            to_val = entry.get(to_key) if isinstance(entry, dict) else None
-            edge_kwargs = config.edge.copy() if hasattr(config, "edge") else {}
-            edge_kwargs["color"] = entry.get("color", config.colors[operation])
-            edge_kwargs["title"] = entry_title or block_title
-            if to_many:
-                if not from_vals:
-                    continue
-                for target in to_val or []:
-                    add_edge(from_vals, target, operation, edge_kwargs, net)
-            else:
-                for source in from_vals:
-                    add_edge(source, to_val, operation, edge_kwargs, net)
+            add_entry(entry)
     else:
         flat_entries = data
+
     for entry in flat_entries:
-        from_vals = entry.get(from_key, []) if isinstance(entry, dict) else []
-        to_val = entry.get(to_key) if isinstance(entry, dict) else None
-        edge_kwargs = config.edge.copy() if hasattr(config, "edge") else {}
-        edge_kwargs["color"] = entry.get("color", config.colors[operation])
-        edge_kwargs["title"] = entry.get("title")
-        if to_many:
-            if not from_vals:
-                continue
-            for target in to_val or []:
-                add_edge(from_vals, target, operation, edge_kwargs, net)
-        else:
-            for source in from_vals:
-                add_edge(source, to_val, operation, edge_kwargs, net)
+        add_entry(entry)
 
 
 def collect_items_from_block(block, section):
@@ -678,13 +642,24 @@ def build_network(yaml_path):
     # --- Post-processing: scale node size by degree ---
     if node_scale:
         adj_list = net.get_adj_list()
+        node_degrees = []
         for node in net.nodes:
             node_id = node["id"]
             base_size = node["size"]
-            degree = len(adj_list.get(node_id, [])) + 1
+            degree = len(adj_list.get(node_id, []))
             scale_factor = node_scale_factor
-            print(f"Node {node_id} has {degree} connections")
             node["size"] = base_size + scale_factor * degree
+            node_degrees.append((str(node_id), degree))
+
+        # Print table header
+        col1 = "Node"
+        col2 = "Edges"
+        width1 = max(len(col1), max(len(n) for n, _ in node_degrees))
+        width2 = max(len(col2), max(len(str(d)) for _, d in node_degrees))
+        print(f"\n{col1:<{width1}} | {col2:<{width2}}")
+        print(f"{'-'*width1}-+-{'-'*width2}")
+        for n, d in node_degrees:
+            print(f"{n:<{width1}} | {d+1:<{width2}}")
 
     if config.buttons.show:
         net.show_buttons(filter_=config.buttons.filter)
@@ -708,4 +683,4 @@ if __name__ == "__main__":
     base_name = os.path.splitext(os.path.basename(args.yaml_file))[0]
     html_output = os.path.abspath(f"{base_name}.html")
     net.write_html(html_output)
-    print("Saved to:", html_output)
+    print("Network saved to:", html_output)
