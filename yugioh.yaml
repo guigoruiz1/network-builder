@@ -42,53 +42,22 @@ series:
       - ["Breaker the Magical Warrior", "Day-Breaker the Shining Magical Warrior"]
       - ["Magician's Valkyria", "Dark Magician Girl"]
 
-  - title: "Aging: Mana to Magi Magi"
-    color: "blue"
-    items: ["Palladium Oracle Mana", "Apprentice Illusion Magician", "Dark Magician Girl", "Magi Magi ☆ Magician Gal", "Old Vindictive Magician"]
-
-  - title: "Aging: Mahad to Dark Sage"
-    color: "blue"
-    items: ["Palladium Oracle Mahad", "Magician of Dark Illusion", "Dark Magician", "Dark Eradicator Warlock", "Magician of Chaos", "Magician of Black Chaos", "Sorcerer of Dark Magic", "Dark Sage"]
-
-  - title: "Aging: Ebon Magicians"
-    color: "blue"
-    items: ["Ebon Illusion Magician", "Ebon High Magician"]
-
-  - title: "Aging: Gaia to BLS"
-    color: "blue"
-    items: ["Gaia The Fierce Knight", "Black Luster Soldier"]
-
-  - title: "Aging: Gaia Origin"
-    color: "blue"
-    items: ["Gaia the Fierce Knight Origin", "Gaia The Fierce Knight"]
-
-  - title: "Aging: Arisen Gaia to BLS Envoy"
-    color: "blue"
-    items: ["Arisen Gaia the Fierce Knight", "Black Luster Soldier - Envoy of the Beginning"]
-
-  - title: "Aging: Envoy of Chaos to BLS Super"
-    color: "blue"
-    items: ["Envoy of Chaos", "Black Luster Soldier - Super Soldier"]
-
-  - title: "Aging: Evening Twilight Knight"
-    color: "blue"
-    items: ["Evening Twilight Knight", "Black Luster Soldier - Envoy of the Evening Twilight"]
-
-  - title: "Aging: Beginning Knight"
-    color: "blue"
-    items: ["Beginning Knight", "Black Luster Soldier - Envoy of the Beginning"]
-
-  - title: "Aging: Silent Magician"
-    color: "blue"
-    items: ["Silent Magician LV4", "Silent Magician LV8", "Silent Magician"]
-
-  - title: "Aging: Silent Swordsman"
-    color: "blue"
-    items: ["Silent Swordsman LV3", "Silent Swordsman LV5", "Silent Swordsman LV7", "Silent Swordsman"]
-
-  - title: "Aging: Buster Whelp to Buster Dragon"
-    color: "blue"
-    items: ["Buster Whelp of the Destruction Swordsman", "Dragon Buster Destruction Sword", "Wizard Buster Destruction Sword", "Robot Buster Destruction Sword", "Buster Dragon"]
+  - title: "Aging"
+    edge:
+      color: "blue"
+    items:
+      - ["Palladium Oracle Mana", "Apprentice Illusion Magician", "Dark Magician Girl", "Magi Magi ☆ Magician Gal", "Old Vindictive Magician"]
+      - ["Palladium Oracle Mahad", "Magician of Dark Illusion", "Dark Magician", "Dark Eradicator Warlock", "Magician of Chaos", "Magician of Black Chaos", "Sorcerer of Dark Magic", "Dark Sage"]
+      - ["Ebon Illusion Magician", "Ebon High Magician"]
+      - ["Gaia The Fierce Knight", "Black Luster Soldier"]
+      - ["Gaia the Fierce Knight Origin", "Gaia The Fierce Knight"]
+      - ["Arisen Gaia the Fierce Knight", "Black Luster Soldier - Envoy of the Beginning"]
+      - ["Envoy of Chaos", "Black Luster Soldier - Super Soldier"]
+      - ["Evening Twilight Knight", "Black Luster Soldier - Envoy of the Evening Twilight"]
+      - ["Beginning Knight", "Black Luster Soldier - Envoy of the Beginning"]
+      - ["Silent Magician LV4", "Silent Magician LV8", "Silent Magician"]
+      - ["Silent Swordsman LV3", "Silent Swordsman LV5", "Silent Swordsman LV7", "Silent Swordsman"]
+      - ["Buster Whelp of the Destruction Swordsman", "Dragon Buster Destruction Sword", "Wizard Buster Destruction Sword", "Robot Buster Destruction Sword", "Buster Dragon"]
 
 # Parallel: cards at the same power level
 parallel:
@@ -110,6 +79,7 @@ parallel:
         - ["Buster Blader, the Destruction Swordmaster", "Buster Blader"]
         - ["Protector Whelp of the Destruction Swordsman", "Buster Whelp of the Destruction Swordsman"]
         - ["Breaker the Magical Warrior", "Defender, the Magical Knight"]
+         
 
 
   # Commented out entries (can be enabled with or without color override)
@@ -192,17 +162,17 @@ convergence:
         
     - title: "The Eye of Timaeus"
       items:
-      - materials: ["Dark Magician Girl", "Timaeus the United Dragon"]
-        product: "Dark Magician Girl the Dragon Knight"
-      
-      - materials: ["Dark Magician", "Timaeus the United Dragon"]
-        product: "Amulet Dragon"
-      
-      - materials: ["Dark Magician", "Timaeus the United Dragon"]
-        product: "Timaeus the United Magical Dragon"
-      
-      - materials: ["Dark Magician", "Timaeus the United Dragon"]
-        product: "Dark Magician the Dragon Knight"
+        - materials: ["Dark Magician Girl", "Timaeus the United Dragon"]
+          product: "Dark Magician Girl the Dragon Knight"
+        
+        - materials: ["Dark Magician", "Timaeus the United Dragon"]
+          product: "Amulet Dragon"
+        
+        - materials: ["Dark Magician", "Timaeus the United Dragon"]
+          product: "Timaeus the United Magical Dragon"
+        
+        - materials: ["Dark Magician", "Timaeus the United Dragon"]
+          product: "Dark Magician the Dragon Knight"
 
     - title: "The Claw of Hermos"
       items:
@@ -396,8 +366,9 @@ config:
   buttons:
     show: True
   node:
-    scale: True
     scale_factor: 10
+    recolor: True
+    table: True
   interaction:
     navigationButtons: True
   download_images: True

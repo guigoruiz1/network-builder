@@ -5,8 +5,6 @@ from pyvis.options import Options
 from pyvis.network import Network
 from collections import Counter
 
-from imageManager import download_images, image_filename
-
 # --- Configuration utilities ---
 
 
@@ -525,7 +523,16 @@ def build_network(yaml_path):
     net.options = set_options()
 
     if config.get("download_images", False):
-        download_images(names=node_info.keys(), config=config)
+        try:
+            from imageManager import download
+
+            download(node_info.keys(), config=config)
+        except ImportError as e:
+            print(
+                f"[Warning] Could not import 'download_images' from imageManager: {e}"
+            )
+        except Exception as e:
+            print(f"[Error] Exception during image downloading: {e}")
 
     node_scale_factor = config.get("node").pop("scale_factor", 0)
     node_recolor = config.get("node").pop("recolor", False)
@@ -533,7 +540,16 @@ def build_network(yaml_path):
 
     for item in sorted(node_info.keys()):
         node_info[item]["title"] = item
-        node_info[item]["image"] = f"images/{image_filename(item)}.jpg"
+
+        try:
+            from imageManager import filename
+
+            node_info[item]["image"] = filename(item)
+        except ImportError as e:
+            print(f"[Warning] Could not import 'image_filename' from imageManager: {e}")
+        except Exception as e:
+            print(f"[Error] Exception assigning image filename for node '{item}': {e}")
+
         net.add_node(item, **node_info[item])
 
     for operation in ["series", "parallel"]:

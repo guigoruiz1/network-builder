@@ -1,8 +1,18 @@
-# Generalized Relationship Network Visualization
+# Relationship Network Visualization
 
 ## Overview
 
-This project visualizes relationships between entities as an interactive network using [pyvis](https://pyvis.readthedocs.io/). Relationships, transformations, and groupings are defined in a YAML file, and the script generates a rich HTML network with entity images, colored edges, and tooltips.
+This project enables flexible visualization of relationships, transformations, and groupings between entities as an interactive network using [pyvis](https://pyvis.readthedocs.io/).
+
+You define your data and configuration in a YAML file, specifying sequences, branches, combinations, and custom styling. The script reads this YAML and generates a rich HTML network:
+
+- Nodes can display images, custom shapes, and tooltips.
+- Edges are colored and styled according to relationship type or custom overrides.
+- Interactive controls allow you to explore, filter, and adjust the network live in your browser.
+- All visual and behavioral options are configurable.
+- Image downloading is handled by user-defined functions for maximum flexibility.
+
+Whether you want to visualize processes, hierarchies, or complex relationships, this tool provides a highly customizable and extensible framework for network visualization.
 
 ---
 
@@ -16,7 +26,6 @@ series:
       - ["Caterpillar", "Chrysalis", "Butterfly"]
       - ["Seed", "Sprout", "Plant", "Flower"]
   - title: "Process Steps"
-    color: "blue"
     items: ["Draft", "Review", "Approval", "Publication"]
 ```
 
@@ -52,31 +61,39 @@ divergence:
 ```
 
 ### Edge/Block Overrides (All Relationship Types)
-You can override edge color, smoothness, and title at the block or entry level in any relationship type (series, parallel, convergence, divergence):
+You can override edge and node properties at the block or entry level in any relationship type (series, parallel, convergence, divergence) using the new syntax:
 ```yaml
 series:
   - title: "Special Chain"
-    color: "red"
+    edge:
+      color: "red"
     items:
       - ["Step1", "Step2", "Step3"]
       - title: "Subchain"
-        color: "green"
+        edge:
+          color: "green"
         items: ["SubstepA", "SubstepB"]
+
 parallel:
   - title: "Highlighted Pair"
-    color: "orange"
-    smooth: false
+    edge:
+      color: "orange"
+      smooth: false
     items:
       - ["Alpha", "Beta"]
+
 convergence:
   - title: "Custom Merge"
-    color: "purple"
     items:
       - materials: ["A", "B"]
         product: "AB"
+        edge:
+          color: "pink"
+
 divergence:
   - title: "Special Branch"
-    color: "teal"
+    edge:
+      color: "teal"
     items:
       - root: "Origin"
         branches:
@@ -87,14 +104,13 @@ divergence:
 
 ## 2. Config Section Details
 
-The `config` block controls all visual and behavioral options. Example:
+The `config` block controls all global visual and behavioral options. Example:
 ```yaml
 config:
   buttons:
     show: True
     filter: [physics, interaction]
   node:
-    scale: True
     scale_factor: 10
     shape: image
     size: 100
@@ -103,22 +119,22 @@ config:
     width: 20
     arrowStrikethrough: False
   operation:
-    series:
-      color: orange
-      smooth: true
-    convergence:
-      color: purple
-      smooth: true
-    parallel:
-      color: green
-      smooth: false
-    divergence:
-      color: red
-      smooth: true
-  sizes:
-    ref: [690, 1000]
-    offset: [82, 182]
-    crop: [528, 522]
+      series:
+        edge:
+          color: orange
+          smooth: true
+      convergence:
+        edge:
+          color: purple
+          smooth: true
+      parallel:
+        edge:
+          color: green
+          smooth: false
+      divergence:
+        edge:
+          color: red
+          smooth: true
   physics:
     enabled: true
     repulsion:
@@ -139,33 +155,48 @@ config:
 
 **Key Options:**
 - `buttons`: Show pyvis options menu, filter menu groups.
-- `node`: Appearance and scaling of nodes.
+- `node`: Appearance of nodes.
 - `edge`: Appearance of edges.
 - `operation`: Per-relationship edge defaults.
-- `sizes`: Image cropping parameters (short lists like `ref: [690, 1000]` are supported).
 - `physics`: Controls force-directed layout.
 - `network`: Network dimensions and directionality.
 - `interaction`: Navigation and drag controls.
 - `download_images`: Toggle image downloading.
 
 **Note:**
-Node and edge configuration options in the config block are applied equally to all nodes and edges. Only `color`, `smooth`, and `title` are individually set by the YAML file (arrows are handled by the script logic). If you wish to modify a property of a particular node or edge (e.g., size, shape, label), you should do so by accessing the node from the returned network object (`net`) and applying the change directly in Python after building the network.
+Node and edge configuration options in the `config` block are applied globally to all nodes and edges unless overridden. To customize properties for a specific entry (such as size, shape, label, or any pyvis-supported attribute), use the `node:` or `edge:` key at the block or entry level in your YAML file. For example:
+```yaml
+series:
+  - items:
+      - ["A", "B", "C"]
+    node:
+      size: 120
+      shape: "image"
+    edge:
+      color: "blue"
+      width: 10
+```
+If you need to further modify an individual node or edge after building the network, you can access the node or edge from the returned `net` object and apply changes directly in Python.
+
+Arrows are handled automatically by the script logic based on relationship type.
 
 ---
 
 ## 3. Image Downloading & Cropping
 
-Image downloading and cropping are handled by user-defined external functions, which you can import and customize as needed. The script expects these functions to be available for handling image filenames, cropping, and downloading. This allows you to tailor image processing to your own requirements.
+Image downloading and cropping are handled by user-defined external functions, which you can customize as needed. The script expects `download_images` and `image_filename` functions to be available (imported from a `imageManager.py` module).
+
+- `download_images(names, config)`: Downloads images for each node name, passing a configuration options object to incorporate the YAML config fields.
+- `image_filename(name)`: Returns the filename for a given node name, allowing you to control naming conventions, file extensions, or directory structure. This is used to assign image paths to each node.
+
+You can extend these functions to support custom image sources (local, remote, API), cropping, resizing, or format conversion. The script will call them automatically if `download_images` is enabled in the config. If you do not want images, set `download_images: false` in your YAML config.
 
 ---
 
 ## 4. Extending the Network
 
 - **Add new relationships:** Add blocks to `series`, `parallel`, `convergence`, or `divergence`.
-- **Custom node/edge appearance:** Override `color`, `smooth`, `title` at block or entry level in any relationship type.
-- **Add new relationship types:** Extend the script with new YAML keys and edge logic.
-- **Custom tooltips:** Set `title` in blocks or entries for custom edge tooltips.
-- **Node scaling:** Adjust `scale` and `scale_factor` in `config.node`.
+- **Custom node/edge appearance:** Override parameters at block or entry level in any relationship type.
 
 ---
 
@@ -203,25 +234,52 @@ Image downloading and cropping are handled by user-defined external functions, w
 
 ## 7. Usage
 
-1. **Prepare your YAML file** describing entities and relationships as shown above.
-2. **Call `build_network(yaml_path)`** in your script, passing the path to your YAML file.
-3. **Work with the returned `net` object** (a pyvis Network), or save it directly to HTML:
-   ```python
-   net = build_network('your_data.yaml')
-   net.show('network.html')
-   ```
+### 1. Prepare your YAML file
+Describe entities and relationships as shown in the examples above.
+
+### 2. Run as a script
+
+To generate the network HTML directly from the command line:
+
+```bash
+python network.py network.yaml
+```
+
+This will create `network.html` in the current directory. Open it in your web browser to view the interactive network.
+
+### 3. Use as a module
+
+To integrate into your own Python scripts:
+
+```python
+from network import build_network
+net = build_network('your_data.yaml')
+net.show('network.html')  # Opens the visualization in your browser
+```
+
+You can further customize the `net` object before saving or displaying.
 
 ---
 
-## 8. Node Scaling Logic & Degree Calculation
+
+## 8. Node Scaling and Recoloring Logic
 
 - **Node scaling:**
-  - Controlled by `config.node.scale` and `config.node.scale_factor`.
-  - After adding all edges, node size is increased by `scale_factor * degree`.
-- **Degree calculation:**
-  - Degree = number of outgoing edges for each node.
-  - Table of node degrees is printed to console after network build.
+  - Controlled by `config.node.scale_factor` (numeric value).
+  - If set to a value greater than 0, after all edges are added, each node's size is increased by `scale_factor * degree`.
+  - Degree is the number of edges connected to each node (both incoming and outgoing).
+  - This helps visually emphasize more connected nodes.
+
+- **Node recoloring:**
+  - Controlled by `config.node.recolor` (boolean).
+  - If enabled, each node is recolored to match the most common color among its connected edges.
+  - This can help visually group nodes by relationship type or highlight network structure.
+
+- **Node table output:**
+  - If `config.node.table` is set to `True`, a summary table of node degrees and colors is printed to the console after building the network.
 
 ---
 
 For further customization, see the script and YAML comments. For advanced usage, refer to the pyvis documentation.
+
+---
