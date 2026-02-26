@@ -9,79 +9,70 @@
 # Sequential transformations (evolving & aging)
 # Default color: orange (evolving)
 # Override with color: "blue" for aging
-series:
-  - title: "Evolving"
-    items:
-      - ["Dark Magician","Dark Magician, the Pharaoh's Servant"]
-      - ["Black Luster Soldier", "Black Luster Soldier - Soldier of Chaos"]
-      - ["Black Luster Soldier", "Black Luster Soldier - Super Soldier"]
-      - ["Black Luster Soldier", "Black Luster Soldier - Envoy of the Beginning"]
-      - ["Magician of Black Chaos", "Black Chaos the Dark Chaos Magician", "Magician of Black Chaos MAX"]
-      - ["Magician of Black Chaos", "Dark Magician of Chaos"]
-      - ["Magician of Dark Illusion", "Illusion of Chaos"]
-      - ["Gandora the Dragon of Destruction", "Gandora-G the Dragon of Destruction"]
-      - ["Gandora the Dragon of Destruction", "Gigarays Gandora the Dragon of Destruction"]
-      - ["Summoned Skull", "Skull Archfiend of Lightning"]
-      - ["Kuriboh", "Clear Kuriboh"]
-      - ["Kuribohrn", "Ankuriboh"]
-      - ["The Winged Dragon of Ra - Sphere Mode", "The Winged Dragon of Ra", "The Winged Dragon of Ra - Immortal Phoenix"]
-      - ["Celtic Guardian", "Obnoxious Celtic Guard", "Celtic Guard of Noble Arms"]
-      - ["Stronghold the Moving Fortress", "Stronghold the Hidden Fortress"]
-      - ["The Eye of Timaeus", "The Gaze of Timaeus", "Timaeus the United Dragon", "Legendary Knight Timaeus"]
-      - ["The Claw of Hermos", "Legendary Knight Hermos"]
-      - ["The Fang of Critias", "Legendary Knight Critias"]
-      - ["Gaia The Fierce Knight", "Gaia the Magical Knight"]
-      - ["Gaia The Fierce Knight", "Swift Gaia the Fierce Knight", "Lord Gaia the Fierce Knight"]
-      - ["Gaia Blaze, the Force of the Sun", "Gaia Prominence, the Fierce Force"]
-      - ["Gaia Knight, the Force of Earth", "Gaia Drake, the Universal Force"]
-      - ["Curse of Dragon", "Curse of Dragonfire"]
-      - ["Gazelle the King of Mythical Beasts", "Gazelle the King of Mythical Claws"]
-      - ["Berfomet", "Big-Winged Berfomet"]
-      - ["Chimera the Flying Mythical Beast", "Chimera the King of Phantom Beasts"]
-      - ["Breaker the Magical Warrior", "Breaker the Dark Magical Warrior"]
-      - ["Breaker the Magical Warrior", "Day-Breaker the Shining Magical Warrior"]
-      - ["Magician's Valkyria", "Dark Magician Girl"]
+evolving:
+  - ["Dark Magician","Dark Magician, the Pharaoh's Servant"]
+  - ["Black Luster Soldier", "Black Luster Soldier - Soldier of Chaos"]
+  - ["Black Luster Soldier", "Black Luster Soldier - Super Soldier"]
+  - ["Black Luster Soldier", "Black Luster Soldier - Envoy of the Beginning"]
+  - ["Magician of Black Chaos", "Black Chaos the Dark Chaos Magician", "Magician of Black Chaos MAX"]
+  - ["Magician of Black Chaos", "Dark Magician of Chaos"]
+  - ["Magician of Dark Illusion", "Illusion of Chaos"]
+  - ["Gandora the Dragon of Destruction", "Gandora-G the Dragon of Destruction"]
+  - ["Gandora the Dragon of Destruction", "Gigarays Gandora the Dragon of Destruction"]
+  - ["Summoned Skull", "Skull Archfiend of Lightning"]
+  - ["Kuriboh", "Clear Kuriboh"]
+  - ["Kuribohrn", "Ankuriboh"]
+  - ["The Winged Dragon of Ra - Sphere Mode", "The Winged Dragon of Ra", "The Winged Dragon of Ra - Immortal Phoenix"]
+  - ["Celtic Guardian", "Obnoxious Celtic Guard", "Celtic Guard of Noble Arms"]
+  - ["Stronghold the Moving Fortress", "Stronghold the Hidden Fortress"]
+  - ["The Eye of Timaeus", "The Gaze of Timaeus", "Timaeus the United Dragon", "Legendary Knight Timaeus"]
+  - ["The Claw of Hermos", "Legendary Knight Hermos"]
+  - ["The Fang of Critias", "Legendary Knight Critias"]
+  - ["Gaia The Fierce Knight", "Gaia the Magical Knight"]
+  - ["Gaia The Fierce Knight", "Swift Gaia the Fierce Knight", "Lord Gaia the Fierce Knight"]
+  - ["Gaia Blaze, the Force of the Sun", "Gaia Prominence, the Fierce Force"]
+  - ["Gaia Knight, the Force of Earth", "Gaia Drake, the Universal Force"]
+  - ["Curse of Dragon", "Curse of Dragonfire"]
+  - ["Gazelle the King of Mythical Beasts", "Gazelle the King of Mythical Claws"]
+  - ["Berfomet", "Big-Winged Berfomet"]
+  - ["Chimera the Flying Mythical Beast", "Chimera the King of Phantom Beasts"]
+  - ["Breaker the Magical Warrior", "Breaker the Dark Magical Warrior"]
+  - ["Breaker the Magical Warrior", "Day-Breaker the Shining Magical Warrior"]
+  - ["Magician's Valkyria", "Dark Magician Girl"]
 
-  - title: "Aging"
-    edge:
-      color: "blue"
-    items:
-      - ["Palladium Oracle Mana", "Apprentice Illusion Magician", "Dark Magician Girl", "Magi Magi ☆ Magician Gal", "Old Vindictive Magician"]
-      - ["Palladium Oracle Mahad", "Magician of Dark Illusion", "Dark Magician", "Dark Eradicator Warlock", "Magician of Chaos", "Magician of Black Chaos", "Sorcerer of Dark Magic", "Dark Sage"]
-      - ["Ebon Illusion Magician", "Ebon High Magician"]
-      - ["Gaia The Fierce Knight", "Black Luster Soldier"]
-      - ["Gaia the Fierce Knight Origin", "Gaia The Fierce Knight"]
-      - ["Arisen Gaia the Fierce Knight", "Black Luster Soldier - Envoy of the Beginning"]
-      - ["Envoy of Chaos", "Black Luster Soldier - Super Soldier"]
-      - ["Evening Twilight Knight", "Black Luster Soldier - Envoy of the Evening Twilight"]
-      - ["Beginning Knight", "Black Luster Soldier - Envoy of the Beginning"]
-      - ["Silent Magician LV4", "Silent Magician LV8", "Silent Magician"]
-      - ["Silent Swordsman LV3", "Silent Swordsman LV5", "Silent Swordsman LV7", "Silent Swordsman"]
-      - ["Buster Whelp of the Destruction Swordsman", "Dragon Buster Destruction Sword", "Wizard Buster Destruction Sword", "Robot Buster Destruction Sword", "Buster Dragon"]
+aging:
+  - ["Palladium Oracle Mana", "Apprentice Illusion Magician", "Dark Magician Girl", "Magi Magi ☆ Magician Gal", "Old Vindictive Magician"]
+  - ["Palladium Oracle Mahad", "Magician of Dark Illusion", "Dark Magician", "Dark Eradicator Warlock", "Magician of Chaos", "Magician of Black Chaos", "Sorcerer of Dark Magic", "Dark Sage"]
+  - ["Ebon Illusion Magician", "Ebon High Magician"]
+  - ["Gaia The Fierce Knight", "Black Luster Soldier"]
+  - ["Gaia the Fierce Knight Origin", "Gaia The Fierce Knight"]
+  - ["Arisen Gaia the Fierce Knight", "Black Luster Soldier - Envoy of the Beginning"]
+  - ["Envoy of Chaos", "Black Luster Soldier - Super Soldier"]
+  - ["Evening Twilight Knight", "Black Luster Soldier - Envoy of the Evening Twilight"]
+  - ["Beginning Knight", "Black Luster Soldier - Envoy of the Beginning"]
+  - ["Silent Magician LV4", "Silent Magician LV8", "Silent Magician"]
+  - ["Silent Swordsman LV3", "Silent Swordsman LV5", "Silent Swordsman LV7", "Silent Swordsman"]
+  - ["Buster Whelp of the Destruction Swordsman", "Dragon Buster Destruction Sword", "Wizard Buster Destruction Sword", "Robot Buster Destruction Sword", "Buster Dragon"]
 
 # Parallel: cards at the same power level
-parallel:
-    - title: "Counterparts"
-      items:
-        - ["Dark Magician", "Dark Magician the Magician of Black Magic"]
-        - ["Dark Magician Girl", "Dark Magician Girl the Magician's Apprentice"]
-        - ["Black Luster Soldier - Sacred Soldier", "Black Luster Soldier - Envoy of the Beginning", "Black Luster Soldier - Envoy of the Evening Twilight"]
-        - ["Ebon Illusion Magician",  "Illusion of Chaos"]
-        - ["Black Luster Soldier - Soldier of Light and Darkness", "Black Luster Soldier - Super Soldier", "Black Luster Soldier - Legendary Swordsman"]
-        - ["Gandora the Dragon of Destruction", "Gandora-X the Dragon of Demolition"]
-        - ["Kuribabylon", "Kuribandit"]
-        - ["Silent Swordsman", "Silent Swordsman Zero"]
-        - ["Silent Magician", "Silent Magician Zero"]
-        - ["Metalhold the Moving Blockade", "Stronghold the Moving Fortress", "Powerhold the Moving Battery"]
-        - ["Arcana Extra Joker", "Arcana Knight Joker", "Arcana Triumph Joker"]
-        - ["Arisen Gaia the Fierce Knight", "Charging Gaia the Fierce Knight", "Swift Gaia the Fierce Knight"]
-        - ["Curse of Dragonfire", "Curse of Dragon, the Cursed Dragon"]
-        - ["Buster Blader, the Destruction Swordmaster", "Buster Blader"]
-        - ["Protector Whelp of the Destruction Swordsman", "Buster Whelp of the Destruction Swordsman"]
-        - ["Breaker the Magical Warrior", "Defender, the Magical Knight"]
-         
-
-
+counterparts:
+  - ["Dark Magician", "Dark Magician the Magician of Black Magic"]
+  - ["Dark Magician Girl", "Dark Magician Girl the Magician's Apprentice"]
+  - ["Black Luster Soldier - Sacred Soldier", "Black Luster Soldier - Envoy of the Beginning", "Black Luster Soldier - Envoy of the Evening Twilight"]
+  - ["Ebon Illusion Magician",  "Illusion of Chaos"]
+  - ["Black Luster Soldier - Soldier of Light and Darkness", "Black Luster Soldier - Super Soldier", "Black Luster Soldier - Legendary Swordsman"]
+  - ["Gandora the Dragon of Destruction", "Gandora-X the Dragon of Demolition"]
+  - ["Kuribabylon", "Kuribandit"]
+  - ["Silent Swordsman", "Silent Swordsman Zero"]
+  - ["Silent Magician", "Silent Magician Zero"]
+  - ["Metalhold the Moving Blockade", "Stronghold the Moving Fortress", "Powerhold the Moving Battery"]
+  - ["Arcana Extra Joker", "Arcana Knight Joker", "Arcana Triumph Joker"]
+  - ["Arisen Gaia the Fierce Knight", "Charging Gaia the Fierce Knight", "Swift Gaia the Fierce Knight"]
+  - ["Curse of Dragonfire", "Curse of Dragon, the Cursed Dragon"]
+  - ["Buster Blader, the Destruction Swordmaster", "Buster Blader"]
+  - ["Protector Whelp of the Destruction Swordsman", "Buster Whelp of the Destruction Swordsman"]
+  - ["Breaker the Magical Warrior", "Defender, the Magical Knight"]
+  
   # Commented out entries (can be enabled with or without color override)
   # Gadgets
   # - ["Green Gadget", "Red Gadget", "Yellow Gadget"]
@@ -91,103 +82,104 @@ parallel:
   # - ["Gamma The Magnet Warrior", "Gamma The Electromagnet Warrior"]
 
 # Convergence: multiple materials combine into a product
-convergence:
-    - title: "Fusion"
-      items:
-        - from: ["Dark Magician Girl", "Dark Magician"]
-          to: "The Dark Magicians"
-        
-        - from: ["Dark Magician", "Buster Blader"]
-          to: "Dark Paladin"
-        
-        - from: ["Dark Magician", "Gaia The Fierce Knight"]
-          to: "Dark Cavalry"
-        
-        - from: ["Dark Magician", "Red-Eyes Black Dragon"]
-          to: "Red-Eyes Dark Dragoon"
-        
-        - from: ["Dark Magician", "Black Luster Soldier"]
-          to: "Master of Chaos"
-        
-        - from: ["Dark Magician", "Gaia the Magical Knight of Dragons"]
-          to: "Dark Magician the Knight of Dragon Magic"
-        
-        - from: ["Dark Magician", "Flame Swordsman"]
-          to: "Dark Flare Knight"
-        
-        - from: ["Magician of Black Chaos", "Blue-Eyes Ultimate Dragon"]
-          to: "Dragon Master Magia"
-        
-        - from: ["Black Luster Soldier", "Blue-Eyes Ultimate Dragon"]
-          to: "Dragon Master Knight"
-        
-        - from: ["Gaia The Fierce Knight", "Curse of Dragon"]
-          to: "Gaia the Dragon Champion"
-        
-        - from: ["Swift Gaia the Fierce Knight", "Curse of Dragonfire"]
-          to: "Sky Galloping Gaia the Dragon Champion"
-        
-        - from: ["Gaia the Magical Knight", "Curse of Dragon, the Cursed Dragon"]
-          to: "Gaia the Magical Knight of Dragons"
-        
-        - from: ["Summoned Skull", "Red-Eyes Black Dragon"]
-          to: "Black Skull Dragon"
-
-        - from: ["Kuriboh", "Witch of the Black Forest"]
-          to: "Sanwitch"
-
-        - from: ["Valkyrion the Magna Warrior", "Berserkion the Electromagna Warrior"]
-          to: "Imperion Magnum the Superconductive Battlebot"
-
-        - from: ["King's Knight", "Queen's Knight", "Jack's Knight"]
-          to: "Arcana Knight Joker"
-
-        - from: ["Buster Blader, the Destruction Swordmaster", "Buster Dragon"]
-          to: "Buster Blader, the Dragon Destroyer Swordsman"
-        
-        - from: ["Legendary Knight Timaeus", "Legendary Knight Hermos", "Legendary Knight Critias"]
-          to: "Timaeus the Knight of Destiny"
-
-        - from: ["Gazelle the King of Mythical Beasts", "Berfomet"]
-          to: "Chimera the Flying Mythical Beast"
-
-        - from: ["Chimera the King of Phantom Beasts", "Cornfield Coatl", "Mirror Swordknight"]
-          to: "Chimera the Illusion Beast"
-
-        - from: ["Big-Winged Berfomet", "Mirror Swordknight"]
-          to: "Berfomet the Mythical King of Phantom Beasts"
-
-        - from: ["Gazelle the King of Mythical Claws", "Big-Winged Berfomet"]
-          to:  "Chimera the King of Phantom Beasts"
-        
-    - title: "The Eye of Timaeus"
-      items:
-        - from: ["Dark Magician Girl", "Timaeus the United Dragon"]
-          to: "Dark Magician Girl the Dragon Knight"
-        
-        - from: ["Dark Magician", "Timaeus the United Dragon"]
-          to: "Amulet Dragon"
-        
-        - from: ["Dark Magician", "Timaeus the United Dragon"]
-          to: "Timaeus the United Magical Dragon"
-        
-        - from: ["Dark Magician", "Timaeus the United Dragon"]
-          to: "Dark Magician the Dragon Knight"
-
-    - title: "The Claw of Hermos"
-      items:
-        - from: ["Queen's Knight", "The Claw of Hermos"]
-          to: "Goddess Bow"
-        
-        - from: ["Red-Eyes Black Dragon", "The Claw of Hermos"]
-          to: "Red-Eyes Black Dragon Sword"
+fusion:
+  - items:
+    - from: ["Dark Magician Girl", "Dark Magician"]
+      to: "The Dark Magicians"
     
-    - title: "The Fang of Critias"
-      items:
-        - from: ["Mirror Force", "The Fang of Critias"]
-          to: "Mirror Force Dragon"
+    - from: ["Dark Magician", "Buster Blader"]
+      to: "Dark Paladin"
+    
+    - from: ["Dark Magician", "Gaia The Fierce Knight"]
+      to: "Dark Cavalry"
+    
+    - from: ["Dark Magician", "Red-Eyes Black Dragon"]
+      to: "Red-Eyes Dark Dragoon"
+    
+    - from: ["Dark Magician", "Black Luster Soldier"]
+      to: "Master of Chaos"
+    
+    - from: ["Dark Magician", "Gaia the Magical Knight of Dragons"]
+      to: "Dark Magician the Knight of Dragon Magic"
+    
+    - from: ["Dark Magician", "Flame Swordsman"]
+      to: "Dark Flare Knight"
+    
+    - from: ["Magician of Black Chaos", "Blue-Eyes Ultimate Dragon"]
+      to: "Dragon Master Magia"
+    
+    - from: ["Black Luster Soldier", "Blue-Eyes Ultimate Dragon"]
+      to: "Dragon Master Knight"
+    
+    - from: ["Gaia The Fierce Knight", "Curse of Dragon"]
+      to: "Gaia the Dragon Champion"
+    
+    - from: ["Swift Gaia the Fierce Knight", "Curse of Dragonfire"]
+      to: "Sky Galloping Gaia the Dragon Champion"
+    
+    - from: ["Gaia the Magical Knight", "Curse of Dragon, the Cursed Dragon"]
+      to: "Gaia the Magical Knight of Dragons"
+    
+    - from: ["Summoned Skull", "Red-Eyes Black Dragon"]
+      to: "Black Skull Dragon"
 
-    # Combinations that are not Fusions
+    - from: ["Kuriboh", "Witch of the Black Forest"]
+      to: "Sanwitch"
+
+    - from: ["Valkyrion the Magna Warrior", "Berserkion the Electromagna Warrior"]
+      to: "Imperion Magnum the Superconductive Battlebot"
+
+    - from: ["King's Knight", "Queen's Knight", "Jack's Knight"]
+      to: "Arcana Knight Joker"
+
+    - from: ["Buster Blader, the Destruction Swordmaster", "Buster Dragon"]
+      to: "Buster Blader, the Dragon Destroyer Swordsman"
+    
+    - from: ["Legendary Knight Timaeus", "Legendary Knight Hermos", "Legendary Knight Critias"]
+      to: "Timaeus the Knight of Destiny"
+
+    - from: ["Gazelle the King of Mythical Beasts", "Berfomet"]
+      to: "Chimera the Flying Mythical Beast"
+
+    - from: ["Chimera the King of Phantom Beasts", "Cornfield Coatl", "Mirror Swordknight"]
+      to: "Chimera the Illusion Beast"
+
+    - from: ["Big-Winged Berfomet", "Mirror Swordknight"]
+      to: "Berfomet the Mythical King of Phantom Beasts"
+
+    - from: ["Gazelle the King of Mythical Claws", "Big-Winged Berfomet"]
+      to:  "Chimera the King of Phantom Beasts"
+      
+  - title: "The Eye of Timaeus"
+    items:
+      - from: ["Dark Magician Girl", "Timaeus the United Dragon"]
+        to: "Dark Magician Girl the Dragon Knight"
+      
+      - from: ["Dark Magician", "Timaeus the United Dragon"]
+        to: "Amulet Dragon"
+      
+      - from: ["Dark Magician", "Timaeus the United Dragon"]
+        to: "Timaeus the United Magical Dragon"
+      
+      - from: ["Dark Magician", "Timaeus the United Dragon"]
+        to: "Dark Magician the Dragon Knight"
+
+  - title: "The Claw of Hermos"
+    items:
+      - from: ["Queen's Knight", "The Claw of Hermos"]
+        to: "Goddess Bow"
+      
+      - from: ["Red-Eyes Black Dragon", "The Claw of Hermos"]
+        to: "Red-Eyes Black Dragon Sword"
+  
+  - title: "The Fang of Critias"
+    items:
+      - from: ["Mirror Force", "The Fang of Critias"]
+        to: "Mirror Force Dragon"
+
+# Combinations that are not Fusions
+combination:
+  - items:
     - from: ["Kuriboh", "Griffore"]
       to: "Gurifoh"
 
@@ -244,78 +236,77 @@ convergence:
     #   product: "Stronghold the Moving Fortress"
 
 # Divergence: one root card branches into multiple paths
-divergence:
-    - title: "Archetypes"
-      items:
-        - from: "Shining Sarcophagus"
-          to:
-            - "Dark Magician the Magician of Black Magic"
-            - "Dark Magician Girl the Magician's Apprentice"
-            - "Archfiend's Advent"
-            - "Gandora-G the Dragon of Destruction"
-            - "Gadget Trio"
-            - "Silent Magician Zero"
-            - "Silent Swordsman Zero"
-            - "Stronghold the Hidden Fortress"
+archtypes:
+  - items:
+    - from: "Shining Sarcophagus"
+      to:
+        - "Dark Magician the Magician of Black Magic"
+        - "Dark Magician Girl the Magician's Apprentice"
+        - "Archfiend's Advent"
+        - "Gandora-G the Dragon of Destruction"
+        - "Gadget Trio"
+        - "Silent Magician Zero"
+        - "Silent Swordsman Zero"
+        - "Stronghold the Hidden Fortress"
 
-        - from: "Ritual of Light and Darkness"
-          to:
-            - "Black Luster Soldier - Soldier of Light and Darkness"
-            - "Black Chaos the Dark Chaos Magician"
-            - "Mystical Celtic Sage"
-            - "Skull Archfiend of Chaos"
-            - "Gurifoh"
+    - from: "Ritual of Light and Darkness"
+      to:
+        - "Black Luster Soldier - Soldier of Light and Darkness"
+        - "Black Chaos the Dark Chaos Magician"
+        - "Mystical Celtic Sage"
+        - "Skull Archfiend of Chaos"
+        - "Gurifoh"
 
-        - from: "Magnetic Field"
-          to: 
-            - "Alpha The Magnet Warrior"
-            - "Beta The Magnet Warrior" 
-            - "Gamma The Magnet Warrior"
-            - "Delta The Magnet Warrior" 
-            - "Epsilon The Magnet Warrior"
+    - from: "Magnetic Field"
+      to: 
+        - "Alpha The Magnet Warrior"
+        - "Beta The Magnet Warrior" 
+        - "Gamma The Magnet Warrior"
+        - "Delta The Magnet Warrior" 
+        - "Epsilon The Magnet Warrior"
 
-        - from: "Royal Straight"
-          to: 
-            - "Royal Straight Slasher"
-            - "King's Knight"
-            - "Queen's Knight"
-            - "Jack's Knight"
-            - "Joker's Knight"
-            - "Imperial Bower"
+    - from: "Royal Straight"
+      to: 
+        - "Royal Straight Slasher"
+        - "King's Knight"
+        - "Queen's Knight"
+        - "Jack's Knight"
+        - "Joker's Knight"
+        - "Imperial Bower"
 
-        - from: "Summoned Skull"
-          to: 
-            - "Archfiend's Awakening"
-            - "Archfiend's Manifestation"
-            - "Archfiend's Call"
-            - "Archfiend's Ascent"
-            - "Archfiend's Advent"
-            - "Skull Archfiend of Chaos"
+    - from: "Summoned Skull"
+      to: 
+        - "Archfiend's Awakening"
+        - "Archfiend's Manifestation"
+        - "Archfiend's Call"
+        - "Archfiend's Ascent"
+        - "Archfiend's Advent"
+        - "Skull Archfiend of Chaos"
 
-        - from: "Gaia The Fierce Knight"
-          to:
-            - "Gaia Saber, the Lightning Shadow"
-            - "Gaia Dragon, the Thunder Charger"
-            - "Gaia Knight, the Force of Earth"
-            - "Gaia Blaze, the Force of the Sun"
-            - "Gaia Stream, the Graceful Force"
+    - from: "Gaia The Fierce Knight"
+      to:
+        - "Gaia Saber, the Lightning Shadow"
+        - "Gaia Dragon, the Thunder Charger"
+        - "Gaia Knight, the Force of Earth"
+        - "Gaia Blaze, the Force of the Sun"
+        - "Gaia Stream, the Graceful Force"
 
-        - from: "Dark Magician Girl"
-          to: 
-            - "Berry Magician Girl"
-            - "Lemon Magician Girl"
-            - "Apple Magician Girl"
-            - "Chocolate Magician Girl"
-            - "Kiwi Magician Girl"
+    - from: "Dark Magician Girl"
+      to: 
+        - "Berry Magician Girl"
+        - "Lemon Magician Girl"
+        - "Apple Magician Girl"
+        - "Chocolate Magician Girl"
+        - "Kiwi Magician Girl"
 
-        # Commented out entries (can be enabled with or without color override)
-        # - from: "Five Star Twilight"
-        #   to:
-        #     - "Kuriboh"
-        #     - "Kuribee"
-        #     - "Kuribah"
-        #     - "Kuriboo"
-        #     - "Kuribeh"
+    # Commented out entries (can be enabled with or without color override)
+    # - from: "Five Star Twilight"
+    #   to:
+    #     - "Kuriboh"
+    #     - "Kuribee"
+    #     - "Kuribah"
+    #     - "Kuriboo"
+    #     - "Kuribeh"
 
 config:
   # ================= CONFIG STRUCTURE =================
@@ -362,6 +353,27 @@ config:
   #   enabled: (bool) Enable the option editor
   #   filter: (list[str]) Which options to show in the editor
   # ====================================================
+
+  section:
+    fusion:
+      edge:
+        color: "purple"
+    combination:
+      edge: 
+        color: "purple"
+    archtypes:
+      edge:
+        color: "red"
+    counterparts:
+      edge:
+        color: "green"
+        arrows: "none"
+    aging:
+      edge:
+        color: "blue"
+    evolving:
+      edge:
+        color: "orange"
   buttons:
     show: True
     # filter: True

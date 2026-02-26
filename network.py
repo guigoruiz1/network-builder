@@ -25,12 +25,6 @@ class Config:
             "shapeProperties": {"useBorderWithImage": True},
         },
         "edge": {"arrowStrikethrough": False, "width": 20},
-        "operation": {
-            "series": {"edge": {"color": "orange", "smooth": True}},
-            "convergence": {"edge": {"color": "purple", "smooth": True}},
-            "parallel": {"edge": {"color": "green", "smooth": False}},
-            "divergence": {"edge": {"color": "red", "smooth": True}},
-        },
         "buttons": {
             "show": False,
             "filter": ["physics", "interaction"],
@@ -252,13 +246,13 @@ def section_has_branching(data: dict | list) -> bool:
 
 
 def get_kwargs(
-    entry_style: dict, operation: str, block_style: dict = {}, config_key: str = "edge"
+    entry_style: dict, section: str, block_style: dict = {}, config_key: str = "edge"
 ) -> dict:
     """
     Merge styling options from config and YAML overrides for a given relationship entry.
     Args:
         entry_style (dict): Entry level style overrides.
-        operation (str): Relationship type (series, parallel, convergence, divergence, ...).
+        section (str): Section name (e.g., "series", "parallel", etc.).
         block_style (dict): Optional block-level style overrides.
         config_key (str): Which config key to use ('edge' or 'node').
     Returns:
@@ -266,8 +260,8 @@ def get_kwargs(
     """
     global config
     base = config.get(config_key)
-    op = config.get("operation")
-    op = op.get(operation, {}) if operation else {}
+    op = config.get("section")
+    op = op.get(section, {}) if section else {}
     op = op.get(config_key, {})
     merged = Config.deep_merge_dicts(base, op)
     merged = Config.deep_merge_dicts(merged, block_style)
@@ -280,11 +274,11 @@ def get_kwargs(
 
 def get_nodes(data):
     """
-    Collect all unique node names from the YAML data across all relationship operations.
+    Collect all unique node names from the YAML data across all relationship sections.
     Merges any node-specific kwargs from the blocks and entries, including block-level and entry-level node styles.
 
     Args:
-        data: The YAML data dictionary containing operations and node information.
+        data: The YAML data dictionary containing sections and node information.
     Returns:
         dict: Mapping of node names to their merged kwargs.
     """
@@ -293,10 +287,10 @@ def get_nodes(data):
     global_node_kwargs = data.get("config", {}).get("node", {}) or {}
 
     def add_node(name, entry_style, block_style, section):
-        # Merge: global node config < operation-level < block-level < entry-level
+        # Merge: global node config < section-level < block-level < entry-level
         node_kwargs = get_kwargs(
             entry_style=entry_style,
-            operation=section,
+            section=section,
             block_style=block_style,
             config_key="node",
         )
@@ -407,7 +401,7 @@ def edit_nodes(
 # --- Edge Creation Functions ---
 
 
-def add_linear_edges(data, net: Network, operation: str) -> None:
+def add_linear_edges(data, net: Network, section: str) -> None:
     """
     Add edges for any linear relationship where entries are lists of node names.
 
@@ -419,7 +413,7 @@ def add_linear_edges(data, net: Network, operation: str) -> None:
     Args:
         data: Section data (list or dict with 'items'), containing lists of node names.
         net (Network): pyvis Network object.
-        operation (str): Relationship type (used for config and default title).
+        section (str): Section name (e.g., 'series', 'parallel', etc.).
     """
     if isinstance(data, dict) and "items" in data:
         data = data["items"]
@@ -429,15 +423,14 @@ def add_linear_edges(data, net: Network, operation: str) -> None:
         style = entry.get("edge", {}) if isinstance(entry, dict) else {}
         edge_kwargs = get_kwargs(
             entry_style=style,
-            operation=operation,
+            section=section,
             config_key="edge",
         )
         # Handle title separately
         edge_kwargs["title"] = (
-            entry.get("title") if isinstance(entry, dict) else operation
-        )
-        if "arrows" not in edge_kwargs:
-            edge_kwargs["arrows"] = "none" if operation == "parallel" else "to"
+            entry.get("title") if isinstance(entry, dict) else None
+        ) or section
+
         if isinstance(entry, dict) and "items" in entry:
             items = entry["items"]
             if isinstance(items, list) and all(isinstance(sub, list) for sub in items):
@@ -453,10 +446,10 @@ def add_linear_edges(data, net: Network, operation: str) -> None:
                 net.add_edge(items[i], items[i + 1], **edge_kwargs)
 
 
-def add_branching_edges(data, net: Network, operation: str) -> None:
+def add_branching_edges(data, net: Network, section: str) -> None:
     """
     Add edges for any relationship type that uses 'from' and 'to' fields.
-    For example: convergence, divergence, or custom operations.
+    For example: convergence, divergence, or custom sections.
 
     For each combination of 'from' and 'to', adds an edge from 'from' to 'to'.
     If no arrows are set in the edge configuration, sets arrows='from'.
@@ -464,7 +457,7 @@ def add_branching_edges(data, net: Network, operation: str) -> None:
     Args:
         data: Section data (list or dict with 'items').
         net (Network): pyvis Network object.
-        operation (str): Relationship type (e.g., 'convergence', 'divergence', or custom).
+        section (str): Section name (e.g., 'convergence', 'divergence', or custom).
     """
 
     def to_list(val):
@@ -483,11 +476,11 @@ def add_branching_edges(data, net: Network, operation: str) -> None:
         block_style = block.get("edge", {})
         edge_kwargs = get_kwargs(
             entry_style=style,
-            operation=operation,
+            section=section,
             block_style=block_style,
             config_key="edge",
         )
-        edge_kwargs["title"] = entry.get("title", block.get("title", operation))
+        edge_kwargs["title"] = entry.get("title", block.get("title", section))
         if "arrows" not in edge_kwargs:
             edge_kwargs["arrows"] = "to"
 
@@ -520,14 +513,13 @@ def add_branching_edges(data, net: Network, operation: str) -> None:
 
 def add_clique_edges(data, net: Network) -> None:
     """
-    Add edges for a 'clique' (complete graph) operation.
+    Add edges for a 'clique' (complete graph) section.
     For each list of nodes, connect every pair of nodes.
     Supports both directed and undirected graphs based on config.
 
     Args:
         data: Section data (list or dict with 'items'), containing lists of node names.
         net (Network): pyvis Network object.
-        operation (str): Relationship type (used for config and default title).
     """
     if isinstance(data, dict) and "items" in data:
         data = data["items"]
@@ -536,7 +528,7 @@ def add_clique_edges(data, net: Network) -> None:
         style = entry.get("edge", {}) if isinstance(entry, dict) else {}
         edge_kwargs = get_kwargs(
             entry_style=style,
-            operation="complete",
+            section="complete",
             config_key="edge",
         )
         edge_kwargs["title"] = (
@@ -610,9 +602,9 @@ def build_network(yaml_path: str) -> Network:
             add_clique_edges(data=section_data, net=net)
             continue
         if section_has_branching(section_data):
-            add_branching_edges(data=section_data, net=net, operation=section)
+            add_branching_edges(data=section_data, net=net, section=section)
         else:
-            add_linear_edges(data=section_data, net=net, operation=section)
+            add_linear_edges(data=section_data, net=net, section=section)
 
     # --- Post-processing: scale node size by degree ---
     if node_scale_factor > 0 or node_recolor or node_print_table:
