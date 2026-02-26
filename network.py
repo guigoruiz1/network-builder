@@ -1,8 +1,10 @@
 import yaml
 import os
+import argparse
 from pyvis.options import Options
 from pyvis.network import Network
-import argparse
+from collections import Counter
+
 from imageManager import download_images, image_filename
 
 # --- Configuration utilities ---
@@ -11,8 +13,7 @@ from imageManager import download_images, image_filename
 class Config:
     default = {
         "node": {
-            "scale": False,
-            "scale_factor": 10,
+            "scale_factor": 0,
             "shape": "image",
             "size": 100,
             "borderWidthSelected": 4,
@@ -58,17 +59,34 @@ class Config:
                 result[k] = v
         return result
 
-    @classmethod
-    def load(cls, config):
-
+    def __init__(self, config=None):
+        if config is None:
+            config = {}
         if isinstance(config, list):
             merged_config = {}
             for entry in config:
                 if isinstance(entry, dict):
                     merged_config.update(entry)
             config = merged_config
-        return cls.deep_merge_dicts(cls.default, config)
+        self._data = Config.deep_merge_dicts(Config.default, config)
 
+    def __getitem__(self, key):
+        return self._data[key]
+
+    def get(self, key, default=None):
+        value = self._data.get(key, default)
+        if value is None:
+            return {}
+        return value
+
+    def __contains__(self, key):
+        return key in self._data
+
+    def __repr__(self):
+        return f"Config({self._data!r})"
+
+
+config = Config()  # Global config variable
 
 # --- Options configuration utilities ---
 
@@ -166,7 +184,8 @@ def set_options():
         Options: Fully configured pyvis Options object.
     """
     global config
-    options = Options(layout=config.get("layout") is not None)
+
+    options = Options(layout=bool(config.get("layout")))
     # Use dictionary-style access for sub-objects
     if config.get("physics"):
         set_physics_options(options["physics"], config["physics"])
@@ -202,8 +221,9 @@ def get_kwargs(entry_style, operation, block_style={}, config_key="edge"):
         dict: Keyword arguments for pyvis.
     """
     global config
-    base = config.get(config_key, {})
-    op = config.get("operation", {}).get(operation, {}) if operation else {}
+    base = config.get(config_key)
+    op = config.get("operation")
+    op = op.get(operation, {}) if operation else {}
     op = op.get(config_key, {})
     merged = Config.deep_merge_dicts(base, op)
     merged = Config.deep_merge_dicts(merged, block_style)
@@ -349,7 +369,7 @@ def get_nodes(data, operations=["series", "parallel", "convergence", "divergence
             yield items
 
     node_info = {}
-    global_node_kwargs = data.get("config", {}).get("node", {})
+    global_node_kwargs = data.get("config", {}).get("node", {}) or {}
 
     def add_node(name, entry_style, block_style, section):
         # Merge: global node config < operation-level < block-level < entry-level
@@ -415,26 +435,68 @@ def get_nodes(data, operations=["series", "parallel", "convergence", "divergence
     return node_info
 
 
-def scale_nodes(net, scale_factor=10, print_table=False):
-    adj_list = net.get_adj_list()
-    node_degrees = []
+def edit_nodes(net, scale_factor=None, recolor=False, print_table=False):
+    """
+    Edit node properties in a pyvis Network object.
+    Optionally scale node size by degree, recolor nodes by edge color majority, and print a summary table.
+
+    Args:
+        net (Network): pyvis Network object.
+        scale_factor (float, optional): If set, increases node size by (scale_factor * degree).
+        recolor (bool, optional): If True, recolors node to the most common color among its edges.
+        print_table (bool, optional): If True, prints a table of node degrees and new colors.
+    """
+    node_stats = []
     for node in net.nodes:
         node_id = node["id"]
-        base_size = node["size"]
-        degree = len(adj_list.get(node_id, []))
-        node["size"] = base_size + scale_factor * degree
-        node_degrees.append((str(node_id), degree))
+        degree = len(net.neighbors(node_id))
+        color = node["color"]
+        if scale_factor:
+            base_size = node.get("size", 0)
+            node["size"] = base_size + scale_factor * degree
+        if recolor:
+            connected_edges = [
+                e for e in net.edges if e["from"] == node_id or e["to"] == node_id
+            ]
+            colors = [e.get("color") for e in connected_edges if e.get("color")]
+            if colors:
+                most_common_color, _ = Counter(colors).most_common(1)[0]
+                node["color"] = most_common_color
+                color = most_common_color
+        node_stats.append(
+            {
+                "id": node_id,
+                "degree": degree,
+                "color": color,
+            }
+        )
 
-    # Print table header
     if print_table:
+        # Always print all nodes, even if some columns are missing
         col1 = "Node"
         col2 = "Edges"
-        width1 = max(len(col1), max(len(n) for n, _ in node_degrees))
-        width2 = max(len(col2), max(len(str(d)) for _, d in node_degrees))
-        print(f"\n{col1:<{width1}} | {col2:<{width2}}")
-        print(f"{'-'*width1}-+-{'-'*width2}")
-        for n, d in node_degrees:
-            print(f"{n:<{width1}} | {d:<{width2}}")
+        col3 = "Color"
+        width1 = max(len(col1), max((len(str(n["id"])) for n in node_stats), default=0))
+        width2 = max(
+            len(col2),
+            max(
+                (len(str(n["degree"])) for n in node_stats if n["degree"] is not None),
+                default=0,
+            ),
+        )
+        width3 = max(
+            len(col3),
+            max(
+                (len(str(n["color"])) for n in node_stats if n["color"] is not None),
+                default=0,
+            ),
+        )
+        print(f"\n{col1:<{width1}} | {col2:<{width2}} | {col3:<{width3}}")
+        print(f"{'-'*width1}-+-{'-'*width2}-+-{'-'*width3}")
+        for n in node_stats:
+            degree = n["degree"] if n["degree"] is not None else "-"
+            color = n["color"] if n["color"] is not None else "-"
+            print(f"{n['id']:<{width1}} | {degree:<{width2}} | {color:<{width3}}")
 
 
 # --- Main network construction function ---
@@ -452,23 +514,22 @@ def build_network(yaml_path):
     global config
     with open(yaml_path, "r") as f:
         data = yaml.safe_load(f)
-    config = Config.load(config=data.get("config", {}))
+    config = Config(config=data.get("config", {}))
 
     node_info = get_nodes(
         data=data,
         operations=["series", "parallel", "convergence", "divergence"],
     )
 
-    net = Network(**config["network"])
+    net = Network(**config.get("network"))
     net.options = set_options()
 
     if config.get("download_images", False):
         download_images(names=node_info.keys(), config=config)
 
-    global_node_kwargs = config["node"].copy()
-    node_scale = global_node_kwargs.pop("scale", False)
-    node_scale_factor = global_node_kwargs.pop("scale_factor", 10)
-    node_print_table = global_node_kwargs.pop("table", False)
+    node_scale_factor = config.get("node").pop("scale_factor", 0)
+    node_recolor = config.get("node").pop("recolor", False)
+    node_print_table = config.get("node").pop("table", False)
 
     for item in sorted(node_info.keys()):
         node_info[item]["title"] = item
@@ -485,16 +546,21 @@ def build_network(yaml_path):
         )
 
     # --- Post-processing: scale node size by degree ---
-    if node_scale:
-        scale_nodes(net, scale_factor=node_scale_factor, print_table=node_print_table)
+    if node_scale_factor > 0 or node_recolor or node_print_table:
+        edit_nodes(
+            net,
+            scale_factor=node_scale_factor,
+            recolor=node_recolor,
+            print_table=node_print_table,
+        )
 
-    if config["buttons"]["show"]:
-        net.show_buttons(filter_=config["buttons"]["filter"])
+    show_buttons = config.get("buttons").get("show", False)
+    if show_buttons:
+        filter = config.get("buttons").get("filter", True)
+        net.show_buttons(filter_=filter)
 
     return net
 
-
-config = Config()  # Global config variable
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -511,5 +577,5 @@ if __name__ == "__main__":
 
     base_name = os.path.splitext(os.path.basename(args.yaml_file))[0]
     output_path = os.path.abspath(f"{base_name}.html")
-    net.write_html(output_path)
+    net.save_graph(output_path)
     print("Network saved to:", output_path)
