@@ -1,3 +1,5 @@
+# --- Imports ---
+
 import yaml
 import os
 import argparse
@@ -5,7 +7,7 @@ from pyvis.options import Options
 from pyvis.network import Network
 from collections import Counter
 
-# --- Configuration utilities ---
+# --- Global Configuration ---
 
 
 class Config:
@@ -86,7 +88,7 @@ class Config:
 
 config = Config()  # Global config variable
 
-# --- Options configuration utilities ---
+# --- Option Configuration Utilities ---
 
 
 def set_physics_options(physics_obj, config):
@@ -202,7 +204,40 @@ def set_options():
     return options
 
 
-# --- Graph construction utilities ---
+# --- General Graph Utilities ---
+
+
+def flatten_items(items):
+    if isinstance(items, str):
+        yield items
+    elif isinstance(items, list):
+        for el in items:
+            yield from flatten_items(el)
+    elif items is not None:
+        yield items
+
+
+def section_has_branching(data):
+    """
+    Recursively checks if any entry in the provided data (dict or list) contains both 'from' and 'to' keys.
+    This identifies branching relationships in a YAML structure, regardless of nesting.
+
+    Args:
+        data: The section data (dict or list) to check for branching relationships.
+    Returns:
+        bool: True if any entry is a branching relationship, False otherwise.
+    """
+    stack = [data]
+    while stack:
+        entry = stack.pop()
+        if isinstance(entry, dict):
+            if "from" in entry and "to" in entry:
+                return True
+            if "items" in entry and isinstance(entry["items"], list):
+                stack.extend(entry["items"])
+        elif isinstance(entry, list):
+            stack.extend(entry)
+    return False
 
 
 def get_kwargs(entry_style, operation, block_style={}, config_key="edge"):
@@ -229,142 +264,19 @@ def get_kwargs(entry_style, operation, block_style={}, config_key="edge"):
     return merged
 
 
-def add_linear_edges(data, net, operation):
+# --- Node Collection and Editing ---
+
+
+def get_nodes(data):
     """
-    Add edges for 'series' or 'parallel' relationships.
-
-    Args:
-        data: Section data (series or parallel).
-        config (Config): Configuration object.
-        net (Network): pyvis Network object.
-        operation (str): 'series' or 'parallel'.
-    """
-    if isinstance(data, dict) and "items" in data:
-        data = data["items"]
-
-    for entry in data:
-        # Extract edge style from entry['edge'] if present, else empty dict
-        style = entry.get("edge", {}) if isinstance(entry, dict) else {}
-        edge_kwargs = get_kwargs(
-            entry_style=style,
-            operation=operation,
-            config_key="edge",
-        )
-        # Handle title separately
-        edge_kwargs["title"] = (
-            entry.get("title") if isinstance(entry, dict) else operation
-        )
-        if "arrows" not in edge_kwargs:
-            edge_kwargs["arrows"] = "none" if operation == "parallel" else "to"
-        if isinstance(entry, dict) and "items" in entry:
-            items = entry["items"]
-            if isinstance(items, list) and all(isinstance(sub, list) for sub in items):
-                for sublist in items:
-                    for i in range(len(sublist) - 1):
-                        net.add_edge(sublist[i], sublist[i + 1], **edge_kwargs)
-            else:
-                for i in range(len(items) - 1):
-                    net.add_edge(items[i], items[i + 1], **edge_kwargs)
-        else:
-            items = entry
-            for i in range(len(items) - 1):
-                net.add_edge(items[i], items[i + 1], **edge_kwargs)
-
-
-def add_branching_edges(data, net, operation):
-    """
-    Add edges for 'convergence' or 'divergence' relationships.
-
-    Args:
-        data: Section data (convergence or divergence).
-        config (Config): Configuration object.
-        net (Network): pyvis Network object.
-        operation (str): 'convergence' or 'divergence'.
-    """
-    if operation == "convergence":
-        from_key = "materials"
-        to_key = "product"
-        to_many = False
-    elif operation == "divergence":
-        from_key = "root"
-        to_key = "branches"
-        to_many = True
-    else:
-        raise ValueError(f"Unknown operation: {operation}")
-
-    def add_entry(entry, block={}):
-        if not isinstance(entry, dict):
-            return
-        from_vals = entry.get(from_key, [])
-        to_val = entry.get(to_key)
-        # Extract edge style from entry['edge'] if present, else empty dict
-        style = entry.get("edge", {})
-        # Extract block style from block['edge'] if present, else empty dict
-        block_style = block.get("edge", {})
-        # Handle title separately
-        edge_kwargs = get_kwargs(
-            entry_style=style,
-            operation=operation,
-            block_style=block_style,
-            config_key="edge",
-        )
-        edge_kwargs["title"] = entry.get("title", block.get("title", operation))
-        if "arrows" not in edge_kwargs:
-            edge_kwargs["arrows"] = "to"
-
-        if to_many:
-            if not from_vals:
-                return
-            for target in to_val or []:
-                net.add_edge(from_vals, target, **edge_kwargs)
-        else:
-            for source in from_vals:
-                net.add_edge(source, to_val, **edge_kwargs)
-
-    flat_entries = []
-    if isinstance(data, list):
-        for block in data:
-            block_items = (
-                block.get("items")
-                if isinstance(block, dict) and "items" in block
-                else None
-            )
-            if block_items:
-                for entry in block_items:
-                    add_entry(entry, block)
-            else:
-                flat_entries.append(block)
-    elif isinstance(data, dict) and "items" in data:
-        for entry in data["items"]:
-            add_entry(entry)
-    else:
-        flat_entries = data
-
-    for entry in flat_entries:
-        add_entry(entry)
-
-
-def get_nodes(data, operations=["series", "parallel", "convergence", "divergence"]):
-    """
-    Collect all unique node names from the YAML data across all relationship sections.
+    Collect all unique node names from the YAML data across all relationship operations.
     Merges any node-specific kwargs from the blocks and entries, including block-level and entry-level node styles.
 
     Args:
-        data: The entire YAML data dictionary.
-        operations: List of operation sections to process.
-        config: The loaded config dict (for merging global/operation-level node config).
+        data: The YAML data dictionary containing operations and node information.
     Returns:
         dict: Mapping of node names to their merged kwargs.
     """
-
-    def flatten_items(items):
-        if isinstance(items, str):
-            yield items
-        elif isinstance(items, list):
-            for el in items:
-                yield from flatten_items(el)
-        elif items is not None:
-            yield items
 
     node_info = {}
     global_node_kwargs = data.get("config", {}).get("node", {}) or {}
@@ -383,52 +295,31 @@ def get_nodes(data, operations=["series", "parallel", "convergence", "divergence
         else:
             node_info[name] = Config.deep_merge_dicts(node_info[name], node_kwargs)
 
-    for section in operations:
-        for block in data.get(section, []):
+    for section in data:
+        for block in data[section]:
             block_node_style = block.get("node", {}) if isinstance(block, dict) else {}
-            if section in ["series", "parallel"]:
-                if isinstance(block, dict) and "items" in block:
-                    items = block["items"]
-                    for name in flatten_items(items):
-                        add_node(name, {}, block_node_style, section)
+            # If block has 'items', iterate entries; else treat block as entry
+            entries = (
+                block["items"]
+                if isinstance(block, dict) and "items" in block
+                else [block]
+            )
+            for entry in entries:
+                entry_node_style = (
+                    entry.get("node", {}) if isinstance(entry, dict) else {}
+                )
+                # If entry is a dict with 'from' or 'to', treat as branching; else treat as linear list
+                if isinstance(entry, dict) and ("from" in entry or "to" in entry):
+                    from_vals = entry.get("from", [])
+                    to_vals = entry.get("to", [])
+                    for name in flatten_items(from_vals):
+                        add_node(name, entry_node_style, block_node_style, section)
+                    for name in flatten_items(to_vals):
+                        add_node(name, entry_node_style, block_node_style, section)
                 else:
-                    for name in flatten_items(block):
-                        add_node(name, {}, block_node_style, section)
-            elif section == "convergence":
-                if isinstance(block, dict) and "items" in block:
-                    for entry in block["items"]:
-                        entry_node_style = entry.get("node", {})
-                        for name in flatten_items(entry.get("materials", [])):
-                            add_node(name, entry_node_style, block_node_style, section)
-                        product = entry.get("product")
-                        if product:
-                            add_node(
-                                product, entry_node_style, block_node_style, section
-                            )
-                else:
-                    for name in flatten_items(block.get("materials", [])):
-                        add_node(name, {}, block_node_style, section)
-                    product = block.get("product") if isinstance(block, dict) else None
-                    if product:
-                        add_node(product, {}, block_node_style, section)
-            elif section == "divergence":
-                if isinstance(block, dict) and "items" in block:
-                    for entry in block["items"]:
-                        entry_node_style = entry.get("node", {})
-                        root = entry.get("root")
-                        if root:
-                            add_node(root, entry_node_style, block_node_style, section)
-                        for name in flatten_items(entry.get("branches", [])):
-                            add_node(name, entry_node_style, block_node_style, section)
-                else:
-                    root = block.get("root") if isinstance(block, dict) else None
-                    if root:
-                        add_node(root, {}, block_node_style, section)
-                    branches = (
-                        block.get("branches", []) if isinstance(block, dict) else []
-                    )
-                    for name in flatten_items(branches):
-                        add_node(name, {}, block_node_style, section)
+                    # Treat as a list of node names (linear)
+                    for name in flatten_items(entry):
+                        add_node(name, entry_node_style, block_node_style, section)
 
     return node_info
 
@@ -497,7 +388,160 @@ def edit_nodes(net, scale_factor=None, recolor=False, print_table=False):
             print(f"{n['id']:<{width1}} | {degree:<{width2}} | {color:<{width3}}")
 
 
-# --- Main network construction function ---
+# --- Edge Creation Functions ---
+
+
+def add_linear_edges(data, net, operation):
+    """
+    Add edges for any linear relationship where entries are lists of node names.
+
+    This function infers edge creation logic based on the structure of the data:
+    - If an entry is a list (or nested lists), it creates edges between consecutive nodes.
+    - If an entry is a dict with an 'items' field, it recursively processes those items.
+    - Edge styles and titles can be overridden at the entry or block level.
+
+    Args:
+        data: Section data (list or dict with 'items'), containing lists of node names.
+        net (Network): pyvis Network object.
+        operation (str): Relationship type (used for config and default title).
+    """
+    if isinstance(data, dict) and "items" in data:
+        data = data["items"]
+
+    for entry in data:
+        # Extract edge style from entry['edge'] if present, else empty dict
+        style = entry.get("edge", {}) if isinstance(entry, dict) else {}
+        edge_kwargs = get_kwargs(
+            entry_style=style,
+            operation=operation,
+            config_key="edge",
+        )
+        # Handle title separately
+        edge_kwargs["title"] = (
+            entry.get("title") if isinstance(entry, dict) else operation
+        )
+        if "arrows" not in edge_kwargs:
+            edge_kwargs["arrows"] = "none" if operation == "parallel" else "to"
+        if isinstance(entry, dict) and "items" in entry:
+            items = entry["items"]
+            if isinstance(items, list) and all(isinstance(sub, list) for sub in items):
+                for sublist in items:
+                    for i in range(len(sublist) - 1):
+                        net.add_edge(sublist[i], sublist[i + 1], **edge_kwargs)
+            else:
+                for i in range(len(items) - 1):
+                    net.add_edge(items[i], items[i + 1], **edge_kwargs)
+        else:
+            items = entry
+            for i in range(len(items) - 1):
+                net.add_edge(items[i], items[i + 1], **edge_kwargs)
+
+
+def add_branching_edges(data, net, operation):
+    """
+    Add edges for any relationship type that uses 'from' and 'to' fields.
+    For example: convergence, divergence, or custom operations.
+
+    For each combination of 'from' and 'to', adds an edge from 'from' to 'to'.
+    If the operation is 'convergence', sets arrows='from'.
+    If the operation is 'divergence', sets arrows='to'.
+    Otherwise, does not set the arrows attribute (uses pyvis default).
+
+    Args:
+        data: Section data (list or dict with 'items').
+        net (Network): pyvis Network object.
+        operation (str): Relationship type (e.g., 'convergence', 'divergence', or custom).
+    """
+
+    def to_list(val):
+        if val is None:
+            return []
+        if isinstance(val, list):
+            return val
+        return [val]
+
+    def add_entry(entry, block={}):
+        if not isinstance(entry, dict):
+            return
+        from_vals = to_list(entry.get("from", []))
+        to_vals = to_list(entry.get("to", []))
+        style = entry.get("edge", {})
+        block_style = block.get("edge", {})
+        edge_kwargs = get_kwargs(
+            entry_style=style,
+            operation=operation,
+            block_style=block_style,
+            config_key="edge",
+        )
+        edge_kwargs["title"] = entry.get("title", block.get("title", operation))
+        if ("arrows" not in edge_kwargs) and (
+            operation in ["convergence", "divergence"]
+        ):
+            edge_kwargs["arrows"] = "to"
+
+        for f in from_vals:
+            for t in to_vals:
+                net.add_edge(f, t, **edge_kwargs)
+
+    flat_entries = []
+    if isinstance(data, list):
+        for block in data:
+            block_items = (
+                block.get("items")
+                if isinstance(block, dict) and "items" in block
+                else None
+            )
+            if block_items:
+                for entry in block_items:
+                    add_entry(entry, block)
+            else:
+                flat_entries.append(block)
+    elif isinstance(data, dict) and "items" in data:
+        for entry in data["items"]:
+            add_entry(entry)
+    else:
+        flat_entries = data
+
+    for entry in flat_entries:
+        add_entry(entry)
+
+
+def add_clique_edges(data, net):
+    """
+    Add edges for a 'clique' (complete graph) operation.
+    For each list of nodes, connect every pair of nodes.
+    Supports both directed and undirected graphs based on config.
+
+    Args:
+        data: Section data (list or dict with 'items'), containing lists of node names.
+        net (Network): pyvis Network object.
+        operation (str): Relationship type (used for config and default title).
+    """
+    if isinstance(data, dict) and "items" in data:
+        data = data["items"]
+
+    for entry in data:
+        style = entry.get("edge", {}) if isinstance(entry, dict) else {}
+        edge_kwargs = get_kwargs(
+            entry_style=style,
+            operation="complete",
+            config_key="edge",
+        )
+        edge_kwargs["title"] = (
+            entry.get("title") if isinstance(entry, dict) else "complete"
+        )
+        # Extract node list
+        items = (
+            entry["items"] if isinstance(entry, dict) and "items" in entry else entry
+        )
+        nodes = list(flatten_items(items))
+        n = len(nodes)
+        for i in range(n):
+            for j in range(i + 1, n):
+                net.add_edge(nodes[i], nodes[j], **edge_kwargs)
+
+
+# --- Main Network Construction ---
 
 
 def build_network(yaml_path):
@@ -512,12 +556,11 @@ def build_network(yaml_path):
     global config
     with open(yaml_path, "r") as f:
         data = yaml.safe_load(f)
-    config = Config(config=data.get("config", {}))
 
-    node_info = get_nodes(
-        data=data,
-        operations=["series", "parallel", "convergence", "divergence"],
-    )
+    cfg = data.pop("config", {})
+    config = Config(config=cfg)
+
+    node_info = get_nodes(data=data)
 
     net = Network(**config.get("network"))
     net.options = set_options()
@@ -528,9 +571,7 @@ def build_network(yaml_path):
 
             download(node_info.keys(), config=config)
         except ImportError as e:
-            print(
-                f"[Warning] Could not import 'download_images' from imageManager: {e}"
-            )
+            print(f"[Warning] Could not import 'download' from imageManager: {e}")
         except Exception as e:
             print(f"[Error] Exception during image downloading: {e}")
 
@@ -546,20 +587,20 @@ def build_network(yaml_path):
 
             node_info[item]["image"] = filename(item)
         except ImportError as e:
-            print(f"[Warning] Could not import 'image_filename' from imageManager: {e}")
+            print(f"[Warning] Could not import 'filename' from imageManager: {e}")
         except Exception as e:
             print(f"[Error] Exception assigning image filename for node '{item}': {e}")
 
         net.add_node(item, **node_info[item])
 
-    for operation in ["series", "parallel"]:
-        add_linear_edges(data=data.get(operation, []), net=net, operation=operation)
-    for operation in ["convergence", "divergence"]:
-        add_branching_edges(
-            data=data.get(operation, []),
-            net=net,
-            operation=operation,
-        )
+    for section, section_data in data.items():
+        if section == "complete":
+            add_clique_edges(data=section_data, net=net)
+            continue
+        if section_has_branching(section_data):
+            add_branching_edges(data=section_data, net=net, operation=section)
+        else:
+            add_linear_edges(data=section_data, net=net, operation=section)
 
     # --- Post-processing: scale node size by degree ---
     if node_scale_factor > 0 or node_recolor or node_print_table:
@@ -577,6 +618,8 @@ def build_network(yaml_path):
 
     return net
 
+
+# --- Script Entry Point ---
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(

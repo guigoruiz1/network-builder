@@ -113,8 +113,8 @@ def _download_images_fallback(names):
     base_url = "https://yugipedia.com/api.php"
 
     for name in sorted(names):
-        filename = filename(name)
-        if os.path.exists(filename):
+        file_path = filename(name)
+        if os.path.exists(file_path):
             continue  # Already downloaded
         # Query for the card's image via MediaWiki API
         params = {
@@ -150,7 +150,7 @@ def _download_images_fallback(names):
 
             img = Image.open(BytesIO(img_resp.content))
             cropped_img = _crop_section(img, out_size=None)
-            cropped_img.save(filename)
+            cropped_img.save(file_path)
             print(f"Downloaded image for '{name}'")
         except Exception as e:
             print(f"[ERROR] Failed to download image for '{name}': {e}")
@@ -206,10 +206,10 @@ def download(names, config):
 
             # Crop the downloaded images
             for name in names:
-                filename = filename(name)
-                if os.path.exists(filename):
+                file_path = filename(name)
+                if os.path.exists(file_path):
                     try:
-                        with Image.open(filename) as img:
+                        with Image.open(file_path) as img:
                             cropped_img = yugiquery_crop(
                                 img,
                                 ref=sizes["ref"],
@@ -217,7 +217,7 @@ def download(names, config):
                                 crop_size=sizes["crop"],
                                 out_size=None,
                             )
-                            cropped_img.save(filename)
+                            cropped_img.save(file_path)
                     except Exception as e:
                         print(f"[WARN] Failed to crop image for '{name}': {e}")
         else:

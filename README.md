@@ -43,10 +43,10 @@ parallel:
 convergence:
   - title: "Combination"
     items:
-      - materials: ["Salt", "Water"]
-        product: "Saltwater"
-      - materials: ["Flour", "Eggs", "Milk"]
-        product: "Pancake Batter"
+      - from: ["Salt", "Water"]
+        to: "Saltwater"
+      - from: ["Flour", "Eggs", "Milk"]
+        to: "Pancake Batter"
 ```
 
 ### Divergence (Branching Entities)
@@ -54,8 +54,8 @@ convergence:
 divergence:
   - title: "Branches"
     items:
-      - root: "Tree"
-        branches:
+      - from: "Tree"
+        to:
           - "Branch1"
           - "Branch2"
 ```
@@ -85,8 +85,8 @@ parallel:
 convergence:
   - title: "Custom Merge"
     items:
-      - materials: ["A", "B"]
-        product: "AB"
+      - from: ["A", "B"]
+        to: "AB"
         edge:
           color: "pink"
 
@@ -95,8 +95,8 @@ divergence:
     edge:
       color: "teal"
     items:
-      - root: "Origin"
-        branches:
+      - from: "Origin"
+        to:
           - "BranchX"
 ```
 

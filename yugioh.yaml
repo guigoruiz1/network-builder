@@ -94,161 +94,161 @@ parallel:
 convergence:
     - title: "Fusion"
       items:
-        - materials: ["Dark Magician Girl", "Dark Magician"]
-          product: "The Dark Magicians"
+        - from: ["Dark Magician Girl", "Dark Magician"]
+          to: "The Dark Magicians"
         
-        - materials: ["Dark Magician", "Buster Blader"]
-          product: "Dark Paladin"
+        - from: ["Dark Magician", "Buster Blader"]
+          to: "Dark Paladin"
         
-        - materials: ["Dark Magician", "Gaia The Fierce Knight"]
-          product: "Dark Cavalry"
+        - from: ["Dark Magician", "Gaia The Fierce Knight"]
+          to: "Dark Cavalry"
         
-        - materials: ["Dark Magician", "Red-Eyes Black Dragon"]
-          product: "Red-Eyes Dark Dragoon"
+        - from: ["Dark Magician", "Red-Eyes Black Dragon"]
+          to: "Red-Eyes Dark Dragoon"
         
-        - materials: ["Dark Magician", "Black Luster Soldier"]
-          product: "Master of Chaos"
+        - from: ["Dark Magician", "Black Luster Soldier"]
+          to: "Master of Chaos"
         
-        - materials: ["Dark Magician", "Gaia the Magical Knight of Dragons"]
-          product: "Dark Magician the Knight of Dragon Magic"
+        - from: ["Dark Magician", "Gaia the Magical Knight of Dragons"]
+          to: "Dark Magician the Knight of Dragon Magic"
         
-        - materials: ["Dark Magician", "Flame Swordsman"]
-          product: "Dark Flare Knight"
+        - from: ["Dark Magician", "Flame Swordsman"]
+          to: "Dark Flare Knight"
         
-        - materials: ["Magician of Black Chaos", "Blue-Eyes Ultimate Dragon"]
-          product: "Dragon Master Magia"
+        - from: ["Magician of Black Chaos", "Blue-Eyes Ultimate Dragon"]
+          to: "Dragon Master Magia"
         
-        - materials: ["Black Luster Soldier", "Blue-Eyes Ultimate Dragon"]
-          product: "Dragon Master Knight"
+        - from: ["Black Luster Soldier", "Blue-Eyes Ultimate Dragon"]
+          to: "Dragon Master Knight"
         
-        - materials: ["Gaia The Fierce Knight", "Curse of Dragon"]
-          product: "Gaia the Dragon Champion"
+        - from: ["Gaia The Fierce Knight", "Curse of Dragon"]
+          to: "Gaia the Dragon Champion"
         
-        - materials: ["Swift Gaia the Fierce Knight", "Curse of Dragonfire"]
-          product: "Sky Galloping Gaia the Dragon Champion"
+        - from: ["Swift Gaia the Fierce Knight", "Curse of Dragonfire"]
+          to: "Sky Galloping Gaia the Dragon Champion"
         
-        - materials: ["Gaia the Magical Knight", "Curse of Dragon, the Cursed Dragon"]
-          product: "Gaia the Magical Knight of Dragons"
+        - from: ["Gaia the Magical Knight", "Curse of Dragon, the Cursed Dragon"]
+          to: "Gaia the Magical Knight of Dragons"
         
-        - materials: ["Summoned Skull", "Red-Eyes Black Dragon"]
-          product: "Black Skull Dragon"
+        - from: ["Summoned Skull", "Red-Eyes Black Dragon"]
+          to: "Black Skull Dragon"
 
-        - materials: ["Kuriboh", "Witch of the Black Forest"]
-          product: "Sanwitch"
+        - from: ["Kuriboh", "Witch of the Black Forest"]
+          to: "Sanwitch"
 
-        - materials: ["Valkyrion the Magna Warrior", "Berserkion the Electromagna Warrior"]
-          product: "Imperion Magnum the Superconductive Battlebot"
+        - from: ["Valkyrion the Magna Warrior", "Berserkion the Electromagna Warrior"]
+          to: "Imperion Magnum the Superconductive Battlebot"
 
-        - materials: ["King's Knight", "Queen's Knight", "Jack's Knight"]
-          product: "Arcana Knight Joker"
+        - from: ["King's Knight", "Queen's Knight", "Jack's Knight"]
+          to: "Arcana Knight Joker"
 
-        - materials: ["Buster Blader, the Destruction Swordmaster", "Buster Dragon"]
-          product: "Buster Blader, the Dragon Destroyer Swordsman"
+        - from: ["Buster Blader, the Destruction Swordmaster", "Buster Dragon"]
+          to: "Buster Blader, the Dragon Destroyer Swordsman"
         
-        - materials: ["Legendary Knight Timaeus", "Legendary Knight Hermos", "Legendary Knight Critias"]
-          product: "Timaeus the Knight of Destiny"
+        - from: ["Legendary Knight Timaeus", "Legendary Knight Hermos", "Legendary Knight Critias"]
+          to: "Timaeus the Knight of Destiny"
 
-        - materials: ["Gazelle the King of Mythical Beasts", "Berfomet"]
-          product: "Chimera the Flying Mythical Beast"
+        - from: ["Gazelle the King of Mythical Beasts", "Berfomet"]
+          to: "Chimera the Flying Mythical Beast"
 
-        - materials: ["Chimera the King of Phantom Beasts", "Cornfield Coatl", "Mirror Swordknight"]
-          product: "Chimera the Illusion Beast"
+        - from: ["Chimera the King of Phantom Beasts", "Cornfield Coatl", "Mirror Swordknight"]
+          to: "Chimera the Illusion Beast"
 
-        - materials: ["Big-Winged Berfomet", "Mirror Swordknight"]
-          product: "Berfomet the Mythical King of Phantom Beasts"
+        - from: ["Big-Winged Berfomet", "Mirror Swordknight"]
+          to: "Berfomet the Mythical King of Phantom Beasts"
 
-        - materials: ["Gazelle the King of Mythical Claws", "Big-Winged Berfomet"]
-          product:  "Chimera the King of Phantom Beasts"
+        - from: ["Gazelle the King of Mythical Claws", "Big-Winged Berfomet"]
+          to:  "Chimera the King of Phantom Beasts"
         
     - title: "The Eye of Timaeus"
       items:
-        - materials: ["Dark Magician Girl", "Timaeus the United Dragon"]
-          product: "Dark Magician Girl the Dragon Knight"
+        - from: ["Dark Magician Girl", "Timaeus the United Dragon"]
+          to: "Dark Magician Girl the Dragon Knight"
         
-        - materials: ["Dark Magician", "Timaeus the United Dragon"]
-          product: "Amulet Dragon"
+        - from: ["Dark Magician", "Timaeus the United Dragon"]
+          to: "Amulet Dragon"
         
-        - materials: ["Dark Magician", "Timaeus the United Dragon"]
-          product: "Timaeus the United Magical Dragon"
+        - from: ["Dark Magician", "Timaeus the United Dragon"]
+          to: "Timaeus the United Magical Dragon"
         
-        - materials: ["Dark Magician", "Timaeus the United Dragon"]
-          product: "Dark Magician the Dragon Knight"
+        - from: ["Dark Magician", "Timaeus the United Dragon"]
+          to: "Dark Magician the Dragon Knight"
 
     - title: "The Claw of Hermos"
       items:
-        - materials: ["Queen's Knight", "The Claw of Hermos"]
-          product: "Goddess Bow"
+        - from: ["Queen's Knight", "The Claw of Hermos"]
+          to: "Goddess Bow"
         
-        - materials: ["Red-Eyes Black Dragon", "The Claw of Hermos"]
-          product: "Red-Eyes Black Dragon Sword"
+        - from: ["Red-Eyes Black Dragon", "The Claw of Hermos"]
+          to: "Red-Eyes Black Dragon Sword"
     
     - title: "The Fang of Critias"
       items:
-        - materials: ["Mirror Force", "The Fang of Critias"]
-          product: "Mirror Force Dragon"
+        - from: ["Mirror Force", "The Fang of Critias"]
+          to: "Mirror Force Dragon"
 
     # Combinations that are not Fusions
-    - materials: ["Kuriboh", "Griffore"]
-      product: "Gurifoh"
+    - from: ["Kuriboh", "Griffore"]
+      to: "Gurifoh"
 
-    - materials: ["Kuriboh", "Kuribah", "Kuribee", "Kuribeh", "Kuriboo"]
-      product: "Kuribabylon"
+    - from: ["Kuriboh", "Kuribah", "Kuribee", "Kuribeh", "Kuriboo"]
+      to: "Kuribabylon"
 
-    - materials: ["Kuriboh", "Monster Reborn"]
-      product: "Kuribohrn"
+    - from: ["Kuriboh", "Monster Reborn"]
+      to: "Kuribohrn"
 
-    - materials: ["Kuriboh", "Relinquished"]
-      product: "Relinkuriboh"
+    - from: ["Kuriboh", "Relinquished"]
+      to: "Relinkuriboh"
 
-    - materials: ["Kuriboh", "Detonate"]
-      product: "Detonating Kuriboh"
+    - from: ["Kuriboh", "Detonate"]
+      to: "Detonating Kuriboh"
 
-    - materials: ["Kuriboh", "Multiply"]
-      product: "Multiplying Kuriboh!"
+    - from: ["Kuriboh", "Multiply"]
+      to: "Multiplying Kuriboh!"
 
-    - materials: ["Kuriboh", "Dark Magician"]
-      product: "Magikuriboh"
+    - from: ["Kuriboh", "Dark Magician"]
+      to: "Magikuriboh"
 
-    - materials: ["Kuriboh", "The Winged Dragon of Ra - Sphere Mode"]
-      product: "Sphere Kuriboh"
+    - from: ["Kuriboh", "The Winged Dragon of Ra - Sphere Mode"]
+      to: "Sphere Kuriboh"
 
-    - materials: ["Celtic Guardian", "Mystical Elf"]
-      product: "Mystical Celtic Sage"
+    - from: ["Celtic Guardian", "Mystical Elf"]
+      to: "Mystical Celtic Sage"
 
-    - materials: ["Green Gadget", "Red Gadget", "Yellow Gadget"]
-      product: "Gadget Trio"
+    - from: ["Green Gadget", "Red Gadget", "Yellow Gadget"]
+      to: "Gadget Trio"
 
-    - materials: ["The Winged Dragon of Ra", "Slifer the Sky Dragon", "Obelisk the Tormentor"]
-      product: "Holactie the Creator of Light"
+    - from: ["The Winged Dragon of Ra", "Slifer the Sky Dragon", "Obelisk the Tormentor"]
+      to: "Holactie the Creator of Light"
 
-    - materials: ["Alpha The Magnet Warrior", "Beta The Magnet Warrior", "Gamma The Magnet Warrior"]
-      product: "Valkyrion the Magna Warrior"
+    - from: ["Alpha The Magnet Warrior", "Beta The Magnet Warrior", "Gamma The Magnet Warrior"]
+      to: "Valkyrion the Magna Warrior"
 
-    - materials: ["Alpha The Electromagnet Warrior", "Beta The Electromagnet Warrior", "Gamma The Electromagnet Warrior"]
-      product: "Berserkion the Electromagna Warrior"
+    - from: ["Alpha The Electromagnet Warrior", "Beta The Electromagnet Warrior", "Gamma The Electromagnet Warrior"]
+      to: "Berserkion the Electromagna Warrior"
 
-    - materials: ["Magician of Black Chaos", "Gandora the Dragon of Destruction"]
-      product: "Dark Magician of Destruction"
+    - from: ["Magician of Black Chaos", "Gandora the Dragon of Destruction"]
+      to: "Dark Magician of Destruction"
 
-    - materials: ["Black Luster Soldier - Soldier of Light and Darkness", "Black Chaos the Dark Chaos Magician"]
-      product: "Black Chaos the Ultimate Magical Swordsman"
+    - from: ["Black Luster Soldier - Soldier of Light and Darkness", "Black Chaos the Dark Chaos Magician"]
+      to: "Black Chaos the Ultimate Magical Swordsman"
 
-    - materials: ["Gaia the Magical Knight", "Black Luster Soldier"]
-      product: "Soldier Gaia the Fierce Knight"
+    - from: ["Gaia the Magical Knight", "Black Luster Soldier"]
+      to: "Soldier Gaia the Fierce Knight"
 
-    - materials: ["Gaia, the Mid-Knight Sun", "Gaia, the Polar Knight"]
-      product: "Arisen Gaia the Fierce Knight"
+    - from: ["Gaia, the Mid-Knight Sun", "Gaia, the Polar Knight"]
+      to: "Arisen Gaia the Fierce Knight"
 
     # Commented out entries (can be enabled with or without color override)
-    # - materials: ["Green Gadget", "Red Gadget", "Yellow Gadget"]
+    # - from: ["Green Gadget", "Red Gadget", "Yellow Gadget"]
     #   product: "Stronghold the Moving Fortress"
 
 # Divergence: one root card branches into multiple paths
 divergence:
     - title: "Archetypes"
       items:
-        - root: "Shining Sarcophagus"
-          branches:
+        - from: "Shining Sarcophagus"
+          to:
             - "Dark Magician the Magician of Black Magic"
             - "Dark Magician Girl the Magician's Apprentice"
             - "Archfiend's Advent"
@@ -258,33 +258,33 @@ divergence:
             - "Silent Swordsman Zero"
             - "Stronghold the Hidden Fortress"
 
-        - root: "Ritual of Light and Darkness"
-          branches:
+        - from: "Ritual of Light and Darkness"
+          to:
             - "Black Luster Soldier - Soldier of Light and Darkness"
             - "Black Chaos the Dark Chaos Magician"
             - "Mystical Celtic Sage"
             - "Skull Archfiend of Chaos"
             - "Gurifoh"
 
-        - root: "Magnetic Field"
-          branches: 
+        - from: "Magnetic Field"
+          to: 
             - "Alpha The Magnet Warrior"
             - "Beta The Magnet Warrior" 
             - "Gamma The Magnet Warrior"
             - "Delta The Magnet Warrior" 
             - "Epsilon The Magnet Warrior"
 
-        - root: "Royal Straight"
-          branches: 
+        - from: "Royal Straight"
+          to: 
             - "Royal Straight Slasher"
             - "King's Knight"
             - "Queen's Knight"
             - "Jack's Knight"
             - "Joker's Knight"
             - "Imperial Bower"
-        - root: "Summoned Skull"
 
-          branches: 
+        - from: "Summoned Skull"
+          to: 
             - "Archfiend's Awakening"
             - "Archfiend's Manifestation"
             - "Archfiend's Call"
@@ -292,26 +292,42 @@ divergence:
             - "Archfiend's Advent"
             - "Skull Archfiend of Chaos"
 
-        - root: "Gaia The Fierce Knight"
-          branches:
+        - from: "Gaia The Fierce Knight"
+          to:
             - "Gaia Saber, the Lightning Shadow"
             - "Gaia Dragon, the Thunder Charger"
             - "Gaia Knight, the Force of Earth"
             - "Gaia Blaze, the Force of the Sun"
             - "Gaia Stream, the Graceful Force"
 
-        - root: "Dark Magician Girl"
-          branches: 
+        - from: "Dark Magician Girl"
+          to: 
             - "Berry Magician Girl"
             - "Lemon Magician Girl"
             - "Apple Magician Girl"
             - "Chocolate Magician Girl"
             - "Kiwi Magician Girl"
 
+complete:
+  - items: 
+      - "A"
+      - "B"
+      - "C"
+      - "D"
+      - "E"
+      - "F"
+      - "G"
+    title: "Example Complete"
+
+test:
+  - title: "Example Series"
+    items: ["1", "2", "3"]
+
+
 
         # Commented out entries (can be enabled with or without color override)
-        # - root: "Five Star Twilight"
-        #   branches:
+        # - from: "Five Star Twilight"
+        #   to:
         #     - "Kuriboh"
         #     - "Kuribee"
         #     - "Kuribah"
@@ -365,10 +381,11 @@ config:
   # ====================================================
   buttons:
     show: True
+    # filter: True
   node:
     scale_factor: 10
     recolor: True
-    table: True
+    # table: True
   interaction:
     navigationButtons: True
   download_images: True
