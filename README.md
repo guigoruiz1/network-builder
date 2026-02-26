@@ -1,22 +1,22 @@
-# Relationship Network Visualization
+# Relationship Network Visualisation
 
 ## Overview
 
-This project enables flexible visualization of relationships, transformations, and groupings between entities as an interactive network using [pyvis](https://pyvis.readthedocs.io/).
+This project enables flexible visualisation of relationships, transformations, and groupings between entities as an interactive network using [pyvis](https://pyvis.readthedocs.io/).
 
 You define your data and configuration in a YAML file, specifying sequences, branches, combinations, and custom styling. The script reads this YAML and generates a rich HTML network:
 
 - Nodes can display images, custom shapes, and tooltips.
 - Edges are colored and styled according to relationship type or custom overrides.
 - Interactive controls allow you to explore, filter, and adjust the network live in your browser.
-- All visual and behavioral options are configurable.
+- All visual and behavioural options are configurable.
 - Image downloading is handled by user-defined functions for maximum flexibility.
 
-Whether you want to visualize processes, hierarchies, or complex relationships, this tool provides a highly customizable and extensible framework for network visualization.
+Whether you want to visualise processes, hierarchies, or complex relationships, this tool provides a highly customisable and extensible framework for network visualisation.
 
 ---
 
-## 1. Full Example YAML Blocks
+## 1. Example YAML Blocks
 
 ### Sequential Relationships
 ```yaml
@@ -29,6 +29,8 @@ series:
     items: ["Draft", "Review", "Approval", "Publication"]
 ```
 
+Create directed edges between consecutive nodes.
+
 ### Parallel Relationships
 ```yaml
 parallel:
@@ -38,7 +40,12 @@ parallel:
       - ["North", "South"]
 ```
 
-### Convergence (Combining Entities)
+Create pairwise connections without arrows.
+
+**Note:**
+Series and parallel use the same backend `add_linear_edge` but have separate styling defaults for convenience.
+
+### Convergence
 ```yaml
 convergence:
   - title: "Combination"
@@ -49,7 +56,9 @@ convergence:
         to: "Pancake Batter"
 ```
 
-### Divergence (Branching Entities)
+Create directed edges from each `from` node to each `to` node.
+
+### Divergence
 ```yaml
 divergence:
   - title: "Branches"
@@ -60,8 +69,23 @@ divergence:
           - "Branch2"
 ```
 
-### Edge/Block Overrides (All Relationship Types)
-You can override edge and node properties at the block or entry level in any relationship type (series, parallel, convergence, divergence) using the new syntax:
+Create directed edges from each `from` node to each `to` node.
+
+**Note:**
+Convergence and divergence use the same backend (`add_branching_edges`) but have separate styling defaults for convenience.
+
+### Complete (Clique) Relationships
+```yaml
+complete:
+  - title: "Letters"
+    items: 
+      - ["X", "Y", "Z"]
+```
+
+Connect every pair of nodes in each list (complete subgraph).
+
+## 2. Edge/Node Overrides
+You can override edge and node properties at the block or entry level:
 ```yaml
 series:
   - title: "Special Chain"
@@ -100,19 +124,21 @@ divergence:
           - "BranchX"
 ```
 
+Block- and entry-level dictionaries provided under `node` or `edge` are forwarded as keyword arguments to pyvis when nodes and edges are created. A few special node options — `scale_factor`, `table`, and `recolor` — are consumed (popped) by the script for post-processing and are not passed through to pyvis; see section 6 for details.
+
 ---
 
-## 2. Config Section Details
+## 3. Config Section Details
 
-The `config` block controls all global visual and behavioral options. Example:
+The `config` block controls all global visual and behavioural options. Example:
 ```yaml
 config:
   buttons:
     show: True
     filter: [physics, interaction]
+
   node:
     scale_factor: 10
-    shape: image
     size: 100
     borderWidthSelected: 4
   edge:
@@ -122,7 +148,6 @@ config:
       series:
         edge:
           color: orange
-          smooth: true
       convergence:
         edge:
           color: purple
@@ -134,7 +159,6 @@ config:
       divergence:
         edge:
           color: red
-          smooth: true
   physics:
     enabled: true
     repulsion:
@@ -142,29 +166,26 @@ config:
       central_gravity: 0.2
       spring_length: 200
       spring_strength: 0.015
-      damping: 0.09
+      damping: 0.5
   network:
-    height: 90vh
-    width: 100%
-    directed: true
+    height: "90vh"
+    width: "100%"
     select_menu: true
   interaction:
     navigationButtons: true
   download_images: true
 ```
-
-**Key Options:**
-- `buttons`: Show pyvis options menu, filter menu groups.
+- **Key Options:**
 - `node`: Appearance of nodes.
 - `edge`: Appearance of edges.
-- `operation`: Per-relationship edge defaults.
-- `physics`: Controls force-directed layout.
-- `network`: Network dimensions and directionality.
+- `operation`: Per-operation edge/node defaults.
 - `interaction`: Navigation and drag controls.
+- `physics`: Controls force-directed layout.
+- `network`: Network initialisation parameters.
 - `download_images`: Toggle image downloading.
 
 **Note:**
-Node and edge configuration options in the `config` block are applied globally to all nodes and edges unless overridden. To customize properties for a specific entry (such as size, shape, label, or any pyvis-supported attribute), use the `node:` or `edge:` key at the block or entry level in your YAML file. For example:
+Node and edge configuration options in the `config` block are applied globally to all nodes and edges unless overridden. Operation-specific defaults placed under the `operation` key (for example `operation.series.edge`) provide defaults for node/edge styles applied to that operation. These operation-specific settings override the global `node`/`edge` defaults for the given operation and are applied before any block- or entry-level overrides. To customize properties for a specific entry (such as size, shape, label, or any pyvis-supported attribute), use the `node:` or `edge:` key at the block or entry level in your YAML file. For example:
 ```yaml
 series:
   - items:
@@ -182,9 +203,9 @@ Arrows are handled automatically by the script logic based on relationship type.
 
 ---
 
-## 3. Image Downloading & Cropping
+## 4. Image Downloading
 
-Image downloading and cropping are handled by user-defined external functions, which you can customize as needed. The script expects `download_images` and `image_filename` functions to be available (imported from a `imageManager.py` module).
+Image downloading is handled by user-defined external functions, which you can customize as needed. The script expects `download_images` and `image_filename` functions to be available (imported from a `imageManager.py` module).
 
 - `download_images(names, config)`: Downloads images for each node name, passing a configuration options object to incorporate the YAML config fields.
 - `image_filename(name)`: Returns the filename for a given node name, allowing you to control naming conventions, file extensions, or directory structure. This is used to assign image paths to each node.
@@ -193,32 +214,7 @@ You can extend these functions to support custom image sources (local, remote, A
 
 ---
 
-## 4. Extending the Network
-
-- **Add new relationships:** Add blocks to `series`, `parallel`, `convergence`, or `divergence`.
-- **Custom node/edge appearance:** Override parameters at block or entry level in any relationship type.
-
----
-
-## 5. Troubleshooting
-
-- **Missing images:**
-  - Check your image handling function and internet connection.
-  - Set `download_images: false` to skip image fetching.
-  - Ensure entity names match your image source logic.
-- **Dependency issues:**
-  - Install required packages: `pip install pyvis pillow pyyaml requests`.
-- **YAML formatting errors:**
-  - Use proper indentation and list syntax.
-  - Validate YAML with online tools if needed.
-- **Network performance:**
-  - For large networks, adjust `physics` and `layout` settings.
-- **Edge/Node appearance:**
-  - Use block/entry overrides for color, smoothness, and title.
-
----
-
-## 6. Pyvis Options Menu & Interactive Controls
+## 5. Pyvis Options Menu & Interactive Controls
 
 - **Options menu:**
   - Enable with `config.buttons.show: true`.
@@ -229,6 +225,24 @@ You can extend these functions to support custom image sources (local, remote, A
 - **Menu features:**
   - Adjust physics, layout, and appearance live in the browser.
   - Save and restore network state.
+
+---
+
+## 6. Node Scaling and Recoloring Logic
+
+- **Node scaling:**
+  - Controlled by `config.node.scale_factor` (numeric value).
+  - If set to a value greater than 0, after all edges are added, each node's size is increased by `scale_factor * degree`.
+  - Degree is the number of edges connected to each node (both incoming and outgoing).
+  - This helps visually emphasize more connected nodes.
+
+- **Node recoloring:**
+  - Controlled by `config.node.recolor` (boolean).
+  - If enabled, each node is recolored to match the most common color among its connected edges.
+  - This can help visually group nodes by relationship type or highlight network structure.
+
+- **Node table output:**
+  - If `config.node.table` is set to `True`, a summary table of node degrees and colors is printed to the console after building the network.
 
 ---
 
@@ -261,22 +275,30 @@ You can further customize the `net` object before saving or displaying.
 
 ---
 
+## 8. Extending the Network
 
-## 8. Node Scaling and Recoloring Logic
+- **Add new relationships:** Add blocks to `series`, `parallel`, `convergence`, `divergence`, `complete`, or any custom operation name you prefer.
+- **Custom node/edge appearance:** Override parameters at block or entry level in any relationship type.
+- **Custom operations:** You may define entries using any operation name. The script infers handling from the structure of each entry rather than the operation name: entries with list-like `items` are treated as linear sequences (`add_linear_edges`), while entries containing `from`/`to` are treated as branching relationships (`add_branching_edges`).
+- **Node merge and overwrite behavior:** A node can appear in multiple blocks or entries. Node attributes are merged as entries are processed; when the same attribute is provided multiple times, the last occurrence (the most recently processed entry) wins and will overwrite earlier values for that attribute.
 
-- **Node scaling:**
-  - Controlled by `config.node.scale_factor` (numeric value).
-  - If set to a value greater than 0, after all edges are added, each node's size is increased by `scale_factor * degree`.
-  - Degree is the number of edges connected to each node (both incoming and outgoing).
-  - This helps visually emphasize more connected nodes.
+---
 
-- **Node recoloring:**
-  - Controlled by `config.node.recolor` (boolean).
-  - If enabled, each node is recolored to match the most common color among its connected edges.
-  - This can help visually group nodes by relationship type or highlight network structure.
+## 9. Troubleshooting
 
-- **Node table output:**
-  - If `config.node.table` is set to `True`, a summary table of node degrees and colors is printed to the console after building the network.
+- **Missing images:**
+  - Check your image handling function and internet connection.
+  - Set `download_images: false` to skip image fetching.
+  - Ensure entity names match your image source logic.
+- **Dependency issues:**
+  - Install required packages: `pip install pyvis pillow pyyaml requests`.
+- **YAML formatting errors:**
+  - Use proper indentation and list syntax.
+  - Validate YAML with online tools if needed.
+- **Network performance:**
+  - For large networks, adjust `physics` and `layout` settings.
+- **Edge/Node appearance:**
+  - Use block/entry overrides for color, smoothness, and title.
 
 ---
 

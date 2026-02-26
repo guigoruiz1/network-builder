@@ -11,6 +11,11 @@ from collections import Counter
 
 
 class Config:
+    """
+    Configuration handler for network visualization settings.
+    Supports deep merging of default and user-provided configs, and dictionary-style access.
+    """
+
     default = {
         "node": {
             "scale_factor": 0,
@@ -91,7 +96,7 @@ config = Config()  # Global config variable
 # --- Option Configuration Utilities ---
 
 
-def set_physics_options(physics_obj, config):
+def set_physics_options(physics_obj, config: dict) -> None:
     """
     Apply physics-related configuration to the pyvis Physics object.
     Supports enabling/disabling physics, selecting solvers, and toggling stabilization.
@@ -127,7 +132,7 @@ def set_physics_options(physics_obj, config):
         setattr(physics_obj, attr, value)
 
 
-def set_edge_options(edges_obj, config):
+def set_edge_options(edges_obj, config: dict) -> None:
     """
     Apply edge-related configuration to the pyvis EdgeOptions object.
     Supports toggling smoothness type and color inheritance.
@@ -147,7 +152,7 @@ def set_edge_options(edges_obj, config):
         setattr(edges_obj, attr, value)
 
 
-def set_layout_options(layout_obj, config):
+def set_layout_options(layout_obj, config: dict) -> None:
     """
     Apply layout-related configuration to the pyvis Layout object.
     Supports random seed, improved layout, and hierarchical layout options.
@@ -176,7 +181,7 @@ def set_layout_options(layout_obj, config):
             setattr(layout_obj.hierarchical, attr, value)
 
 
-def set_options():
+def get_options():
     """
     Create and configure a pyvis Options object using the global config.
     Delegates to helper functions for each sub-object (physics, edges, layout, interaction, configure).
@@ -208,6 +213,13 @@ def set_options():
 
 
 def flatten_items(items):
+    """
+    Recursively flattens nested lists or single items into a generator of items.
+    Args:
+        items: An item to flatten.
+    Yields:
+        Individual items from the input.
+    """
     if isinstance(items, str):
         yield items
     elif isinstance(items, list):
@@ -217,11 +229,10 @@ def flatten_items(items):
         yield items
 
 
-def section_has_branching(data):
+def section_has_branching(data: dict | list) -> bool:
     """
     Recursively checks if any entry in the provided data (dict or list) contains both 'from' and 'to' keys.
-    This identifies branching relationships in a YAML structure, regardless of nesting.
-
+    Identifies branching relationships in a YAML structure, regardless of nesting.
     Args:
         data: The section data (dict or list) to check for branching relationships.
     Returns:
@@ -240,14 +251,14 @@ def section_has_branching(data):
     return False
 
 
-def get_kwargs(entry_style, operation, block_style={}, config_key="edge"):
+def get_kwargs(
+    entry_style: dict, operation: str, block_style: dict = {}, config_key: str = "edge"
+) -> dict:
     """
     Merge styling options from config and YAML overrides for a given relationship entry.
-
     Args:
         entry_style (dict): Entry level style overrides.
-        config (dict): Configuration dictionary.
-        operation (str): Relationship type (series, parallel, convergence, divergence).
+        operation (str): Relationship type (series, parallel, convergence, divergence, ...).
         block_style (dict): Optional block-level style overrides.
         config_key (str): Which config key to use ('edge' or 'node').
     Returns:
@@ -324,7 +335,12 @@ def get_nodes(data):
     return node_info
 
 
-def edit_nodes(net, scale_factor=None, recolor=False, print_table=False):
+def edit_nodes(
+    net: Network,
+    scale_factor: float = 0,
+    recolor: bool = False,
+    print_table: bool = False,
+) -> None:
     """
     Edit node properties in a pyvis Network object.
     Optionally scale node size by degree, recolor nodes by edge color majority, and print a summary table.
@@ -340,7 +356,7 @@ def edit_nodes(net, scale_factor=None, recolor=False, print_table=False):
         node_id = node["id"]
         degree = len(net.neighbors(node_id))
         color = node["color"]
-        if scale_factor:
+        if scale_factor > 0:
             base_size = node.get("size", 0)
             node["size"] = base_size + scale_factor * degree
         if recolor:
@@ -391,7 +407,7 @@ def edit_nodes(net, scale_factor=None, recolor=False, print_table=False):
 # --- Edge Creation Functions ---
 
 
-def add_linear_edges(data, net, operation):
+def add_linear_edges(data, net: Network, operation: str) -> None:
     """
     Add edges for any linear relationship where entries are lists of node names.
 
@@ -437,15 +453,13 @@ def add_linear_edges(data, net, operation):
                 net.add_edge(items[i], items[i + 1], **edge_kwargs)
 
 
-def add_branching_edges(data, net, operation):
+def add_branching_edges(data, net: Network, operation: str) -> None:
     """
     Add edges for any relationship type that uses 'from' and 'to' fields.
     For example: convergence, divergence, or custom operations.
 
     For each combination of 'from' and 'to', adds an edge from 'from' to 'to'.
-    If the operation is 'convergence', sets arrows='from'.
-    If the operation is 'divergence', sets arrows='to'.
-    Otherwise, does not set the arrows attribute (uses pyvis default).
+    If no arrows are set in the edge configuration, sets arrows='from'.
 
     Args:
         data: Section data (list or dict with 'items').
@@ -474,9 +488,7 @@ def add_branching_edges(data, net, operation):
             config_key="edge",
         )
         edge_kwargs["title"] = entry.get("title", block.get("title", operation))
-        if ("arrows" not in edge_kwargs) and (
-            operation in ["convergence", "divergence"]
-        ):
+        if "arrows" not in edge_kwargs:
             edge_kwargs["arrows"] = "to"
 
         for f in from_vals:
@@ -506,7 +518,7 @@ def add_branching_edges(data, net, operation):
         add_entry(entry)
 
 
-def add_clique_edges(data, net):
+def add_clique_edges(data, net: Network) -> None:
     """
     Add edges for a 'clique' (complete graph) operation.
     For each list of nodes, connect every pair of nodes.
@@ -544,7 +556,7 @@ def add_clique_edges(data, net):
 # --- Main Network Construction ---
 
 
-def build_network(yaml_path):
+def build_network(yaml_path: str) -> Network:
     """
     Build an interactive relationship network from a YAML file.
     Loads configuration, downloads images, adds nodes and edges, applies all options, and scales node sizes.
@@ -563,7 +575,7 @@ def build_network(yaml_path):
     node_info = get_nodes(data=data)
 
     net = Network(**config.get("network"))
-    net.options = set_options()
+    net.options = get_options()
 
     if config.get("download_images", False):
         try:

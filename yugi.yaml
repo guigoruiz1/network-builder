@@ -308,23 +308,6 @@ divergence:
             - "Chocolate Magician Girl"
             - "Kiwi Magician Girl"
 
-complete:
-  - items: 
-      - "A"
-      - "B"
-      - "C"
-      - "D"
-      - "E"
-      - "F"
-      - "G"
-    title: "Example Complete"
-
-test:
-  - title: "Example Series"
-    items: ["1", "2", "3"]
-
-
-
         # Commented out entries (can be enabled with or without color override)
         # - from: "Five Star Twilight"
         #   to:
