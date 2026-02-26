@@ -18,6 +18,8 @@ Whether you want to visualise processes, hierarchies, or complex relationships, 
 
 ## 1. Example YAML Blocks
 
+The section names you choose are not hard-coded — the examples below (`series`, `parallel`, `convergence`, `divergence`, etc.) are conventional titles. The script determines processing based on each section's entry structure.
+
 ### Sequential Relationships
 ```yaml
 series:
@@ -29,21 +31,17 @@ series:
     items: ["Draft", "Review", "Approval", "Publication"]
 ```
 
-Create directed edges between consecutive nodes.
-
 ### Parallel Relationships
 ```yaml
 parallel:
-  - title: "Counterparts"
-    items:
-      - ["Sun", "Moon"]
-      - ["North", "South"]
+  - items:
+    - ["Left", "Right"]
+    - ["North", "South"]
+    edge:
+      arrows: "none"
 ```
 
-Create pairwise connections without arrows.
-
-**Note:**
-Series and parallel use the same backend `add_linear_edge` but have separate styling defaults for convenience.
+`series` and `parallel` in these examples are sections with list-like entries. These are processed by the linear-edge backend `add_linear_edges`, where each node is connected to its immediate neighbour.
 
 ### Convergence
 ```yaml
@@ -56,8 +54,6 @@ convergence:
         to: "Pancake Batter"
 ```
 
-Create directed edges from each `from` node to each `to` node.
-
 ### Divergence
 ```yaml
 divergence:
@@ -69,10 +65,7 @@ divergence:
           - "Branch2"
 ```
 
-Create directed edges from each `from` node to each `to` node.
-
-**Note:**
-Convergence and divergence use the same backend (`add_branching_edges`) but have separate styling defaults for convenience.
+`convergence` and `divergence` in these examples contain entries with `from`/`to` keys. These are processed by the branching-edge backend `add_branching_edges`, where all nodes in `from` are connected to all nodes in `to`.
 
 ### Complete (Clique) Relationships
 ```yaml
@@ -82,9 +75,10 @@ complete:
       - ["X", "Y", "Z"]
 ```
 
-Connect every pair of nodes in each list (complete subgraph).
+`complete` is a special case which connects all nodes in each list (complete subgraph).
 
 ## 2. Edge/Node Overrides
+
 You can override edge and node properties at the block or entry level:
 ```yaml
 series:
@@ -136,7 +130,6 @@ config:
   buttons:
     show: True
     filter: [physics, interaction]
-
   node:
     scale_factor: 10
     size: 100
@@ -144,7 +137,7 @@ config:
   edge:
     width: 20
     arrowStrikethrough: False
-  operation:
+  section:
       series:
         edge:
           color: orange
@@ -156,6 +149,7 @@ config:
         edge:
           color: green
           smooth: false
+          arrows: "none"
       divergence:
         edge:
           color: red
@@ -178,14 +172,13 @@ config:
 - **Key Options:**
 - `node`: Appearance of nodes.
 - `edge`: Appearance of edges.
-- `operation`: Per-operation edge/node defaults.
+- `section`: Per-section edge/node defaults.
 - `interaction`: Navigation and drag controls.
 - `physics`: Controls force-directed layout.
 - `network`: Network initialisation parameters.
 - `download_images`: Toggle image downloading.
 
-**Note:**
-Node and edge configuration options in the `config` block are applied globally to all nodes and edges unless overridden. Operation-specific defaults placed under the `operation` key (for example `operation.series.edge`) provide defaults for node/edge styles applied to that operation. These operation-specific settings override the global `node`/`edge` defaults for the given operation and are applied before any block- or entry-level overrides. To customize properties for a specific entry (such as size, shape, label, or any pyvis-supported attribute), use the `node:` or `edge:` key at the block or entry level in your YAML file. For example:
+Node and edge configuration options in the `config` block are applied globally to all nodes and edges unless overridden. Per-section defaults placed under the `section` key (for example `section.series.edge`) provide defaults for node/edge styles applied to that section and are applied before any block- or entry-level overrides. To customize properties for a specific entry (such as size, shape, label, or any pyvis-supported attribute), use the `node:` or `edge:` key at the block or entry level in your YAML file. For example:
 ```yaml
 series:
   - items:
@@ -199,7 +192,43 @@ series:
 ```
 If you need to further modify an individual node or edge after building the network, you can access the node or edge from the returned `net` object and apply changes directly in Python.
 
-Arrows are handled automatically by the script logic based on relationship type.
+**Note:** A node can appear in multiple sections or entries. Node attributes are merged as entries are processed; when the same attribute is provided multiple times, the last occurrence (the most recently processed entry) wins and will overwrite earlier values for that attribute.
+
+### Script Default Config
+
+The script loads a default Config object with the following attributes for convenience:
+```yaml
+node:
+  scale_factor: 0
+  shape: image
+  size: 100
+  borderWidthSelected: 4
+  shapeProperties:
+    useBorderWithImage: true
+edge:
+  arrowStrikethrough: false
+  width: 20
+  arrows: to
+buttons:
+  show: false
+  filter:
+    - physics
+    - interaction
+physics:
+  enabled: true
+  repulsion:
+    node_distance: 1000
+    central_gravity: 0.2
+    spring_length: 200
+    spring_strength: 0.015
+    damping: 0.5
+network:
+  height: "90vh"
+  width: "100%"
+  directed: false
+  select_menu: true
+download_images: false
+```
 
 ---
 
@@ -268,23 +297,14 @@ To integrate into your own Python scripts:
 ```python
 from network import build_network
 net = build_network('your_data.yaml')
-net.show('network.html')  # Opens the visualization in your browser
+net.show('network.html')  # Opens the visualisation in your browser
 ```
 
 You can further customize the `net` object before saving or displaying.
 
 ---
 
-## 8. Extending the Network
-
-- **Add new relationships:** Add blocks to `series`, `parallel`, `convergence`, `divergence`, `complete`, or any custom operation name you prefer.
-- **Custom node/edge appearance:** Override parameters at block or entry level in any relationship type.
-- **Custom operations:** You may define entries using any operation name. The script infers handling from the structure of each entry rather than the operation name: entries with list-like `items` are treated as linear sequences (`add_linear_edges`), while entries containing `from`/`to` are treated as branching relationships (`add_branching_edges`).
-- **Node merge and overwrite behavior:** A node can appear in multiple blocks or entries. Node attributes are merged as entries are processed; when the same attribute is provided multiple times, the last occurrence (the most recently processed entry) wins and will overwrite earlier values for that attribute.
-
----
-
-## 9. Troubleshooting
+## 8. Troubleshooting
 
 - **Missing images:**
   - Check your image handling function and internet connection.

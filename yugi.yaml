@@ -375,12 +375,12 @@ config:
       edge:
         color: "orange"
   buttons:
-    show: True
+    show: False
     # filter: True
   node:
     scale_factor: 10
     recolor: True
-    # table: True
+    table: False
   interaction:
     navigationButtons: True
   download_images: True
