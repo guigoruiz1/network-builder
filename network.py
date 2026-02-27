@@ -518,7 +518,11 @@ def add_edges(data, net: Network, section: str) -> None:
                     f"[WARN] Unrecognized entry format in section '{section}': {entry}"
                 )
         elif isinstance(entry, list):
-            closed = block_style.get("closed", False)
+            closed = get_kwargs(
+                entry_style=block_style,
+                section=section,
+                config_key="edge",
+            ).get("closed", False)
             if closed == "complete":
                 add_clique_edges(entry, net=net, block_style=block_style)
             else:
@@ -623,5 +627,7 @@ if __name__ == "__main__":
 
     base_name = os.path.splitext(os.path.basename(args.yaml_file))[0]
     output_path = os.path.abspath(f"{base_name}.html")
+
+    net.set_template("./template.html")
     net.save_graph(output_path)
     print("Network saved to:", output_path)

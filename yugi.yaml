@@ -81,88 +81,81 @@ counterparts:
   # - ["Gamma The Magnet Warrior", "Gamma The Electromagnet Warrior"]
 
 attributes:
-  - items: 
-      - ["LIGHT", "DARK", "EARTH", "WATER", "FIRE", "WIND", "DIVINE"]
-    edge:
-      closed: "complete"
-    node:
-      shape: "circularImage"
+  - ["LIGHT", "DARK", "EARTH", "WATER", "FIRE", "WIND", "DIVINE"]
     
     
 
 # Convergence: multiple materials combine into a product
 fusion:
-  - items:
-    - from: ["Dark Magician Girl", "Dark Magician"]
-      to: "The Dark Magicians"
-    
-    - from: ["Dark Magician", "Buster Blader"]
-      to: "Dark Paladin"
-    
-    - from: ["Dark Magician", "Gaia The Fierce Knight"]
-      to: "Dark Cavalry"
-    
-    - from: ["Dark Magician", "Red-Eyes Black Dragon"]
-      to: "Red-Eyes Dark Dragoon"
-    
-    - from: ["Dark Magician", "Black Luster Soldier"]
-      to: "Master of Chaos"
-    
-    - from: ["Dark Magician", "Gaia the Magical Knight of Dragons"]
-      to: "Dark Magician the Knight of Dragon Magic"
-    
-    - from: ["Dark Magician", "Flame Swordsman"]
-      to: "Dark Flare Knight"
-    
-    - from: ["Magician of Black Chaos", "Blue-Eyes Ultimate Dragon"]
-      to: "Dragon Master Magia"
-    
-    - from: ["Black Luster Soldier", "Blue-Eyes Ultimate Dragon"]
-      to: "Dragon Master Knight"
-    
-    - from: ["Gaia The Fierce Knight", "Curse of Dragon"]
-      to: "Gaia the Dragon Champion"
-    
-    - from: ["Swift Gaia the Fierce Knight", "Curse of Dragonfire"]
-      to: "Sky Galloping Gaia the Dragon Champion"
-    
-    - from: ["Gaia the Magical Knight", "Curse of Dragon, the Cursed Dragon"]
-      to: "Gaia the Magical Knight of Dragons"
-    
-    - from: ["Summoned Skull", "Red-Eyes Black Dragon"]
-      to: "Black Skull Dragon"
+  - from: ["Dark Magician Girl", "Dark Magician"]
+    to: "The Dark Magicians"
+  
+  - from: ["Dark Magician", "Buster Blader"]
+    to: "Dark Paladin"
+  
+  - from: ["Dark Magician", "Gaia The Fierce Knight"]
+    to: "Dark Cavalry"
+  
+  - from: ["Dark Magician", "Red-Eyes Black Dragon"]
+    to: "Red-Eyes Dark Dragoon"
+  
+  - from: ["Dark Magician", "Black Luster Soldier"]
+    to: "Master of Chaos"
+  
+  - from: ["Dark Magician", "Gaia the Magical Knight of Dragons"]
+    to: "Dark Magician the Knight of Dragon Magic"
+  
+  - from: ["Dark Magician", "Flame Swordsman"]
+    to: "Dark Flare Knight"
+  
+  - from: ["Magician of Black Chaos", "Blue-Eyes Ultimate Dragon"]
+    to: "Dragon Master Magia"
+  
+  - from: ["Black Luster Soldier", "Blue-Eyes Ultimate Dragon"]
+    to: "Dragon Master Knight"
+  
+  - from: ["Gaia The Fierce Knight", "Curse of Dragon"]
+    to: "Gaia the Dragon Champion"
+  
+  - from: ["Swift Gaia the Fierce Knight", "Curse of Dragonfire"]
+    to: "Sky Galloping Gaia the Dragon Champion"
+  
+  - from: ["Gaia the Magical Knight", "Curse of Dragon, the Cursed Dragon"]
+    to: "Gaia the Magical Knight of Dragons"
+  
+  - from: ["Summoned Skull", "Red-Eyes Black Dragon"]
+    to: "Black Skull Dragon"
 
-    - from: ["Kuriboh", "Witch of the Black Forest"]
-      to: "Sanwitch"
+  - from: ["Kuriboh", "Witch of the Black Forest"]
+    to: "Sanwitch"
 
-    - from: ["Valkyrion the Magna Warrior", "Berserkion the Electromagna Warrior"]
-      to: "Imperion Magnum the Superconductive Battlebot"
+  - from: ["Valkyrion the Magna Warrior", "Berserkion the Electromagna Warrior"]
+    to: "Imperion Magnum the Superconductive Battlebot"
 
-    - from: ["King's Knight", "Queen's Knight", "Jack's Knight"]
-      to: "Arcana Knight Joker"
+  - from: ["King's Knight", "Queen's Knight", "Jack's Knight"]
+    to: "Arcana Knight Joker"
 
-    - from: ["Buster Blader, the Destruction Swordmaster", "Buster Dragon"]
-      to: "Buster Blader, the Dragon Destroyer Swordsman"
-    
-    - from: ["Legendary Knight Timaeus", "Legendary Knight Hermos", "Legendary Knight Critias"]
-      to: "Timaeus the Knight of Destiny"
+  - from: ["Buster Blader, the Destruction Swordmaster", "Buster Dragon"]
+    to: "Buster Blader, the Dragon Destroyer Swordsman"
+  
+  - from: ["Legendary Knight Timaeus", "Legendary Knight Hermos", "Legendary Knight Critias"]
+    to: "Timaeus the Knight of Destiny"
 
-    - from: ["Gazelle the King of Mythical Beasts", "Berfomet"]
-      to: "Chimera the Flying Mythical Beast"
+  - from: ["Gazelle the King of Mythical Beasts", "Berfomet"]
+    to: "Chimera the Flying Mythical Beast"
 
-    - from: ["Chimera the King of Phantom Beasts", "Cornfield Coatl", "Mirror Swordknight"]
-      to: "Chimera the Illusion Beast"
+  - from: ["Chimera the King of Phantom Beasts", "Cornfield Coatl", "Mirror Swordknight"]
+    to: "Chimera the Illusion Beast"
 
-    - from: ["Big-Winged Berfomet", "Mirror Swordknight"]
-      to: "Berfomet the Mythical King of Phantom Beasts"
+  - from: ["Big-Winged Berfomet", "Mirror Swordknight"]
+    to: "Berfomet the Mythical King of Phantom Beasts"
 
-    - from: ["Gazelle the King of Mythical Claws", "Big-Winged Berfomet"]
-      to:  "Chimera the King of Phantom Beasts"
+  - from: ["Gazelle the King of Mythical Claws", "Big-Winged Berfomet"]
+    to:  "Chimera the King of Phantom Beasts"
       
   - edge:
       title: "The Eye of Timaeus"
     items:
-
       - from: ["Dark Magician Girl", "Timaeus the United Dragon"]
         to: "Dark Magician Girl the Dragon Knight"
       
@@ -192,125 +185,123 @@ fusion:
 
 # Combinations that are not Fusions
 combination:
-  - items:
-    - from: ["Kuriboh", "Griffore"]
-      to: "Gurifoh"
+  - from: ["Kuriboh", "Griffore"]
+    to: "Gurifoh"
 
-    - from: ["Kuriboh", "Kuribah", "Kuribee", "Kuribeh", "Kuriboo"]
-      to: "Kuribabylon"
+  - from: ["Kuriboh", "Kuribah", "Kuribee", "Kuribeh", "Kuriboo"]
+    to: "Kuribabylon"
 
-    - from: ["Kuriboh", "Monster Reborn"]
-      to: "Kuribohrn"
+  - from: ["Kuriboh", "Monster Reborn"]
+    to: "Kuribohrn"
 
-    - from: ["Kuriboh", "Relinquished"]
-      to: "Relinkuriboh"
+  - from: ["Kuriboh", "Relinquished"]
+    to: "Relinkuriboh"
 
-    - from: ["Kuriboh", "Detonate"]
-      to: "Detonating Kuriboh"
+  - from: ["Kuriboh", "Detonate"]
+    to: "Detonating Kuriboh"
 
-    - from: ["Kuriboh", "Multiply"]
-      to: "Multiplying Kuriboh!"
+  - from: ["Kuriboh", "Multiply"]
+    to: "Multiplying Kuriboh!"
 
-    - from: ["Kuriboh", "Dark Magician"]
-      to: "Magikuriboh"
+  - from: ["Kuriboh", "Dark Magician"]
+    to: "Magikuriboh"
 
-    - from: ["Kuriboh", "The Winged Dragon of Ra - Sphere Mode"]
-      to: "Sphere Kuriboh"
+  - from: ["Kuriboh", "The Winged Dragon of Ra - Sphere Mode"]
+    to: "Sphere Kuriboh"
 
-    - from: ["Celtic Guardian", "Mystical Elf"]
-      to: "Mystical Celtic Sage"
+  - from: ["Celtic Guardian", "Mystical Elf"]
+    to: "Mystical Celtic Sage"
 
-    - from: ["Green Gadget", "Red Gadget", "Yellow Gadget"]
-      to: "Gadget Trio"
+  - from: ["Green Gadget", "Red Gadget", "Yellow Gadget"]
+    to: "Gadget Trio"
 
-    - from: ["The Winged Dragon of Ra", "Slifer the Sky Dragon", "Obelisk the Tormentor"]
-      to: "Holactie the Creator of Light"
+  - from: ["The Winged Dragon of Ra", "Slifer the Sky Dragon", "Obelisk the Tormentor"]
+    to: "Holactie the Creator of Light"
 
-    - from: ["Alpha The Magnet Warrior", "Beta The Magnet Warrior", "Gamma The Magnet Warrior"]
-      to: "Valkyrion the Magna Warrior"
+  - from: ["Alpha The Magnet Warrior", "Beta The Magnet Warrior", "Gamma The Magnet Warrior"]
+    to: "Valkyrion the Magna Warrior"
 
-    - from: ["Alpha The Electromagnet Warrior", "Beta The Electromagnet Warrior", "Gamma The Electromagnet Warrior"]
-      to: "Berserkion the Electromagna Warrior"
+  - from: ["Alpha The Electromagnet Warrior", "Beta The Electromagnet Warrior", "Gamma The Electromagnet Warrior"]
+    to: "Berserkion the Electromagna Warrior"
 
-    - from: ["Magician of Black Chaos", "Gandora the Dragon of Destruction"]
-      to: "Dark Magician of Destruction"
+  - from: ["Magician of Black Chaos", "Gandora the Dragon of Destruction"]
+    to: "Dark Magician of Destruction"
 
-    - from: ["Black Luster Soldier - Soldier of Light and Darkness", "Black Chaos the Dark Chaos Magician"]
-      to: "Black Chaos the Ultimate Magical Swordsman"
+  - from: ["Black Luster Soldier - Soldier of Light and Darkness", "Black Chaos the Dark Chaos Magician"]
+    to: "Black Chaos the Ultimate Magical Swordsman"
 
-    - from: ["Gaia the Magical Knight", "Black Luster Soldier"]
-      to: "Soldier Gaia the Fierce Knight"
+  - from: ["Gaia the Magical Knight", "Black Luster Soldier"]
+    to: "Soldier Gaia the Fierce Knight"
 
-    - from: ["Gaia, the Mid-Knight Sun", "Gaia, the Polar Knight"]
-      to: "Arisen Gaia the Fierce Knight"
+  - from: ["Gaia, the Mid-Knight Sun", "Gaia, the Polar Knight"]
+    to: "Arisen Gaia the Fierce Knight"
 
     # Commented out entries (can be enabled with or without color override)
     # - from: ["Green Gadget", "Red Gadget", "Yellow Gadget"]
     #   product: "Stronghold the Moving Fortress"
 
 # Divergence: one root card branches into multiple paths
-archtypes:
-  - items:
-    - from: "Shining Sarcophagus"
-      to:
-        - "Dark Magician the Magician of Black Magic"
-        - "Dark Magician Girl the Magician's Apprentice"
-        - "Archfiend's Advent"
-        - "Gandora-G the Dragon of Destruction"
-        - "Gadget Trio"
-        - "Silent Magician Zero"
-        - "Silent Swordsman Zero"
-        - "Stronghold the Hidden Fortress"
+archtype:
+  - from: "Shining Sarcophagus"
+    to:
+      - "Dark Magician the Magician of Black Magic"
+      - "Dark Magician Girl the Magician's Apprentice"
+      - "Archfiend's Advent"
+      - "Gandora-G the Dragon of Destruction"
+      - "Gadget Trio"
+      - "Silent Magician Zero"
+      - "Silent Swordsman Zero"
+      - "Stronghold the Hidden Fortress"
 
-    - from: "Ritual of Light and Darkness"
-      to:
-        - "Black Luster Soldier - Soldier of Light and Darkness"
-        - "Black Chaos the Dark Chaos Magician"
-        - "Mystical Celtic Sage"
-        - "Skull Archfiend of Chaos"
-        - "Gurifoh"
+  - from: "Ritual of Light and Darkness"
+    to:
+      - "Black Luster Soldier - Soldier of Light and Darkness"
+      - "Black Chaos the Dark Chaos Magician"
+      - "Mystical Celtic Sage"
+      - "Skull Archfiend of Chaos"
+      - "Gurifoh"
 
-    - from: "Magnetic Field"
-      to: 
-        - "Alpha The Magnet Warrior"
-        - "Beta The Magnet Warrior" 
-        - "Gamma The Magnet Warrior"
-        - "Delta The Magnet Warrior" 
-        - "Epsilon The Magnet Warrior"
+  - from: "Magnetic Field"
+    to: 
+      - "Alpha The Magnet Warrior"
+      - "Beta The Magnet Warrior" 
+      - "Gamma The Magnet Warrior"
+      - "Delta The Magnet Warrior" 
+      - "Epsilon The Magnet Warrior"
 
-    - from: "Royal Straight"
-      to: 
-        - "Royal Straight Slasher"
-        - "King's Knight"
-        - "Queen's Knight"
-        - "Jack's Knight"
-        - "Joker's Knight"
-        - "Imperial Bower"
+  - from: "Royal Straight"
+    to: 
+      - "Royal Straight Slasher"
+      - "King's Knight"
+      - "Queen's Knight"
+      - "Jack's Knight"
+      - "Joker's Knight"
+      - "Imperial Bower"
 
-    - from: "Summoned Skull"
-      to: 
-        - "Archfiend's Awakening"
-        - "Archfiend's Manifestation"
-        - "Archfiend's Call"
-        - "Archfiend's Ascent"
-        - "Archfiend's Advent"
-        - "Skull Archfiend of Chaos"
+  - from: "Summoned Skull"
+    to: 
+      - "Archfiend's Awakening"
+      - "Archfiend's Manifestation"
+      - "Archfiend's Call"
+      - "Archfiend's Ascent"
+      - "Archfiend's Advent"
+      - "Skull Archfiend of Chaos"
 
-    - from: "Gaia The Fierce Knight"
-      to:
-        - "Gaia Saber, the Lightning Shadow"
-        - "Gaia Dragon, the Thunder Charger"
-        - "Gaia Knight, the Force of Earth"
-        - "Gaia Blaze, the Force of the Sun"
-        - "Gaia Stream, the Graceful Force"
+  - from: "Gaia The Fierce Knight"
+    to:
+      - "Gaia Saber, the Lightning Shadow"
+      - "Gaia Dragon, the Thunder Charger"
+      - "Gaia Knight, the Force of Earth"
+      - "Gaia Blaze, the Force of the Sun"
+      - "Gaia Stream, the Graceful Force"
 
-    - from: "Dark Magician Girl"
-      to: 
-        - "Berry Magician Girl"
-        - "Lemon Magician Girl"
-        - "Apple Magician Girl"
-        - "Chocolate Magician Girl"
-        - "Kiwi Magician Girl"
+  - from: "Dark Magician Girl"
+    to: 
+      - "Berry Magician Girl"
+      - "Lemon Magician Girl"
+      - "Apple Magician Girl"
+      - "Chocolate Magician Girl"
+      - "Kiwi Magician Girl"
 
     # Commented out entries (can be enabled with or without color override)
     # - from: "Five Star Twilight"
@@ -379,6 +370,12 @@ config:
     evolving:
       edge:
         color: "orange"
+    attributes:
+      edge:
+        closed: "complete"
+      node:
+        shape: "circularImage"
+        size: 15
   buttons:
     show: False
     # filter: True
@@ -393,5 +390,6 @@ config:
   network:
     filter_menu: True
     directed: True
-    # heading: "Yu-Gi-Oh! Card Relationship Graph"
+    height: "80vh"
+    heading: "Yu-Gi-Oh! Card Relationship Graph"
   download_images: True
