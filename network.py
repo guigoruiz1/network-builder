@@ -365,7 +365,7 @@ def add_linear_edges(entry, net: Network, section: str, block_style: dict = {}) 
     This function infers edge creation logic based on the structure of the data:
     - If an entry is a list (or nested lists), it creates edges between consecutive nodes.
     - If an entry is a dict with an 'items' field, it recursively processes those items.
-    - Edge styles and titles can be overridden at the entry or block level.
+    - Edge styles can be overridden at the entry or block level.
 
     Args:
         entry: Entry (list or dict with 'items'), containing lists of node names.
@@ -382,9 +382,7 @@ def add_linear_edges(entry, net: Network, section: str, block_style: dict = {}) 
         section=section,
         config_key="edge",
     )
-    edge_kwargs["title"] = (
-        entry.get("title") if isinstance(entry, dict) else None
-    ) or section
+    edge_kwargs["title"] = edge_kwargs.get("title") or section
 
     items = entry["items"] if isinstance(entry, dict) and "items" in entry else entry
 
@@ -435,7 +433,7 @@ def add_branching_edges(
             section=section,
             config_key="edge",
         )
-        edge_kwargs["title"] = e.get("title", section)
+        edge_kwargs["title"] = edge_kwargs.get("title") or section
 
         for f in from_vals:
             for t in to_vals:
@@ -463,7 +461,7 @@ def add_clique_edges(entry, net: Network, block_style: dict = {}) -> None:
         section="complete",
         config_key="edge",
     )
-    edge_kwargs["title"] = entry.get("title") if isinstance(entry, dict) else "complete"
+    edge_kwargs["title"] = edge_kwargs.get("title") or "complete"
 
     if "arrows" not in edge_kwargs:
         edge_kwargs["arrows"] = "none"

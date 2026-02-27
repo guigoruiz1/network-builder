@@ -4,6 +4,7 @@ import asyncio
 from PIL import Image
 import requests
 from io import BytesIO
+import glob
 
 # --- Filename sanitization utility ---
 
@@ -14,38 +15,52 @@ sizes = {
 }
 
 
-def filename(name):
+def filename(name, ext=None):
     """
     Sanitize a card name for use as a filename by removing all non-alphanumeric characters.
 
     Args:
         name (str): Card name to sanitize.
+        ext (str or list or None): Extension to use. If None, try to detect an existing
+            file among common extensions and return that path; if none exist, default to 'jpg'.
     Returns:
-        str: Sanitized filename string.
+        str: Path to the filename with the chosen or detected extension.
     """
     base = f"images/{re.sub(r'[^\w]', '', name)}"
 
-    def try_ext(ext):
-        return f"{base}.{ext}"
+    def path_for(e):
+        return f"{base}.{e}"
 
-    # ext argument should be passed to the function
-    # Default to jpg if not provided
-    ext = "jpg"
-    # If ext is provided as a keyword argument, use it
-    import inspect
+    pref_exts = ["jpg", "jpeg", "png", "svg"]
 
-    frame = inspect.currentframe()
-    args, _, _, values = inspect.getargvalues(frame)
-    if "ext" in values:
-        ext = values["ext"]
+    # If ext explicitly provided as list/tuple, prefer existing files in that order
     if isinstance(ext, (list, tuple)):
         for e in ext:
-            path = try_ext(e)
-            if os.path.exists(path):
-                return path
-        return try_ext(ext[0])
-    else:
-        return try_ext(ext)
+            p = path_for(e)
+            if os.path.isfile(p):
+                return p
+        # fall back to any match
+        matches = glob.glob(f"{base}.*")
+        if matches:
+            return matches[0]
+        return path_for(ext[0])
+
+    # If ext explicitly provided as string, return that path
+    if isinstance(ext, str):
+        return path_for(ext)
+
+    # ext is None -> use glob to find any existing file
+    matches = glob.glob(f"{base}.*")
+    if matches:
+        # prefer known extensions order
+        for e in pref_exts:
+            for m in matches:
+                if m.lower().endswith(f".{e}"):
+                    return m
+        return matches[0]
+
+    # default
+    return path_for("jpg")
 
 
 # --- Image downloading and cropping utilities ---
@@ -134,8 +149,9 @@ def _download_images_fallback(names):
     base_url = "https://yugipedia.com/api.php"
 
     for name in sorted(names):
-        file_path = filename(name)
-        if os.path.exists(file_path):
+        # If any existing image exists for this name, skip
+        existing = filename(name, ext=None)
+        if os.path.exists(existing):
             continue  # Already downloaded
         # Query for the card's image via MediaWiki API
         params = {
@@ -172,18 +188,22 @@ def _download_images_fallback(names):
                 image_url.lower().endswith(".svg")
                 or img_resp.headers.get("Content-Type", "").lower() == "image/svg+xml"
             ):
-                # Save SVG content directly
+                # Save SVG content directly with .svg extension
+                file_path = filename(name, ext="svg")
                 with open(file_path, "wb") as f:
                     f.write(img_bytes.getvalue())
+                print(f"Saved SVG image for '{name}'")
                 continue
             else:
+                # Save raster image as jpg
+                file_path = filename(name, ext="jpg")
                 img = Image.open(img_bytes)
                 img = _crop_section(img, out_size=None)
                 if img.mode != "RGB":
                     img = img.convert("RGB")
 
-            img.save(file_path)
-            print(f"Downloaded image for '{name}'")
+                img.save(file_path)
+                print(f"Downloaded image for '{name}'")
         except Exception as e:
             print(f"[ERROR] Failed to download image for '{name}': {e}")
 

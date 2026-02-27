@@ -54,39 +54,23 @@ aging:
 
 # Parallel: cards at the same power level
 counterparts: 
-  - edge:
-      color: "blue"
-      arrows: "none"
-    items:
-      - ["Dark Magician", "Dark Magician the Magician of Black Magic"]
-      - ["Dark Magician Girl", "Dark Magician Girl the Magician's Apprentice"]
-      - ["Black Luster Soldier - Sacred Soldier", "Black Luster Soldier - Envoy of the Beginning", "Black Luster Soldier - Envoy of the Evening Twilight"]
-      - ["Ebon Illusion Magician",  "Illusion of Chaos"]
-      - ["Black Luster Soldier - Soldier of Light and Darkness", "Black Luster Soldier - Super Soldier", "Black Luster Soldier - Legendary Swordsman"]
-      - ["Gandora the Dragon of Destruction", "Gandora-X the Dragon of Demolition"]
-      - ["Kuribabylon", "Kuribandit"]
-      - ["Silent Swordsman", "Silent Swordsman Zero"]
-      - ["Silent Magician", "Silent Magician Zero"]
-      - ["Metalhold the Moving Blockade", "Stronghold the Moving Fortress", "Powerhold the Moving Battery"]
-      - ["Arcana Extra Joker", "Arcana Knight Joker", "Arcana Triumph Joker"]
-      - ["Arisen Gaia the Fierce Knight", "Charging Gaia the Fierce Knight", "Swift Gaia the Fierce Knight"]
-      - ["Curse of Dragonfire", "Curse of Dragon, the Cursed Dragon"]
-      - ["Buster Blader, the Destruction Swordmaster", "Buster Blader"]
-
-      - items: 
-        - ["Protector Whelp of the Destruction Swordsman", "Buster Whelp of the Destruction Swordsman"]
-        edge:
-          color: "pink"
-          arrows: "to"
-        node:
-          color: "pink"
-          shape: "box"
-
-  - items: 
-      - ["Breaker the Magical Warrior", "Defender, the Magical Knight"]
-    edge:
-      color: "black"
-    
+  - ["Dark Magician", "Dark Magician the Magician of Black Magic"]
+  - ["Dark Magician Girl", "Dark Magician Girl the Magician's Apprentice"]
+  - ["Black Luster Soldier - Sacred Soldier", "Black Luster Soldier - Envoy of the Beginning", "Black Luster Soldier - Envoy of the Evening Twilight"]
+  - ["Ebon Illusion Magician",  "Illusion of Chaos"]
+  - ["Black Luster Soldier - Soldier of Light and Darkness", "Black Luster Soldier - Super Soldier", "Black Luster Soldier - Legendary Swordsman"]
+  - ["Gandora the Dragon of Destruction", "Gandora-X the Dragon of Demolition"]
+  - ["Kuribabylon", "Kuribandit"]
+  - ["Silent Swordsman", "Silent Swordsman Zero"]
+  - ["Silent Magician", "Silent Magician Zero"]
+  - ["Metalhold the Moving Blockade", "Stronghold the Moving Fortress", "Powerhold the Moving Battery"]
+  - ["Arcana Extra Joker", "Arcana Knight Joker", "Arcana Triumph Joker"]
+  - ["Arisen Gaia the Fierce Knight", "Charging Gaia the Fierce Knight", "Swift Gaia the Fierce Knight"]
+  - ["Curse of Dragonfire", "Curse of Dragon, the Cursed Dragon"]
+  - ["Buster Blader, the Destruction Swordmaster", "Buster Blader"]
+  - ["Breaker the Magical Warrior", "Defender, the Magical Knight"]
+  - ["Protector Whelp of the Destruction Swordsman", "Buster Whelp of the Destruction Swordsman"]
+        
 
   # Commented out entries (can be enabled with or without color override)
   # Gadgets
@@ -99,12 +83,11 @@ counterparts:
 attributes:
   - items: 
       - ["LIGHT", "DARK", "EARTH", "WATER", "FIRE", "WIND", "DIVINE"]
-      - items: 
-        - ["A", "B", "C"]
-        edge:
-          closed: True
     edge:
       closed: "complete"
+    node:
+      shape: "circularImage"
+    
     
 
 # Convergence: multiple materials combine into a product
@@ -176,8 +159,10 @@ fusion:
     - from: ["Gazelle the King of Mythical Claws", "Big-Winged Berfomet"]
       to:  "Chimera the King of Phantom Beasts"
       
-  - title: "The Eye of Timaeus"
+  - edge:
+      title: "The Eye of Timaeus"
     items:
+
       - from: ["Dark Magician Girl", "Timaeus the United Dragon"]
         to: "Dark Magician Girl the Dragon Knight"
       
@@ -190,7 +175,8 @@ fusion:
       - from: ["Dark Magician", "Timaeus the United Dragon"]
         to: "Dark Magician the Dragon Knight"
 
-  - title: "The Claw of Hermos"
+  - edge:
+      title:: "The Claw of Hermos"
     items:
       - from: ["Queen's Knight", "The Claw of Hermos"]
         to: "Goddess Bow"
@@ -198,7 +184,8 @@ fusion:
       - from: ["Red-Eyes Black Dragon", "The Claw of Hermos"]
         to: "Red-Eyes Black Dragon Sword"
   
-  - title: "The Fang of Critias"
+  - edge:
+      title: "The Fang of Critias"
     items:
       - from: ["Mirror Force", "The Fang of Critias"]
         to: "Mirror Force Dragon"

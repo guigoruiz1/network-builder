@@ -120,7 +120,11 @@ divergence:
           - "BranchX"
 ```
 
-Block- and entry-level dictionaries provided under `node` or `edge` are forwarded as keyword arguments to pyvis when nodes and edges are created. A few special node options — `scale_factor`, `table`, and `recolor` — are consumed (popped) by the script for post-processing and are not passed through to pyvis; see section 6 for details.
+Blocks and entries
+
+A block is an item in a section's list; typically it is a mapping that may include keys such as `title`, `node`, `edge`, and `items`. An entry is an element of a block's `items` sequence. When a block has no `items` key, the block itself functions as a single entry.
+
+Block-level `node` and `edge` mappings act as defaults for the entries they directly contain. Entry-level `node` and `edge` mappings take precedence and override block defaults for that entry only. Defaults are applied one level deep and do not cascade into nested sub-blocks.
 
 ---
 
