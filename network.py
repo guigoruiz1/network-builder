@@ -25,7 +25,7 @@ class Config:
         },
         "buttons": {
             "show": False,
-            "filter": ["physics", "interaction"],
+            "filter": ["physics", "interaction", "layout"],
         },
         "network": {"height": "85vh", "select_menu": True, "directed": True},
         "download_images": False,
@@ -169,6 +169,23 @@ def get_options():
 
     options = Options(layout=bool(config.get("layout")))
     # Use dictionary-style access for sub-objects
+    if config.get("options"):
+        if isinstance(config["options"], dict):
+            import json
+
+            options_json = json.dumps(config.get("options"))
+        else:
+            options_json = config.get("options")
+
+        new_options = options.set(options_json)
+        merge = new_options.pop("merge", False)
+        if not merge:
+            return new_options
+        else:
+            for key, value in new_options.items():
+                if value is not None:
+                    setattr(options, key, value)
+
     if config.get("physics"):
         set_physics_options(options["physics"], config["physics"])
     if config.get("edges"):
@@ -280,6 +297,7 @@ def get_nodes(data):
                     # Treat as a list of node names (linear)
                     for name in flatten_items(entry):
                         add_node(name, section, style)
+
     return node_info
 
 
@@ -292,6 +310,7 @@ def edit_nodes(
     """
     Edit node properties in a pyvis Network object.
     Optionally scale node size by degree, recolor nodes by edge color majority, and print a summary table.
+    If recoloring, nodes in groups with specific options are skipped to avoid overwriting group colors.
 
     Args:
         net (Network): pyvis Network object.
@@ -311,20 +330,28 @@ def edit_nodes(
         else:
             degree = len(adj_list[node_id])
 
-        color = node["color"]
+        color = node.get("color")
+
         if scale_factor > 0:
             base_size = node.get("size", 25)
             node["size"] = base_size / 2 + scale_factor * degree
 
         if recolor:
-            connected_edges = [
-                e for e in net.edges if e["from"] == node_id or e["to"] == node_id
-            ]
-            colors = [e.get("color") for e in connected_edges if e.get("color")]
-            if colors:
-                most_common_color, _ = Counter(colors).most_common(1)[0]
-                node["color"] = most_common_color
-                color = most_common_color
+            group_configs = config.get("options", {}).get("groups", {})
+            if not (
+                node.get("group") in group_configs
+                and group_configs[node["group"]].get("color")
+            ):  # Skip recoloring if node is in a group with a specified color
+                node["group"] = None
+                connected_edges = [
+                    e for e in net.edges if e["from"] == node_id or e["to"] == node_id
+                ]
+                colors = [e.get("color") for e in connected_edges if e.get("color")]
+                if colors:
+                    most_common_color, _ = Counter(colors).most_common(1)[0]
+                    node["color"] = most_common_color
+                    color = most_common_color
+
         node_stats.append({"id": node_id, "degree": degree, "color": color})
 
     if print_table:
@@ -442,7 +469,7 @@ def add_branching_edges(
     add_entry(entry, block_style)
 
 
-def add_clique_edges(entry, net: Network, block_style: dict = {}) -> None:
+def add_clique_edges(entry, net: Network, section: str, block_style: dict = {}) -> None:
     """
     Add edges for a 'clique' (complete graph) section.
     For each list of nodes, connect every pair of nodes.
@@ -451,6 +478,7 @@ def add_clique_edges(entry, net: Network, block_style: dict = {}) -> None:
     Args:
         data: Section data (list or dict with 'items'), containing lists of node names.
         net (Network): pyvis Network object.
+        section (str): Section name.
         block_style (dict): Optional block-level context for styling.
     """
     style = Config.deep_merge_dicts(
@@ -458,7 +486,7 @@ def add_clique_edges(entry, net: Network, block_style: dict = {}) -> None:
     )
     edge_kwargs = get_kwargs(
         entry_style=style,
-        section="complete",
+        section=section,
         config_key="edge",
     )
     edge_kwargs["title"] = edge_kwargs.get("title") or "complete"
@@ -522,9 +550,11 @@ def add_edges(data, net: Network, section: str) -> None:
                 entry_style=block_style,
                 section=section,
                 config_key="edge",
-            ).get("closed", False)
+            ).pop("closed", False)
             if closed == "complete":
-                add_clique_edges(entry, net=net, block_style=block_style)
+                add_clique_edges(
+                    entry, net=net, section=section, block_style=block_style
+                )
             else:
                 add_linear_edges(
                     entry, net=net, section=section, block_style=block_style

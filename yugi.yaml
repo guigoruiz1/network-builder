@@ -1,12 +1,4 @@
 # Yu-Gi-Oh! Card Relationship Graph
-# Operations: series, convergence, parallel, divergence
-# 
-# series: Sequential card transformations (evolving/aging)
-# convergence: Multiple materials combining to a product
-# parallel: Cards at the same power level (counterparts)
-# divergence: One root card branching into multiple paths
-
-# Sequential transformations (evolving & aging)
 evolving:
   - ["Dark Magician","Dark Magician, the Pharaoh's Servant"]
   - ["Black Luster Soldier", "Black Luster Soldier - Soldier of Chaos"]
@@ -52,7 +44,6 @@ aging:
   - ["Silent Swordsman LV3", "Silent Swordsman LV5", "Silent Swordsman LV7", "Silent Swordsman"]
   - ["Buster Whelp of the Destruction Swordsman", "Dragon Buster Destruction Sword", "Wizard Buster Destruction Sword", "Robot Buster Destruction Sword", "Buster Dragon"]
 
-# Parallel: cards at the same power level
 counterparts: 
   - ["Dark Magician", "Dark Magician the Magician of Black Magic"]
   - ["Dark Magician Girl", "Dark Magician Girl the Magician's Apprentice"]
@@ -70,9 +61,8 @@ counterparts:
   - ["Buster Blader, the Destruction Swordmaster", "Buster Blader"]
   - ["Breaker the Magical Warrior", "Defender, the Magical Knight"]
   - ["Protector Whelp of the Destruction Swordsman", "Buster Whelp of the Destruction Swordsman"]
+  - ["Marshmacaron", "Moremarshmallon", "Marshmallon"]
         
-
-  # Commented out entries (can be enabled with or without color override)
   # Gadgets
   # - ["Green Gadget", "Red Gadget", "Yellow Gadget"]
   # Magnet Warriors
@@ -82,10 +72,8 @@ counterparts:
 
 attributes:
   - ["LIGHT", "DARK", "EARTH", "WATER", "FIRE", "WIND", "DIVINE"]
-    
-    
 
-# Convergence: multiple materials combine into a product
+# Fusions: multiple materials combine into a product
 fusion:
   - from: ["Dark Magician Girl", "Dark Magician"]
     to: "The Dark Magicians"
@@ -169,7 +157,7 @@ fusion:
         to: "Dark Magician the Dragon Knight"
 
   - edge:
-      title:: "The Claw of Hermos"
+      title: "The Claw of Hermos"
     items:
       - from: ["Queen's Knight", "The Claw of Hermos"]
         to: "Goddess Bow"
@@ -236,11 +224,10 @@ combination:
   - from: ["Gaia, the Mid-Knight Sun", "Gaia, the Polar Knight"]
     to: "Arisen Gaia the Fierce Knight"
 
-    # Commented out entries (can be enabled with or without color override)
     # - from: ["Green Gadget", "Red Gadget", "Yellow Gadget"]
     #   product: "Stronghold the Moving Fortress"
 
-# Divergence: one root card branches into multiple paths
+# One root card branches into multiple paths
 archtype:
   - from: "Shining Sarcophagus"
     to:
@@ -252,6 +239,7 @@ archtype:
       - "Silent Magician Zero"
       - "Silent Swordsman Zero"
       - "Stronghold the Hidden Fortress"
+      - "Moremarshmallon"
 
   - from: "Ritual of Light and Darkness"
     to:
@@ -303,7 +291,6 @@ archtype:
       - "Chocolate Magician Girl"
       - "Kiwi Magician Girl"
 
-    # Commented out entries (can be enabled with or without color override)
     # - from: "Five Star Twilight"
     #   to:
     #     - "Kuriboh"
@@ -313,41 +300,8 @@ archtype:
     #     - "Kuribeh"
 
 config:
-  # ================= CONFIG STRUCTURE =================
   # This section controls all global and visual options for the graph.
   # You can override any of these fields in your YAML config.
-  #
-  # buttons: (dict)
-  #   show: (bool) Show the pyvis options menu (default: False)
-  #   filter: (list[str]) Which button groups to show in the menu (e.g. ["physics", "interaction"])
-    # network: (dict)
-  #   height: (str) Graph height (default: "90vh")
-  #   width: (str) Graph width (default: "100%")
-  #   directed: (bool) Directed edges (default: True)
-  #   select_menu: (bool) Show select menu (default: True)
-  # physics: (dict)
-  #   enabled: (bool) Enable/disable physics simulation (default: True)
-  #   repulsion: (dict) Repulsion solver settings
-  #   forceAtlas2Based: (dict) (optional) Force Atlas 2 solver settings
-  #   barnesHut: (dict) (optional) Barnes-Hut solver settings
-  #   hierarchicalRepulsion: (dict) (optional) Hierarchical repulsion settings
-  #   stabilization: (bool) Toggle stabilization (default: True)
-  # edges: (dict)
-  #   smooth_type: (str) Edge smoothness type (e.g. "dynamic", "continuous")
-  #   inherit_colors: (bool|str) Inherit edge color from node (True, False, "from", "to")
-  # layout: (dict)
-  #   randomSeed: (int) Random seed for layout
-  #   improvedLayout: (bool) Use improved layout
-  #   hierarchical: (dict) Hierarchical layout options
-  # interaction: (dict)
-  #   hideEdgesOnDrag: (bool)
-  #   hideNodesOnDrag: (bool)
-  #   dragNodes: (bool)
-  # configure: (dict)
-  #   enabled: (bool) Enable the option editor
-  #   filter: (list[str]) Which options to show in the editor
-  # ====================================================
-
   section:
     fusion:
       edge:
@@ -357,7 +311,7 @@ config:
       edge: 
         color: "purple"
         smooth: True
-    archtypes:
+    archtype:
       edge:
         color: "red"
     counterparts:
@@ -373,23 +327,31 @@ config:
     attributes:
       edge:
         closed: "complete"
+        color: "magenta"
       node:
-        shape: "circularImage"
+        shape: "circularImage" # Must be set here because pyvis passes shape = "dot" by default.
         size: 15
+        # group: "attributes"
   buttons:
     show: False
     # filter: True
   node:
     scale_factor: 2
-    recolor: False
-    table: False
+    recolor: True
+    table: True
   edge:
     smooth: False
-  interaction:
-    navigationButtons: True
+  # options: 
+  #   merge: True # Merge or overwrite global options
+  #   groups: # Group options are applied to all nodes in that group.
+  #     attributes: # This group is for all nodes in the "attributes" section.
+  #       color: "magenta"
+  #       size: 15
   network:
     filter_menu: True
     directed: True
     height: "80vh"
     heading: "Yu-Gi-Oh! Card Relationship Graph"
+  interaction:
+    navigationButtons: True
   download_images: True
