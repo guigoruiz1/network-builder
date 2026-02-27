@@ -19,32 +19,15 @@ class Config:
     default = {
         "node": {
             "scale_factor": 0,
+            "font": {"size": 5},
             "shape": "image",
-            "size": 100,
-            "borderWidthSelected": 4,
             "shapeProperties": {"useBorderWithImage": True},
         },
-        "edge": {"arrowStrikethrough": False, "width": 20, "arrows": "to"},
         "buttons": {
             "show": False,
             "filter": ["physics", "interaction"],
         },
-        "physics": {
-            "enabled": True,
-            "repulsion": {
-                "node_distance": 1000,
-                "central_gravity": 0.2,
-                "spring_length": 200,
-                "spring_strength": 0.015,
-                "damping": 0.50,
-            },
-        },
-        "network": {
-            "height": "90vh",
-            "width": "100%",
-            "directed": False,
-            "select_menu": True,
-        },
+        "network": {"height": "85vh", "select_menu": True, "directed": True},
         "download_images": False,
     }
 
@@ -329,8 +312,9 @@ def edit_nodes(
         degree = len(net.neighbors(node_id))
         color = node["color"]
         if scale_factor > 0:
-            base_size = node.get("size", 0)
-            node["size"] = base_size + scale_factor * degree
+            base_size = node.get("size", 25)
+            node["size"] = base_size / 2 + scale_factor * degree
+
         if recolor:
             connected_edges = [
                 e for e in net.edges if e["from"] == node_id or e["to"] == node_id

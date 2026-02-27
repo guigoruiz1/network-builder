@@ -72,7 +72,7 @@ counterparts:
   - ["Buster Blader, the Destruction Swordmaster", "Buster Blader"]
   - ["Protector Whelp of the Destruction Swordsman", "Buster Whelp of the Destruction Swordsman"]
   - ["Breaker the Magical Warrior", "Defender, the Magical Knight"]
-  
+
   # Commented out entries (can be enabled with or without color override)
   # Gadgets
   # - ["Green Gadget", "Red Gadget", "Yellow Gadget"]
@@ -358,9 +358,11 @@ config:
     fusion:
       edge:
         color: "purple"
+        smooth: True
     combination:
       edge: 
         color: "purple"
+        smooth: True
     archtypes:
       edge:
         color: "red"
@@ -378,9 +380,14 @@ config:
     show: False
     # filter: True
   node:
-    scale_factor: 10
+    scale_factor: 2
     recolor: True
-    table: False
+    table: True
+  edge:
+    smooth: False
   interaction:
     navigationButtons: True
+  network:
+    filter_menu: True
+    # heading: "Yu-Gi-Oh! Card Relationship Graph"
   download_images: True

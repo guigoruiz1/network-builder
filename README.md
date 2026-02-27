@@ -201,31 +201,18 @@ The script loads a default Config object with the following attributes for conve
 node:
   scale_factor: 0
   shape: image
-  size: 100
-  borderWidthSelected: 4
+  font: 
+    size: 5
   shapeProperties:
     useBorderWithImage: true
-edge:
-  arrowStrikethrough: false
-  width: 20
-  arrows: to
 buttons:
   show: false
   filter:
     - physics
     - interaction
-physics:
-  enabled: true
-  repulsion:
-    node_distance: 1000
-    central_gravity: 0.2
-    spring_length: 200
-    spring_strength: 0.015
-    damping: 0.5
 network:
-  height: "90vh"
-  width: "100%"
-  directed: false
+  directed: True
+  height: "85vh"
   select_menu: true
 download_images: false
 ```
@@ -325,3 +312,5 @@ You can further customize the `net` object before saving or displaying.
 For further customization, see the script and YAML comments. For advanced usage, refer to the pyvis documentation.
 
 ---
+
+NOTE: this script is not designed for hierarchical layouts or single node setting properties per individual node/edge!
