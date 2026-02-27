@@ -7,8 +7,6 @@
 # divergence: One root card branching into multiple paths
 
 # Sequential transformations (evolving & aging)
-# Default color: orange (evolving)
-# Override with color: "blue" for aging
 evolving:
   - ["Dark Magician","Dark Magician, the Pharaoh's Servant"]
   - ["Black Luster Soldier", "Black Luster Soldier - Soldier of Chaos"]
@@ -55,23 +53,40 @@ aging:
   - ["Buster Whelp of the Destruction Swordsman", "Dragon Buster Destruction Sword", "Wizard Buster Destruction Sword", "Robot Buster Destruction Sword", "Buster Dragon"]
 
 # Parallel: cards at the same power level
-counterparts:
-  - ["Dark Magician", "Dark Magician the Magician of Black Magic"]
-  - ["Dark Magician Girl", "Dark Magician Girl the Magician's Apprentice"]
-  - ["Black Luster Soldier - Sacred Soldier", "Black Luster Soldier - Envoy of the Beginning", "Black Luster Soldier - Envoy of the Evening Twilight"]
-  - ["Ebon Illusion Magician",  "Illusion of Chaos"]
-  - ["Black Luster Soldier - Soldier of Light and Darkness", "Black Luster Soldier - Super Soldier", "Black Luster Soldier - Legendary Swordsman"]
-  - ["Gandora the Dragon of Destruction", "Gandora-X the Dragon of Demolition"]
-  - ["Kuribabylon", "Kuribandit"]
-  - ["Silent Swordsman", "Silent Swordsman Zero"]
-  - ["Silent Magician", "Silent Magician Zero"]
-  - ["Metalhold the Moving Blockade", "Stronghold the Moving Fortress", "Powerhold the Moving Battery"]
-  - ["Arcana Extra Joker", "Arcana Knight Joker", "Arcana Triumph Joker"]
-  - ["Arisen Gaia the Fierce Knight", "Charging Gaia the Fierce Knight", "Swift Gaia the Fierce Knight"]
-  - ["Curse of Dragonfire", "Curse of Dragon, the Cursed Dragon"]
-  - ["Buster Blader, the Destruction Swordmaster", "Buster Blader"]
-  - ["Protector Whelp of the Destruction Swordsman", "Buster Whelp of the Destruction Swordsman"]
-  - ["Breaker the Magical Warrior", "Defender, the Magical Knight"]
+counterparts: 
+  - edge:
+      color: "blue"
+      arrows: "none"
+    items:
+      - ["Dark Magician", "Dark Magician the Magician of Black Magic"]
+      - ["Dark Magician Girl", "Dark Magician Girl the Magician's Apprentice"]
+      - ["Black Luster Soldier - Sacred Soldier", "Black Luster Soldier - Envoy of the Beginning", "Black Luster Soldier - Envoy of the Evening Twilight"]
+      - ["Ebon Illusion Magician",  "Illusion of Chaos"]
+      - ["Black Luster Soldier - Soldier of Light and Darkness", "Black Luster Soldier - Super Soldier", "Black Luster Soldier - Legendary Swordsman"]
+      - ["Gandora the Dragon of Destruction", "Gandora-X the Dragon of Demolition"]
+      - ["Kuribabylon", "Kuribandit"]
+      - ["Silent Swordsman", "Silent Swordsman Zero"]
+      - ["Silent Magician", "Silent Magician Zero"]
+      - ["Metalhold the Moving Blockade", "Stronghold the Moving Fortress", "Powerhold the Moving Battery"]
+      - ["Arcana Extra Joker", "Arcana Knight Joker", "Arcana Triumph Joker"]
+      - ["Arisen Gaia the Fierce Knight", "Charging Gaia the Fierce Knight", "Swift Gaia the Fierce Knight"]
+      - ["Curse of Dragonfire", "Curse of Dragon, the Cursed Dragon"]
+      - ["Buster Blader, the Destruction Swordmaster", "Buster Blader"]
+
+      - items: 
+        - ["Protector Whelp of the Destruction Swordsman", "Buster Whelp of the Destruction Swordsman"]
+        edge:
+          color: "pink"
+          arrows: "to"
+        node:
+          color: "pink"
+          shape: "box"
+
+  - items: 
+      - ["Breaker the Magical Warrior", "Defender, the Magical Knight"]
+    edge:
+      color: "black"
+    
 
   # Commented out entries (can be enabled with or without color override)
   # Gadgets
@@ -80,6 +95,17 @@ counterparts:
   # - ["Alpha The Magnet Warrior", "Alpha The Electromagnet Warrior"]
   # - ["Beta The Magnet Warrior", "Beta The Electromagnet Warrior"]
   # - ["Gamma The Magnet Warrior", "Gamma The Electromagnet Warrior"]
+
+attributes:
+  - items: 
+      - ["LIGHT", "DARK", "EARTH", "WATER", "FIRE", "WIND", "DIVINE"]
+      - items: 
+        - ["A", "B", "C"]
+        edge:
+          closed: True
+    edge:
+      closed: "complete"
+    
 
 # Convergence: multiple materials combine into a product
 fusion:
@@ -316,17 +342,7 @@ config:
   # buttons: (dict)
   #   show: (bool) Show the pyvis options menu (default: False)
   #   filter: (list[str]) Which button groups to show in the menu (e.g. ["physics", "interaction"])
-  # colors: (dict)
-  #   series: (str) Edge color for series (default: orange)
-  #   convergence: (str) Edge color for convergence (default: purple)
-  #   parallel: (str) Edge color for parallel (default: green)
-  #   divergence: (str) Edge color for divergence (default: red)
-  # sizes: (dict)
-  #   ref: (tuple[int, int]) Reference image size (default: [690, 1000])
-  #   offset: (tuple[int, int]) Crop offset (default: [82, 182])
-  #   crop: (tuple[int, int]) Crop size (default: [528, 522])
-  #   node: (int) Node size (default: 100)
-  # network: (dict)
+    # network: (dict)
   #   height: (str) Graph height (default: "90vh")
   #   width: (str) Graph width (default: "100%")
   #   directed: (bool) Directed edges (default: True)
@@ -381,13 +397,14 @@ config:
     # filter: True
   node:
     scale_factor: 2
-    recolor: True
-    table: True
+    recolor: False
+    table: False
   edge:
     smooth: False
   interaction:
     navigationButtons: True
   network:
     filter_menu: True
+    directed: True
     # heading: "Yu-Gi-Oh! Card Relationship Graph"
   download_images: True

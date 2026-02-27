@@ -206,15 +206,12 @@ def flatten_items(items):
         yield items
 
 
-def get_kwargs(
-    entry_style: dict, section: str, block_style: dict = {}, config_key: str = "edge"
-) -> dict:
+def get_kwargs(entry_style: dict, section: str, config_key: str = "edge") -> dict:
     """
     Merge styling options from config and YAML overrides for a given relationship entry.
     Args:
         entry_style (dict): Entry level style overrides.
         section (str): Section name (e.g., "series", "parallel", etc.).
-        block_style (dict): Optional block-level style overrides.
         config_key (str): Which config key to use ('edge' or 'node').
     Returns:
         dict: Keyword arguments for pyvis.
@@ -225,7 +222,6 @@ def get_kwargs(
     op = op.get(section, {}) if section else {}
     op = op.get(config_key, {})
     merged = Config.deep_merge_dicts(base, op)
-    merged = Config.deep_merge_dicts(merged, block_style)
     merged = Config.deep_merge_dicts(merged, entry_style)
     return merged
 
@@ -245,17 +241,14 @@ def get_nodes(data):
     """
 
     node_info = {}
-    global_node_kwargs = data.get("config", {}).get("node", {}) or {}
 
-    def add_node(name, entry_style, block_style, section):
-        # Merge: global node config < section-level < block-level < entry-level
+    def add_node(name, section, style={}):
         node_kwargs = get_kwargs(
-            entry_style=entry_style,
+            entry_style=style,
             section=section,
-            block_style=block_style,
             config_key="node",
         )
-        node_kwargs = Config.deep_merge_dicts(global_node_kwargs, node_kwargs)
+
         if name not in node_info:
             node_info[name] = node_kwargs
         else:
@@ -263,7 +256,7 @@ def get_nodes(data):
 
     for section in data:
         for block in data[section]:
-            block_node_style = block.get("node", {}) if isinstance(block, dict) else {}
+            block_style = block.get("node", {}) if isinstance(block, dict) else {}
             # If block has 'items', iterate entries; else treat block as entry
             entries = (
                 block["items"]
@@ -271,22 +264,22 @@ def get_nodes(data):
                 else [block]
             )
             for entry in entries:
-                entry_node_style = (
-                    entry.get("node", {}) if isinstance(entry, dict) else {}
-                )
+                entry_style = entry.get("node", {}) if isinstance(entry, dict) else {}
+                style = Config.deep_merge_dicts(block_style, entry_style)
                 # If entry is a dict with 'from' or 'to', treat as branching; else treat as linear list
-                if isinstance(entry, dict) and ("from" in entry or "to" in entry):
-                    from_vals = entry.get("from", [])
-                    to_vals = entry.get("to", [])
-                    for name in flatten_items(from_vals):
-                        add_node(name, entry_node_style, block_node_style, section)
-                    for name in flatten_items(to_vals):
-                        add_node(name, entry_node_style, block_node_style, section)
+                if isinstance(entry, dict):
+                    if ("from" in entry) and ("to" in entry):
+                        for name in flatten_items(entry["from"]):
+                            add_node(name, section, style)
+                        for name in flatten_items(entry["to"]):
+                            add_node(name, section, style)
+                    elif "items" in entry:
+                        for name in flatten_items(entry["items"]):
+                            add_node(name, section, style)
                 else:
                     # Treat as a list of node names (linear)
                     for name in flatten_items(entry):
-                        add_node(name, entry_node_style, block_node_style, section)
-
+                        add_node(name, section, style)
     return node_info
 
 
@@ -307,9 +300,17 @@ def edit_nodes(
         print_table (bool, optional): If True, prints a table of node degrees and new colors.
     """
     node_stats = []
+    adj_list = net.get_adj_list()
     for node in net.nodes:
         node_id = node["id"]
-        degree = len(net.neighbors(node_id))
+
+        if net.directed:
+            outgoing = len(adj_list.get(node_id, []))
+            incoming = sum(node_id in targets for targets in adj_list.values())
+            degree = outgoing + incoming
+        else:
+            degree = len(adj_list[node_id])
+
         color = node["color"]
         if scale_factor > 0:
             base_size = node.get("size", 25)
@@ -357,7 +358,7 @@ def edit_nodes(
 # --- Edge Creation Functions ---
 
 
-def add_linear_edges(entry, net: Network, section: str) -> None:
+def add_linear_edges(entry, net: Network, section: str, block_style: dict = {}) -> None:
     """
     Add edges for any linear relationship where entries are lists of node names.
 
@@ -370,11 +371,12 @@ def add_linear_edges(entry, net: Network, section: str) -> None:
         entry: Entry (list or dict with 'items'), containing lists of node names.
         net (Network): pyvis Network object.
         section (str): Section name (e.g., 'series', 'parallel', etc.).
+        block (dict): Optional block-level context for styling.
     """
-    # An entry may be either:
-    # - a dict with an 'items' key (block or entry containing items), or
-    # - a plain list of node names
-    style = entry.get("edge", {}) if isinstance(entry, dict) else {}
+    style = Config.deep_merge_dicts(
+        block_style, entry.get("edge", {}) if isinstance(entry, dict) else {}
+    )
+    closed = style.pop("closed", False)
     edge_kwargs = get_kwargs(
         entry_style=style,
         section=section,
@@ -385,18 +387,21 @@ def add_linear_edges(entry, net: Network, section: str) -> None:
     ) or section
 
     items = entry["items"] if isinstance(entry, dict) and "items" in entry else entry
-    # If items is a list of lists, treat each sublist as a separate sequence
-    if isinstance(items, list) and all(isinstance(sub, list) for sub in items):
-        for sublist in items:
-            for i in range(len(sublist) - 1):
-                net.add_edge(sublist[i], sublist[i + 1], **edge_kwargs)
-    else:
-        # items may be a flat list of node names
-        for i in range(len(items) - 1):
+
+    for i in range(len(items) - 1):
+        if isinstance(items[i], list):
+            for sub in items[i]:
+                net.add_edge(sub, items[i + 1], **edge_kwargs)
+        else:
             net.add_edge(items[i], items[i + 1], **edge_kwargs)
 
+    if closed and len(items) > 2:
+        net.add_edge(items[-1], items[0], **edge_kwargs)
 
-def add_branching_edges(entry, net: Network, section: str, block: dict = {}) -> None:
+
+def add_branching_edges(
+    entry, net: Network, section: str, block_style: dict = {}
+) -> None:
     """
     Add edges for any relationship type that uses 'from' and 'to' fields.
     For example: convergence, divergence, or custom sections.
@@ -407,6 +412,7 @@ def add_branching_edges(entry, net: Network, section: str, block: dict = {}) -> 
         data: Section data (list or dict with 'items').
         net (Network): pyvis Network object.
         section (str): Section name (e.g., 'convergence', 'divergence', or custom).
+        block_style (dict): Optional block-level context for styling.
     """
 
     def to_list(val):
@@ -416,38 +422,29 @@ def add_branching_edges(entry, net: Network, section: str, block: dict = {}) -> 
             return val
         return [val]
 
-    def add_entry(e, blk={}):
+    def add_entry(e, block_style=None):
         if not isinstance(e, dict):
             return
         from_vals = to_list(e.get("from", []))
         to_vals = to_list(e.get("to", []))
-        style = e.get("edge", {})
-        block_style = blk.get("edge", {}) if isinstance(blk, dict) else {}
+        style = Config.deep_merge_dicts(
+            block_style, e.get("edge", {}) if isinstance(e, dict) else {}
+        )
         edge_kwargs = get_kwargs(
             entry_style=style,
             section=section,
-            block_style=block_style,
             config_key="edge",
         )
-        edge_kwargs["title"] = e.get(
-            "title", (blk.get("title") if isinstance(blk, dict) else None) or section
-        )
+        edge_kwargs["title"] = e.get("title", section)
 
         for f in from_vals:
             for t in to_vals:
                 net.add_edge(f, t, **edge_kwargs)
 
-    # Entry may be a block containing 'items' or a single branching entry
-    if isinstance(entry, dict) and "items" in entry:
-        # entry is a block; process each sub-entry with block context
-        for sub in entry["items"]:
-            add_entry(sub, entry)
-    else:
-        # single entry
-        add_entry(entry, block)
+    add_entry(entry, block_style)
 
 
-def add_clique_edges(data, net: Network) -> None:
+def add_clique_edges(entry, net: Network, block_style: dict = {}) -> None:
     """
     Add edges for a 'clique' (complete graph) section.
     For each list of nodes, connect every pair of nodes.
@@ -456,29 +453,28 @@ def add_clique_edges(data, net: Network) -> None:
     Args:
         data: Section data (list or dict with 'items'), containing lists of node names.
         net (Network): pyvis Network object.
+        block_style (dict): Optional block-level context for styling.
     """
-    if isinstance(data, dict) and "items" in data:
-        data = data["items"]
+    style = Config.deep_merge_dicts(
+        block_style, entry.get("edge", {}) if isinstance(entry, dict) else {}
+    )
+    edge_kwargs = get_kwargs(
+        entry_style=style,
+        section="complete",
+        config_key="edge",
+    )
+    edge_kwargs["title"] = entry.get("title") if isinstance(entry, dict) else "complete"
 
-    for entry in data:
-        style = entry.get("edge", {}) if isinstance(entry, dict) else {}
-        edge_kwargs = get_kwargs(
-            entry_style=style,
-            section="complete",
-            config_key="edge",
-        )
-        edge_kwargs["title"] = (
-            entry.get("title") if isinstance(entry, dict) else "complete"
-        )
-        # Extract node list
-        items = (
-            entry["items"] if isinstance(entry, dict) and "items" in entry else entry
-        )
-        nodes = list(flatten_items(items))
-        n = len(nodes)
-        for i in range(n):
-            for j in range(i + 1, n):
-                net.add_edge(nodes[i], nodes[j], **edge_kwargs)
+    if "arrows" not in edge_kwargs:
+        edge_kwargs["arrows"] = "none"
+
+    # Extract node list
+    items = entry["items"] if isinstance(entry, dict) and "items" in entry else entry
+    nodes = list(flatten_items(items))
+    n = len(nodes)
+    for i in range(n):
+        for j in range(i + 1, n):
+            net.add_edge(nodes[i], nodes[j], **edge_kwargs)
 
 
 def add_edges(data, net: Network, section: str) -> None:
@@ -504,20 +500,40 @@ def add_edges(data, net: Network, section: str) -> None:
     else:
         entries = [data]
 
-    def add_entry(entry, block={}):
-        if isinstance(entry, dict) and ("from" in entry or "to" in entry):
-            add_branching_edges(entry, net=net, section=section, block=block)
-        else:
-            add_linear_edges(entry, net=net, section=section)
+    def add_entry(entry, block_style={}):
+        if isinstance(entry, dict):
+            if ("from" in entry) and ("to" in entry):
+                add_branching_edges(
+                    entry, net=net, section=section, block_style=block_style
+                )
+            elif "items" in entry:
+                # Recursively process nested blocks in items
+                for subentry in entry["items"]:
+                    add_entry(
+                        subentry,
+                        block_style=Config.deep_merge_dicts(
+                            block_style, entry.get("edge", {})
+                        ),
+                    )
+            else:
+                print(
+                    f"[WARN] Unrecognized entry format in section '{section}': {entry}"
+                )
+        elif isinstance(entry, list):
+            closed = block_style.get("closed", False)
+            if closed == "complete":
+                add_clique_edges(entry, net=net, block_style=block_style)
+            else:
+                add_linear_edges(
+                    entry, net=net, section=section, block_style=block_style
+                )
 
     for block in entries:
-        # If block is a dict with 'items', iterate its items as entries
-        if isinstance(block, dict) and "items" in block:
-            for entry in block["items"]:
-                add_entry(entry, block=block)
+        block_style = block.get("edge", {}) if isinstance(block, dict) else {}
+        if isinstance(block, dict):
+            add_entry(block, block_style=block_style)
         else:
-            entry = block
-            add_entry(entry, block={})
+            add_entry(block, block_style=block_style)
 
 
 # --- Main Network Construction ---
@@ -573,10 +589,7 @@ def build_network(yaml_path: str) -> Network:
         net.add_node(item, **node_info[item])
 
     for section, section_data in data.items():
-        if section == "complete":
-            add_clique_edges(data=section_data, net=net)
-        else:
-            add_edges(data=section_data, net=net, section=section)
+        add_edges(data=section_data, net=net, section=section)
 
     # --- Post-processing: scale node size by degree ---
     if node_scale_factor > 0 or node_recolor or node_print_table:

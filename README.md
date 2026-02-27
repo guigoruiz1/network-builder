@@ -28,7 +28,8 @@ series:
       - ["Caterpillar", "Chrysalis", "Butterfly"]
       - ["Seed", "Sprout", "Plant", "Flower"]
   - title: "Process Steps"
-    items: ["Draft", "Review", "Approval", "Publication"]
+    items: 
+      - ["Draft", "Review", "Approval", "Publication"]
 ```
 
 ### Parallel Relationships
@@ -90,7 +91,8 @@ series:
       - title: "Subchain"
         edge:
           color: "green"
-        items: ["SubstepA", "SubstepB"]
+        items: 
+          - ["SubstepA", "SubstepB"]
 
 parallel:
   - title: "Highlighted Pair"

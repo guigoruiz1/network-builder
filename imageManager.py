@@ -3,6 +3,7 @@ import re
 import asyncio
 from PIL import Image
 import requests
+from io import BytesIO
 
 # --- Filename sanitization utility ---
 
@@ -22,7 +23,29 @@ def filename(name):
     Returns:
         str: Sanitized filename string.
     """
-    return f"images/{re.sub(r'[^\w]', '', name)}.jpg"
+    base = f"images/{re.sub(r'[^\w]', '', name)}"
+
+    def try_ext(ext):
+        return f"{base}.{ext}"
+
+    # ext argument should be passed to the function
+    # Default to jpg if not provided
+    ext = "jpg"
+    # If ext is provided as a keyword argument, use it
+    import inspect
+
+    frame = inspect.currentframe()
+    args, _, _, values = inspect.getargvalues(frame)
+    if "ext" in values:
+        ext = values["ext"]
+    if isinstance(ext, (list, tuple)):
+        for e in ext:
+            path = try_ext(e)
+            if os.path.exists(path):
+                return path
+        return try_ext(ext[0])
+    else:
+        return try_ext(ext)
 
 
 # --- Image downloading and cropping utilities ---
@@ -85,8 +108,6 @@ def _crop_section(
     if out_size:
         resampling = Image.Resampling.LANCZOS
         cropped = cropped.resize(out_size, resampling)
-    if cropped.mode != "RGB":
-        cropped = cropped.convert("RGB")
 
     return cropped
 
@@ -146,11 +167,22 @@ def _download_images_fallback(names):
             img_resp.raise_for_status()
 
             # Open, crop, and save the image
-            from io import BytesIO
+            img_bytes = BytesIO(img_resp.content)
+            if (
+                image_url.lower().endswith(".svg")
+                or img_resp.headers.get("Content-Type", "").lower() == "image/svg+xml"
+            ):
+                # Save SVG content directly
+                with open(file_path, "wb") as f:
+                    f.write(img_bytes.getvalue())
+                continue
+            else:
+                img = Image.open(img_bytes)
+                img = _crop_section(img, out_size=None)
+                if img.mode != "RGB":
+                    img = img.convert("RGB")
 
-            img = Image.open(BytesIO(img_resp.content))
-            cropped_img = _crop_section(img, out_size=None)
-            cropped_img.save(file_path)
+            img.save(file_path)
             print(f"Downloaded image for '{name}'")
         except Exception as e:
             print(f"[ERROR] Failed to download image for '{name}': {e}")
