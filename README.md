@@ -1,8 +1,10 @@
 # Relationship Network Visualisation
 
+You can see a live example [here](example/example.html).
+
 ## Overview
 
-This tool builds interactive network visualisations from a compact YAML description and renders them using pyvis.
+This tool builds interactive network visualisations from a compact YAML description and renders them using [pyvis](https://github.com/WestHealth/pyvis).
 
 You declare entities and relationships in YAML and specify styling. The script infers structure from the entries and constructs a network accordingly.
 
@@ -193,7 +195,7 @@ Key options:
 - `physics`: physics settings. 
 - `network`: networkinitialization parameters such as height and width.
 - `download_images`: enable image downloading.
- - `options`: The vis.js options can be provided as a JSON string or in YAML syntax. If the argument `merge=True` is passed, these options will be merged with other configuration options instead of overwriting them.
+ - `options`: The [vis.js](https://github.com/visjs/vis-network) options can be provided as a JSON string or in YAML syntax. If the argument `merge=True` is passed, these options will be merged with other configuration options instead of overwriting them.
 
 ### Script default config
 
@@ -301,4 +303,4 @@ You may further modify the returned `net` object before saving or displaying.
 
 --- 
 
-For further customisation consult the script's inline comments and the pyvis documentation.
+For further customisation consult the script's inline comments and the [pyvis](https://github.com/WestHealth/pyvis) documentation.
