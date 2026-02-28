@@ -1,0 +1,84 @@
+series:
+  - edge:
+      title: "Evolution"
+    items:
+      - ["Caterpillar", "Chrysalis", "Butterfly"]
+      - ["Seed", "Sprout", "Plant", "Flower"]
+  - edge:
+      title: "Process Steps"
+    items: 
+      - ["Draft", "Review", "Approval", "Publication"]
+
+parallel:
+  - items:
+    - ["Left", "Right"]
+    - ["North", "South"]
+    edge:
+      arrows: "none"
+
+convergence:
+    - from: ["Salt", "Water"]
+      to: "Saltwater"
+    - from: ["Flour", "Eggs", "Milk"]
+      to: "Pancake Batter"
+
+divergence:
+  - edge:
+      title: "Branches"
+    items:
+      - from: "Tree"
+        to:
+          - "Branch1"
+          - "Branch2"
+
+complete:
+  - edge:
+      closed: "complete"
+      title: "Letters"
+    items: 
+      - ["W", "X", "Y", "Z"]
+
+config:
+  buttons:
+    show: True
+    filter: True
+  node:
+    recolor: False
+    shape: "circle"
+    font: 
+      size: 40
+  edge:
+    width: 15
+    arrowStrikethrough: False
+  section:
+      series:
+        edge:
+          color: "orange"
+      convergence:
+        edge:
+          color: "purple"
+          smooth: True
+      parallel:
+        edge:
+          color: "green"
+          smooth: False
+          arrows: "none"
+      divergence:
+        edge:
+          color: "red"
+  physics:
+    enabled: True
+    repulsion:
+      node_distance: 1000
+      central_gravity: 0.2
+      spring_length: 200
+      spring_strength: 0.015
+      damping: 0.5
+  network:
+    height: "90vh"
+    width: "100%"
+    select_menu: False
+    heading: "Example"
+  interaction:
+    navigationButtons: True
+  download_images: False

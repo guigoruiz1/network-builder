@@ -342,7 +342,6 @@ def edit_nodes(
                 node.get("group") in group_configs
                 and group_configs[node["group"]].get("color")
             ):  # Skip recoloring if node is in a group with a specified color
-                node["group"] = None
                 connected_edges = [
                     e for e in net.edges if e["from"] == node_id or e["to"] == node_id
                 ]

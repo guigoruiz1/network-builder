@@ -143,7 +143,7 @@ The `config` block controls global visual and behavioural options. Example:
 config:
   buttons:
     show: True
-    filter: [physics, interaction]
+    filter: ["physics", "interaction"]
   node:
     scale_factor: 10
     size: 100
@@ -154,21 +154,21 @@ config:
   section:
       series:
         edge:
-          color: orange
+          color: "orange"
       convergence:
         edge:
-          color: purple
-          smooth: true
+          color: "purple"
+          smooth: True
       parallel:
         edge:
-          color: green
-          smooth: false
+          color: "green"
+          smooth: False
           arrows: "none"
       divergence:
         edge:
-          color: red
+          color: "red"
   physics:
-    enabled: true
+    enabled: True
     repulsion:
       node_distance: 1000
       central_gravity: 0.2
@@ -178,10 +178,10 @@ config:
   network:
     height: "90vh"
     width: "100%"
-    select_menu: true
+    select_menu: True
   interaction:
-    navigationButtons: true
-  download_images: true
+    navigationButtons: True
+  download_images: True
 ```
 
 Key options:
@@ -205,7 +205,7 @@ node:
   font: 
     size: 5
   shapeProperties:
-    useBorderWithImage: true
+    useBorderWithImage: True
 buttons:
   show: false
   filter:
@@ -214,8 +214,8 @@ buttons:
 network:
   directed: True
   height: "85vh"
-  select_menu: true
-download_images: false
+  select_menu: True
+download_images: False
 ```
 
 Note about `edge` vs `edges` and pyvis options

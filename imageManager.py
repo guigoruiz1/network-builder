@@ -148,64 +148,112 @@ def _download_images_fallback(names):
     }
     base_url = "https://yugipedia.com/api.php"
 
-    for name in sorted(names):
-        # If any existing image exists for this name, skip
-        existing = filename(name, ext=None)
-        if os.path.exists(existing):
-            continue  # Already downloaded
-        # Query for the card's image via MediaWiki API
+    def fetch_image(image_title):
         params = {
             "action": "query",
             "format": "json",
-            "prop": "pageimages",
-            "titles": name,
-            "piprop": "original",
+            "titles": f"File:{image_title}",
+            "prop": "imageinfo",
+            "iiprop": "url",
         }
         try:
             resp = session.get(base_url, params=params, headers=headers, timeout=10)
             resp.raise_for_status()
-            data_json = resp.json()
-            pages = data_json.get("query", {}).get("pages", {})
-            # Find the image URL
+            data = resp.json()
+            pages = data.get("query", {}).get("pages", {})
             image_url = None
             for page in pages.values():
-                original = page.get("original")
-                thumbnail = page.get("thumbnail")
-                if original and "source" in original:
-                    image_url = original["source"]
-                elif thumbnail and "original" in thumbnail:
-                    image_url = thumbnail["original"]
-            if not image_url:
-                print(f"[WARN] No image found for '{name}'")
-                continue
-            # Download the image
-            img_resp = session.get(image_url, headers=headers, timeout=10)
-            img_resp.raise_for_status()
-
-            # Open, crop, and save the image
-            img_bytes = BytesIO(img_resp.content)
-            if (
-                image_url.lower().endswith(".svg")
-                or img_resp.headers.get("Content-Type", "").lower() == "image/svg+xml"
-            ):
-                # Save SVG content directly with .svg extension
-                file_path = filename(name, ext="svg")
-                with open(file_path, "wb") as f:
-                    f.write(img_bytes.getvalue())
-                print(f"Saved SVG image for '{name}'")
-                continue
+                imageinfo = page.get("imageinfo")
+                if imageinfo and isinstance(imageinfo, list) and "url" in imageinfo[0]:
+                    image_url = imageinfo[0]["url"]
+            if image_url:
+                ext = image_title.split(".")[-1].lower()
+                img_resp = session.get(image_url, headers=headers, timeout=10)
+                img_resp.raise_for_status()
+                img_bytes = BytesIO(img_resp.content)
+                if ext == "svg":
+                    return img_bytes
+                else:
+                    try:
+                        img = Image.open(img_bytes)
+                        return img
+                    except Exception:
+                        return None
             else:
-                # Save raster image as jpg
-                file_path = filename(name, ext="jpg")
-                img = Image.open(img_bytes)
-                img = _crop_section(img, out_size=None)
-                if img.mode != "RGB":
-                    img = img.convert("RGB")
+                return None
+        except Exception:
+            return None
 
-                img.save(file_path)
-                print(f"Downloaded image for '{name}'")
-        except Exception as e:
-            print(f"[ERROR] Failed to download image for '{name}': {e}")
+    for name in sorted(names):
+        existing = filename(name, ext=None)
+        if os.path.exists(existing):
+            continue
+
+        sanitized = re.sub(r"[\W]", "", name)
+        found = False
+        for image_title in [
+            f"{sanitized}-MADU-EN-VG-artwork.png",
+            f"{sanitized}-OW.png",
+            f"{sanitized}.svg",
+        ]:
+            ext = image_title.split(".")[-1].lower()
+            img_obj = fetch_image(image_title)
+            if img_obj is not None:
+                file_path = filename(name, ext=ext)
+                if ext == "svg" and isinstance(img_obj, BytesIO):
+                    with open(file_path, "wb") as f:
+                        f.write(img_obj.getvalue())
+                elif isinstance(img_obj, Image.Image):
+                    img_obj.save(file_path)
+                found = True
+                break
+
+        if not found:
+            # Fallback to featured image via API (with cropping)
+            params = {
+                "action": "query",
+                "format": "json",
+                "prop": "pageimages",
+                "titles": name,
+                "piprop": "original",
+            }
+            try:
+                resp = session.get(base_url, params=params, headers=headers, timeout=10)
+                resp.raise_for_status()
+                data_json = resp.json()
+                pages = data_json.get("query", {}).get("pages", {})
+                image_url = None
+                for page in pages.values():
+                    original = page.get("original")
+                    thumbnail = page.get("thumbnail")
+                    if original and "source" in original:
+                        image_url = original["source"]
+                    elif thumbnail and "original" in thumbnail:
+                        image_url = thumbnail["original"]
+                if not image_url:
+                    print(f"[WARN] No image found for '{name}'")
+                    continue
+                img_resp = session.get(image_url, headers=headers, timeout=10)
+                img_resp.raise_for_status()
+                img_bytes = BytesIO(img_resp.content)
+                if (
+                    image_url.lower().endswith(".svg")
+                    or img_resp.headers.get("Content-Type", "").lower()
+                    == "image/svg+xml"
+                ):
+                    file_path = filename(name, ext="svg")
+                    with open(file_path, "wb") as f:
+                        f.write(img_bytes.getvalue())
+                    continue
+                else:
+                    file_path = filename(name, ext="jpg")
+                    img = Image.open(img_bytes)
+                    img = _crop_section(img, out_size=None)
+                    if img.mode != "RGB":
+                        img = img.convert("RGB")
+                    img.save(file_path)
+            except Exception as e:
+                print(f"[ERROR] Failed to download image for '{name}': {e}")
 
 
 def download(names, config):

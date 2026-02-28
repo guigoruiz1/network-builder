@@ -333,7 +333,7 @@ config:
         size: 15
         # group: "attributes"
   buttons:
-    show: False
+    show: True
     # filter: True
   node:
     scale_factor: 2
