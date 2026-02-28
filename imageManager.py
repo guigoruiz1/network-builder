@@ -5,8 +5,9 @@ from PIL import Image
 import requests
 from io import BytesIO
 import glob
+import hashlib
+from tqdm.auto import tqdm
 
-# --- Filename sanitization utility ---
 
 sizes = {
     "ref": (690, 1000),
@@ -14,42 +15,24 @@ sizes = {
     "crop": (528, 522),
 }
 
+base_path = "images"
 
-def filename(name, ext=None):
+
+def filename(name):
     """
     Sanitize a card name for use as a filename by removing all non-alphanumeric characters.
 
     Args:
         name (str): Card name to sanitize.
-        ext (str or list or None): Extension to use. If None, try to detect an existing
-            file among common extensions and return that path; if none exist, default to 'jpg'.
     Returns:
         str: Path to the filename with the chosen or detected extension.
     """
-    base = f"images/{re.sub(r'[^\w]', '', name)}"
+    base = f"{base_path}/{sanitize_name(name)}"
 
     def path_for(e):
         return f"{base}.{e}"
 
     pref_exts = ["jpg", "jpeg", "png", "svg"]
-
-    # If ext explicitly provided as list/tuple, prefer existing files in that order
-    if isinstance(ext, (list, tuple)):
-        for e in ext:
-            p = path_for(e)
-            if os.path.isfile(p):
-                return p
-        # fall back to any match
-        matches = glob.glob(f"{base}.*")
-        if matches:
-            return matches[0]
-        return path_for(ext[0])
-
-    # If ext explicitly provided as string, return that path
-    if isinstance(ext, str):
-        return path_for(ext)
-
-    # ext is None -> use glob to find any existing file
     matches = glob.glob(f"{base}.*")
     if matches:
         # prefer known extensions order
@@ -59,11 +42,18 @@ def filename(name, ext=None):
                     return m
         return matches[0]
 
-    # default
-    return path_for("jpg")
+    return None
 
 
-# --- Image downloading and cropping utilities ---
+def sanitize_name(name):
+    """
+    Sanitize a card name for use as a filename by removing all non-alphanumeric characters.
+
+    Args:
+        name (str): Card name to sanitize.
+    """
+
+    return re.sub(r"[^\w]", "", name)
 
 
 def _crop_section(
@@ -127,14 +117,63 @@ def _crop_section(
     return cropped
 
 
+def _fetch_image(image_url, session, headers):
+    """
+    Try to fetch an image from Yugipedia's static file server using the MD5 hash path.
+    Returns a PIL Image or BytesIO (for SVG) or None.
+    """
+    ext = image_url.split(".")[-1].lower()
+    try:
+        img_resp = session.get(image_url, headers=headers, timeout=10)
+        if img_resp.status_code != 200:
+            return None
+        img_bytes = BytesIO(img_resp.content)
+        if ext == "svg":
+            return img_bytes
+        else:
+            try:
+                img = Image.open(img_bytes)
+                return img
+            except Exception:
+                return None
+    except Exception:
+        return None
+
+
+def _fetch_featured_image(card_name, session, headers, base_url):
+    """
+    Query the card page for the featured image using the MediaWiki API.
+    Returns a PIL Image or BytesIO (for SVG) or None.
+    """
+    params = {
+        "action": "query",
+        "format": "json",
+        "prop": "pageimages",
+        "titles": card_name,
+        "piprop": "original",
+    }
+    try:
+        resp = session.get(base_url, params=params, headers=headers, timeout=10)
+        resp.raise_for_status()
+        data_json = resp.json()
+        pages = data_json.get("query", {}).get("pages", {})
+        image_url = None
+        for page in pages.values():
+            original = page.get("original")
+            thumbnail = page.get("thumbnail")
+            if original and "source" in original:
+                image_url = original["source"]
+            elif thumbnail and "original" in thumbnail:
+                image_url = thumbnail["original"]
+        return image_url
+    except Exception:
+        return None
+
+
 def _download_images_fallback(names):
     """
-    Download and crop card images directly from Yugipedia API (fallback method).
-    Used when yugiquery utilities are unavailable. Saves images to images/<Card_Name>.jpg.
-    Skips existing files.
-
-    Args:
-        names (Iterable[str]): Card names to download.
+    Download and crop card images directly from Yugipedia (fallback method).
+    Tries static file server first, then queries card page for featured image.
     """
     image_dir = "images"
     if not os.path.exists(image_dir):
@@ -148,112 +187,48 @@ def _download_images_fallback(names):
     }
     base_url = "https://yugipedia.com/api.php"
 
-    def fetch_image(image_title):
-        params = {
-            "action": "query",
-            "format": "json",
-            "titles": f"File:{image_title}",
-            "prop": "imageinfo",
-            "iiprop": "url",
-        }
-        try:
-            resp = session.get(base_url, params=params, headers=headers, timeout=10)
-            resp.raise_for_status()
-            data = resp.json()
-            pages = data.get("query", {}).get("pages", {})
-            image_url = None
-            for page in pages.values():
-                imageinfo = page.get("imageinfo")
-                if imageinfo and isinstance(imageinfo, list) and "url" in imageinfo[0]:
-                    image_url = imageinfo[0]["url"]
-            if image_url:
-                ext = image_title.split(".")[-1].lower()
-                img_resp = session.get(image_url, headers=headers, timeout=10)
-                img_resp.raise_for_status()
-                img_bytes = BytesIO(img_resp.content)
-                if ext == "svg":
-                    return img_bytes
-                else:
-                    try:
-                        img = Image.open(img_bytes)
-                        return img
-                    except Exception:
-                        return None
-            else:
-                return None
-        except Exception:
-            return None
-
-    for name in sorted(names):
-        existing = filename(name, ext=None)
-        if os.path.exists(existing):
+    for name in tqdm(sorted(names)):
+        existing = filename(name)
+        if existing and os.path.exists(existing):
             continue
 
-        sanitized = re.sub(r"[\W]", "", name)
+        sanitized = sanitize_name(name)
         found = False
         for image_title in [
             f"{sanitized}-MADU-EN-VG-artwork.png",
             f"{sanitized}-OW.png",
             f"{sanitized}.svg",
         ]:
-            ext = image_title.split(".")[-1].lower()
-            img_obj = fetch_image(image_title)
+            md5 = hashlib.md5(image_title.encode("utf-8")).hexdigest()
+            image_url = f"https://ms.yugipedia.com//{md5[0]}/{md5[0:2]}/{image_title}"
+            img_obj = _fetch_image(image_url, session, headers)
             if img_obj is not None:
-                file_path = filename(name, ext=ext)
-                if ext == "svg" and isinstance(img_obj, BytesIO):
-                    with open(file_path, "wb") as f:
-                        f.write(img_obj.getvalue())
-                elif isinstance(img_obj, Image.Image):
-                    img_obj.save(file_path)
+                ext = image_title.split(".")[-1].lower()
+                save_image(img_obj, sanitized, ext)
                 found = True
                 break
 
         if not found:
-            # Fallback to featured image via API (with cropping)
-            params = {
-                "action": "query",
-                "format": "json",
-                "prop": "pageimages",
-                "titles": name,
-                "piprop": "original",
-            }
-            try:
-                resp = session.get(base_url, params=params, headers=headers, timeout=10)
-                resp.raise_for_status()
-                data_json = resp.json()
-                pages = data_json.get("query", {}).get("pages", {})
-                image_url = None
-                for page in pages.values():
-                    original = page.get("original")
-                    thumbnail = page.get("thumbnail")
-                    if original and "source" in original:
-                        image_url = original["source"]
-                    elif thumbnail and "original" in thumbnail:
-                        image_url = thumbnail["original"]
-                if not image_url:
-                    print(f"[WARN] No image found for '{name}'")
-                    continue
-                img_resp = session.get(image_url, headers=headers, timeout=10)
-                img_resp.raise_for_status()
-                img_bytes = BytesIO(img_resp.content)
-                if (
-                    image_url.lower().endswith(".svg")
-                    or img_resp.headers.get("Content-Type", "").lower()
-                    == "image/svg+xml"
-                ):
-                    file_path = filename(name, ext="svg")
-                    with open(file_path, "wb") as f:
-                        f.write(img_bytes.getvalue())
-                    continue
-                else:
-                    file_path = filename(name, ext="jpg")
-                    img = Image.open(img_bytes)
-                    img = _crop_section(img, out_size=None)
-                    if img.mode != "RGB":
-                        img = img.convert("RGB")
-                    img.save(file_path)
-            except Exception as e:
-                print(f"[ERROR] Failed to download image for '{name}': {e}")
+            image_url = _fetch_featured_image(name, session, headers, base_url)
+            if image_url:
+                img_obj = _fetch_image(image_url, session, headers)
+                img_obj = _crop_section(img_obj, out_size=None)
+                if img_obj is not None:
+                    ext = image_url.split(".")[-1].lower()
+                    save_image(img_obj, sanitized, ext)
+            else:
+                print(f"[WARN] No image found for '{name}'")
+
+
+def save_image(img_obj, name, ext):
+    file_path = f"{base_path}/{sanitize_name(name)}.{ext}"
+    if ext == "svg" and isinstance(img_obj, BytesIO):
+        with open(file_path, "wb") as f:
+            f.write(img_obj.getvalue())
+    elif isinstance(img_obj, Image.Image):
+        img_obj.save(file_path)
+    else:
+        print(f"[WARN] Unrecognized image object for '{name}'")
 
 
 def download(names, config):
@@ -279,11 +254,10 @@ def download(names, config):
 
         # Fetch the featured image filenames
         file_names = fetch_featured_images(*names)
-        image_dir = "images"
 
         # Download them (only if we got filenames)
         if file_names:
-            results = asyncio.run(download_media(*file_names, output_path=image_dir))
+            results = asyncio.run(download_media(*file_names, output_path=base_path))
 
             # Print download results
             if results is not None and len(results) > 0:
@@ -307,7 +281,7 @@ def download(names, config):
             # Crop the downloaded images
             for name in names:
                 file_path = filename(name)
-                if os.path.exists(file_path):
+                if file_path is not None and os.path.exists(file_path):
                     try:
                         with Image.open(file_path) as img:
                             cropped_img = yugiquery_crop(
