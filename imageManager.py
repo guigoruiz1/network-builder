@@ -278,6 +278,7 @@ def _download_images_yugiquery(names):
 
     Args:
         names (Iterable[str]): Card names to download.
+        config (Config): Configuration object for cropping.
     """
     from yugiquery.utils.api import fetch_featured_images, download_media
     from yugiquery.utils.image import crop_section as yugiquery_crop
@@ -319,6 +320,7 @@ def _download_images_yugiquery(names):
         remaining = failed
 
     # For still-remaining cards, use fetch_featured_images as final fallback
+    featured_cards = []
     if remaining:
         file_names = fetch_featured_images(*remaining)
         if file_names:
@@ -339,12 +341,13 @@ def _download_images_yugiquery(names):
                 )
                 for result in failed:
                     print(f"[WARN] Failed to download: {result.get('file_name')}")
+            featured_cards = list(remaining)
         else:
             for name in remaining:
                 print(f"[WARN] No image found for '{name}'")
 
-    # Crop all downloaded images
-    for name in names:
+    # Crop only featured images
+    for name in featured_cards:
         file_path = filename(name)
         if file_path is not None and os.path.exists(file_path):
             try:
