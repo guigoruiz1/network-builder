@@ -1,6 +1,7 @@
 # Module stub for image management. 
 # To be populated by the user for specific use cases. 
 
+import os
 import re
 
 # --- Mandatory functions for network script ---
@@ -32,4 +33,8 @@ def filename(name):
     Returns:
         str: Path to the filename.
     """
-    return ""
+    file_name = re.sub(r"[^\w]", "", name)
+    if os.path.isfile(file_name)
+        return file_name
+        
+    return None
