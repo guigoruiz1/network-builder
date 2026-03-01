@@ -298,8 +298,7 @@ def _download_images_yugiquery(names):
         names (Iterable[str]): Card names to download.
         config (Config): Configuration object for cropping.
     """
-    from yugiquery.utils.api import fetch_featured_images, download_media
-    from yugiquery.utils.image import crop_section as yugiquery_crop
+    from yugiquery.utils.api import fetch_page_images, download_media
 
     # Patterns to try in priority order ({name} is replaced with the sanitized card name)
     patterns = [
@@ -338,26 +337,46 @@ def _download_images_yugiquery(names):
         )
         remaining = failed
 
-    # For still-remaining cards, use fetch_featured_images as final fallback
+    # For still-remaining cards, use fetch_page_images as final fallback
     featured_cards = []
     if remaining:
-        file_names = fetch_featured_images(*remaining)
-        if file_names:
-            results = asyncio.run(download_media(*file_names, output_path=base_path))
+        image_files = fetch_page_images(*remaining)
+        if image_files is not None and len(image_files) > 0:
+            results = asyncio.run(
+                download_media(*image_files.tolist(), output_path=base_path)
+            )
             if results is not None and len(results) > 0:
                 succeeded_count = 0
-                for name, result in zip(remaining, results):
-                    if isinstance(result, dict) and result.get("success"):
-                        _move_download(result, name)
-                        featured_cards.append(name)
-                        succeeded_count += 1
-                    else:
+                # Build a mapping from sanitized-lowercase card name to original card name
+                sanitized_to_card = {
+                    _sanitize_name(card_name).lower(): card_name
+                    for card_name in remaining
+                }
+                assigned = set()
+                for result in results:
+                    if not (isinstance(result, dict) and result.get("success")):
                         print(
                             f"[WARN] Failed to download: {result.get('file_name') if isinstance(result, dict) else '?'}"
                         )
+                        continue
+                    file_base = _sanitize_name(
+                        os.path.splitext(result["file_name"])[0]
+                    ).lower()
+                    for san, card_name in sanitized_to_card.items():
+                        if card_name in assigned:
+                            continue
+                        if file_base.startswith(san):
+                            _move_download(result, card_name)
+                            featured_cards.append(card_name)
+                            assigned.add(card_name)
+                            succeeded_count += 1
+                            break
                 print(
-                    f"Downloaded {succeeded_count}/{len(results)} images using yugiquery [featured]"
+                    f"Downloaded {succeeded_count}/{len(remaining)} images using yugiquery [featured]"
                 )
+                for name in remaining:
+                    if name not in assigned:
+                        print(f"[WARN] No image found for '{name}'")
         else:
             for name in remaining:
                 print(f"[WARN] No image found for '{name}'")
@@ -368,13 +387,7 @@ def _download_images_yugiquery(names):
         if file_path is not None and os.path.exists(file_path):
             try:
                 with Image.open(file_path) as img:
-                    cropped_img = yugiquery_crop(
-                        img,
-                        ref=sizes["ref"],
-                        offset=sizes["offset"],
-                        crop_size=sizes["crop"],
-                        out_size=None,
-                    )
+                    cropped_img = _crop_section(img)
                     cropped_img.save(file_path)
             except Exception as e:
                 print(f"[WARN] Failed to crop image for '{name}': {e}")
