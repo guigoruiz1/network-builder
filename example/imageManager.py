@@ -26,7 +26,7 @@ def filename(name):
     """
     Converts a passed name into a filename path.
     Must be consistent with the naming scheme used in `download()`.
-    Returns None if no file exists.
+    Should return None if no file exists.
 
     Args:
         name (str): Node name.
