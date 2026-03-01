@@ -1,3 +1,8 @@
+# Module stub for image management. 
+# To be populated by the user for specific use cases. 
+
+import re
+
 # --- Mandatory functions for network script ---
 
 
