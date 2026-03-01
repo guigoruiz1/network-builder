@@ -1,6 +1,6 @@
 # Relationship Network Visualisation
 
-You can see a live example [here](example/example.html).
+You can see a live example [here](https://ruizbad.com/network-builder/example/example.html).
 
 ## Overview
 
