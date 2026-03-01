@@ -1,5 +1,5 @@
-# Module stub for image management. 
-# To be populated by the user for specific use cases. 
+# Module stub for image management.
+# To be populated by the user for specific use cases.
 
 import os
 import re
@@ -34,7 +34,7 @@ def filename(name):
         str: Path to the filename.
     """
     file_name = "images/" + re.sub(r"[^\w]", "", name) + ".jpg"
-    if os.path.exists(file_name)
+    if os.path.exists(file_name):
         return file_name
-        
+
     return None
