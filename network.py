@@ -661,7 +661,12 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    # Add script directory to parh for imageManager import fallback
+    # Add current working directory to path for imageManager import priority
+    cwd = os.getcwd()
+    if cwd not in sys.path:
+        sys.path.insert(0, cwd)
+
+    # Add script directory to path for imageManager import fallback
     self_dir = os.path.dirname(os.path.abspath(__file__))
     if self_dir not in sys.path:
         sys.path.append(self_dir)
