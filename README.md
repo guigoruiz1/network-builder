@@ -1,4 +1,4 @@
-# Relationship Network Visualisation
+# Network Builder - Relationship Visualization Tool
 
 You can see a live example [here](https://ruizbad.com/network-builder/example/example.html).
 
