@@ -1,0 +1,893 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        
+            <script src="lib/bindings/utils.js"></script>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/dist/vis-network.min.css" integrity="sha512-WgxfT5LWjfszlPHXRmBWHkV2eceiWTOBvrKCNbdgDYTHrT2AeLCGbF4sZlZw3UMN3WtL0tGUoIAKsu8mllg/XA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/vis-network.min.js" integrity="sha512-LnvoEWDFrqGHlHmDD2101OrLcbsfkrzoSpvtSQtxK3RMnRV0eOkhhBN2dXHKRrUU8p2DGRTk35n4O8nWSVe1mQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+            
+                <link href="lib/tom-select/tom-select.css" rel="stylesheet">
+                <script src="lib/tom-select/tom-select.complete.min.js"></script>
+            
+        
+<center>
+<h1>Yu-Gi-Oh! Card Relationship Network</h1>
+</center>
+
+<!-- <link rel="stylesheet" href="../node_modules/vis/dist/vis.min.css" type="text/css" />
+<script type="text/javascript" src="../node_modules/vis/dist/vis.js"> </script>-->
+        <link
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6"
+          crossorigin="anonymous"
+        />
+        <script
+          src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js"
+          integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf"
+          crossorigin="anonymous"
+        ></script>
+
+        <style type="text/css">
+
+             #mynetwork {
+                 width: 100%;
+                 height: 80vh;
+                 background-color: #ffffff;
+                 border: 1px solid lightgray;
+                 position: relative;
+                 float: left;
+             }
+
+             
+             #loadingBar {
+                 position:absolute;
+                 top:0px;
+                 left:0px;
+                 width: 100%;
+                 height: 80vh;
+                 background-color:rgba(200,200,200,0.8);
+                 -webkit-transition: all 0.5s ease;
+                 -moz-transition: all 0.5s ease;
+                 -ms-transition: all 0.5s ease;
+                 -o-transition: all 0.5s ease;
+                 transition: all 0.5s ease;
+                 opacity:1;
+             }
+
+             #bar {
+                 position:absolute;
+                 top:0px;
+                 left:0px;
+                 width:20px;
+                 height:20px;
+                 margin:auto auto auto auto;
+                 border-radius:11px;
+                 border:2px solid rgba(30,30,30,0.05);
+                 background: rgb(0, 173, 246); /* Old browsers */
+                 box-shadow: 2px 0px 4px rgba(0,0,0,0.4);
+             }
+
+             #border {
+                 position:absolute;
+                 top:10px;
+                 left:10px;
+                 width:500px;
+                 height:23px;
+                 margin:auto auto auto auto;
+                 box-shadow: 0px 0px 4px rgba(0,0,0,0.2);
+                 border-radius:10px;
+             }
+
+             #text {
+                 position:absolute;
+                 top:8px;
+                 left:530px;
+                 width:30px;
+                 height:50px;
+                 margin:auto auto auto auto;
+                 font-size:22px;
+                 color: #000000;
+             }
+
+             div.outerBorder {
+                 position:relative;
+                 top:400px;
+                 width:600px;
+                 height:44px;
+                 margin:auto auto auto auto;
+                 border:8px solid rgba(0,0,0,0.1);
+                 background: rgb(252,252,252); /* Old browsers */
+                 background: -moz-linear-gradient(top,  rgba(252,252,252,1) 0%, rgba(237,237,237,1) 100%); /* FF3.6+ */
+                 background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(252,252,252,1)), color-stop(100%,rgba(237,237,237,1))); /* Chrome,Safari4+ */
+                 background: -webkit-linear-gradient(top,  rgba(252,252,252,1) 0%,rgba(237,237,237,1) 100%); /* Chrome10+,Safari5.1+ */
+                 background: -o-linear-gradient(top,  rgba(252,252,252,1) 0%,rgba(237,237,237,1) 100%); /* Opera 11.10+ */
+                 background: -ms-linear-gradient(top,  rgba(252,252,252,1) 0%,rgba(237,237,237,1) 100%); /* IE10+ */
+                 background: linear-gradient(to bottom,  rgba(252,252,252,1) 0%,rgba(237,237,237,1) 100%); /* W3C */
+                 filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fcfcfc', endColorstr='#ededed',GradientType=0 ); /* IE6-9 */
+                 border-radius:72px;
+                 box-shadow: 0px 0px 10px rgba(0,0,0,0.2);
+             }
+             
+
+             
+             #config {
+                 float: left;
+                 width: 400px;
+                 height: 600px;
+             }
+             
+
+             
+        </style>
+    </head>
+
+
+    <body>
+        <div class="card" style="width: 100%">
+            
+                <div id="select-menu" class="card-header">
+                    <div class="row no-gutters">
+                        <div class="col-10 pb-2">
+                            <select
+                            class="form-select"
+                            aria-label="Default select example"
+                            onchange="selectNode([value]);"
+                            id="select-node"
+                            placeholder="Select node..."
+                            >
+                                <option selected>Select a Node by ID</option>
+                                
+                                    <option value="Alpha The Electromagnet Warrior">Alpha The Electromagnet Warrior</option>
+                                
+                                    <option value="Alpha The Magnet Warrior">Alpha The Magnet Warrior</option>
+                                
+                                    <option value="Amulet Dragon">Amulet Dragon</option>
+                                
+                                    <option value="Ankuriboh">Ankuriboh</option>
+                                
+                                    <option value="Apple Magician Girl">Apple Magician Girl</option>
+                                
+                                    <option value="Apprentice Illusion Magician">Apprentice Illusion Magician</option>
+                                
+                                    <option value="Arcana Extra Joker">Arcana Extra Joker</option>
+                                
+                                    <option value="Arcana Knight Joker">Arcana Knight Joker</option>
+                                
+                                    <option value="Arcana Triumph Joker">Arcana Triumph Joker</option>
+                                
+                                    <option value="Archfiend's Advent">Archfiend's Advent</option>
+                                
+                                    <option value="Archfiend's Ascent">Archfiend's Ascent</option>
+                                
+                                    <option value="Archfiend's Awakening">Archfiend's Awakening</option>
+                                
+                                    <option value="Archfiend's Call">Archfiend's Call</option>
+                                
+                                    <option value="Archfiend's Manifestation">Archfiend's Manifestation</option>
+                                
+                                    <option value="Arisen Gaia the Fierce Knight">Arisen Gaia the Fierce Knight</option>
+                                
+                                    <option value="Beginning Knight">Beginning Knight</option>
+                                
+                                    <option value="Berfomet">Berfomet</option>
+                                
+                                    <option value="Berfomet the Mythical King of Phantom Beasts">Berfomet the Mythical King of Phantom Beasts</option>
+                                
+                                    <option value="Berry Magician Girl">Berry Magician Girl</option>
+                                
+                                    <option value="Berserkion the Electromagna Warrior">Berserkion the Electromagna Warrior</option>
+                                
+                                    <option value="Beta The Electromagnet Warrior">Beta The Electromagnet Warrior</option>
+                                
+                                    <option value="Beta The Magnet Warrior">Beta The Magnet Warrior</option>
+                                
+                                    <option value="Big-Winged Berfomet">Big-Winged Berfomet</option>
+                                
+                                    <option value="Black Chaos the Dark Chaos Magician">Black Chaos the Dark Chaos Magician</option>
+                                
+                                    <option value="Black Chaos the Ultimate Magical Swordsman">Black Chaos the Ultimate Magical Swordsman</option>
+                                
+                                    <option value="Black Luster Soldier">Black Luster Soldier</option>
+                                
+                                    <option value="Black Luster Soldier - Envoy of the Beginning">Black Luster Soldier - Envoy of the Beginning</option>
+                                
+                                    <option value="Black Luster Soldier - Envoy of the Evening Twilight">Black Luster Soldier - Envoy of the Evening Twilight</option>
+                                
+                                    <option value="Black Luster Soldier - Legendary Swordsman">Black Luster Soldier - Legendary Swordsman</option>
+                                
+                                    <option value="Black Luster Soldier - Sacred Soldier">Black Luster Soldier - Sacred Soldier</option>
+                                
+                                    <option value="Black Luster Soldier - Soldier of Chaos">Black Luster Soldier - Soldier of Chaos</option>
+                                
+                                    <option value="Black Luster Soldier - Soldier of Light and Darkness">Black Luster Soldier - Soldier of Light and Darkness</option>
+                                
+                                    <option value="Black Luster Soldier - Super Soldier">Black Luster Soldier - Super Soldier</option>
+                                
+                                    <option value="Black Skull Dragon">Black Skull Dragon</option>
+                                
+                                    <option value="Blue-Eyes Ultimate Dragon">Blue-Eyes Ultimate Dragon</option>
+                                
+                                    <option value="Breaker the Dark Magical Warrior">Breaker the Dark Magical Warrior</option>
+                                
+                                    <option value="Breaker the Magical Warrior">Breaker the Magical Warrior</option>
+                                
+                                    <option value="Buster Blader">Buster Blader</option>
+                                
+                                    <option value="Buster Blader, the Destruction Swordmaster">Buster Blader, the Destruction Swordmaster</option>
+                                
+                                    <option value="Buster Blader, the Dragon Destroyer Swordsman">Buster Blader, the Dragon Destroyer Swordsman</option>
+                                
+                                    <option value="Buster Dragon">Buster Dragon</option>
+                                
+                                    <option value="Buster Whelp of the Destruction Swordsman">Buster Whelp of the Destruction Swordsman</option>
+                                
+                                    <option value="Celtic Guard of Noble Arms">Celtic Guard of Noble Arms</option>
+                                
+                                    <option value="Celtic Guardian">Celtic Guardian</option>
+                                
+                                    <option value="Charging Gaia the Fierce Knight">Charging Gaia the Fierce Knight</option>
+                                
+                                    <option value="Chimera the Flying Mythical Beast">Chimera the Flying Mythical Beast</option>
+                                
+                                    <option value="Chimera the Illusion Beast">Chimera the Illusion Beast</option>
+                                
+                                    <option value="Chimera the King of Phantom Beasts">Chimera the King of Phantom Beasts</option>
+                                
+                                    <option value="Chocolate Magician Girl">Chocolate Magician Girl</option>
+                                
+                                    <option value="Clear Kuriboh">Clear Kuriboh</option>
+                                
+                                    <option value="Cornfield Coatl">Cornfield Coatl</option>
+                                
+                                    <option value="Curse of Dragon">Curse of Dragon</option>
+                                
+                                    <option value="Curse of Dragon, the Cursed Dragon">Curse of Dragon, the Cursed Dragon</option>
+                                
+                                    <option value="Curse of Dragonfire">Curse of Dragonfire</option>
+                                
+                                    <option value="DARK">DARK</option>
+                                
+                                    <option value="DIVINE">DIVINE</option>
+                                
+                                    <option value="Dark Cavalry">Dark Cavalry</option>
+                                
+                                    <option value="Dark Eradicator Warlock">Dark Eradicator Warlock</option>
+                                
+                                    <option value="Dark Flare Knight">Dark Flare Knight</option>
+                                
+                                    <option value="Dark Magician">Dark Magician</option>
+                                
+                                    <option value="Dark Magician Girl">Dark Magician Girl</option>
+                                
+                                    <option value="Dark Magician Girl the Dragon Knight">Dark Magician Girl the Dragon Knight</option>
+                                
+                                    <option value="Dark Magician Girl the Magician's Apprentice">Dark Magician Girl the Magician's Apprentice</option>
+                                
+                                    <option value="Dark Magician of Chaos">Dark Magician of Chaos</option>
+                                
+                                    <option value="Dark Magician of Destruction">Dark Magician of Destruction</option>
+                                
+                                    <option value="Dark Magician the Dragon Knight">Dark Magician the Dragon Knight</option>
+                                
+                                    <option value="Dark Magician the Knight of Dragon Magic">Dark Magician the Knight of Dragon Magic</option>
+                                
+                                    <option value="Dark Magician the Magician of Black Magic">Dark Magician the Magician of Black Magic</option>
+                                
+                                    <option value="Dark Magician, the Pharaoh's Servant">Dark Magician, the Pharaoh's Servant</option>
+                                
+                                    <option value="Dark Paladin">Dark Paladin</option>
+                                
+                                    <option value="Dark Sage">Dark Sage</option>
+                                
+                                    <option value="Day-Breaker the Shining Magical Warrior">Day-Breaker the Shining Magical Warrior</option>
+                                
+                                    <option value="Defender, the Magical Knight">Defender, the Magical Knight</option>
+                                
+                                    <option value="Delta The Magnet Warrior">Delta The Magnet Warrior</option>
+                                
+                                    <option value="Detonate">Detonate</option>
+                                
+                                    <option value="Detonating Kuriboh">Detonating Kuriboh</option>
+                                
+                                    <option value="Dragon Buster Destruction Sword">Dragon Buster Destruction Sword</option>
+                                
+                                    <option value="Dragon Master Knight">Dragon Master Knight</option>
+                                
+                                    <option value="Dragon Master Magia">Dragon Master Magia</option>
+                                
+                                    <option value="EARTH">EARTH</option>
+                                
+                                    <option value="Ebon High Magician">Ebon High Magician</option>
+                                
+                                    <option value="Ebon Illusion Magician">Ebon Illusion Magician</option>
+                                
+                                    <option value="Envoy of Chaos">Envoy of Chaos</option>
+                                
+                                    <option value="Epsilon The Magnet Warrior">Epsilon The Magnet Warrior</option>
+                                
+                                    <option value="Evening Twilight Knight">Evening Twilight Knight</option>
+                                
+                                    <option value="FIRE">FIRE</option>
+                                
+                                    <option value="Flame Swordsman">Flame Swordsman</option>
+                                
+                                    <option value="Gadget Trio">Gadget Trio</option>
+                                
+                                    <option value="Gaia Blaze, the Force of the Sun">Gaia Blaze, the Force of the Sun</option>
+                                
+                                    <option value="Gaia Dragon, the Thunder Charger">Gaia Dragon, the Thunder Charger</option>
+                                
+                                    <option value="Gaia Drake, the Universal Force">Gaia Drake, the Universal Force</option>
+                                
+                                    <option value="Gaia Knight, the Force of Earth">Gaia Knight, the Force of Earth</option>
+                                
+                                    <option value="Gaia Prominence, the Fierce Force">Gaia Prominence, the Fierce Force</option>
+                                
+                                    <option value="Gaia Saber, the Lightning Shadow">Gaia Saber, the Lightning Shadow</option>
+                                
+                                    <option value="Gaia Stream, the Graceful Force">Gaia Stream, the Graceful Force</option>
+                                
+                                    <option value="Gaia The Fierce Knight">Gaia The Fierce Knight</option>
+                                
+                                    <option value="Gaia the Dragon Champion">Gaia the Dragon Champion</option>
+                                
+                                    <option value="Gaia the Fierce Knight Origin">Gaia the Fierce Knight Origin</option>
+                                
+                                    <option value="Gaia the Magical Knight">Gaia the Magical Knight</option>
+                                
+                                    <option value="Gaia the Magical Knight of Dragons">Gaia the Magical Knight of Dragons</option>
+                                
+                                    <option value="Gaia, the Mid-Knight Sun">Gaia, the Mid-Knight Sun</option>
+                                
+                                    <option value="Gaia, the Polar Knight">Gaia, the Polar Knight</option>
+                                
+                                    <option value="Gamma The Electromagnet Warrior">Gamma The Electromagnet Warrior</option>
+                                
+                                    <option value="Gamma The Magnet Warrior">Gamma The Magnet Warrior</option>
+                                
+                                    <option value="Gandora the Dragon of Destruction">Gandora the Dragon of Destruction</option>
+                                
+                                    <option value="Gandora-G the Dragon of Destruction">Gandora-G the Dragon of Destruction</option>
+                                
+                                    <option value="Gandora-X the Dragon of Demolition">Gandora-X the Dragon of Demolition</option>
+                                
+                                    <option value="Gazelle the King of Mythical Beasts">Gazelle the King of Mythical Beasts</option>
+                                
+                                    <option value="Gazelle the King of Mythical Claws">Gazelle the King of Mythical Claws</option>
+                                
+                                    <option value="Gigarays Gandora the Dragon of Destruction">Gigarays Gandora the Dragon of Destruction</option>
+                                
+                                    <option value="Goddess Bow">Goddess Bow</option>
+                                
+                                    <option value="Green Gadget">Green Gadget</option>
+                                
+                                    <option value="Griffore">Griffore</option>
+                                
+                                    <option value="Gurifoh">Gurifoh</option>
+                                
+                                    <option value="Holactie the Creator of Light">Holactie the Creator of Light</option>
+                                
+                                    <option value="Illusion of Chaos">Illusion of Chaos</option>
+                                
+                                    <option value="Imperial Bower">Imperial Bower</option>
+                                
+                                    <option value="Imperion Magnum the Superconductive Battlebot">Imperion Magnum the Superconductive Battlebot</option>
+                                
+                                    <option value="Jack's Knight">Jack's Knight</option>
+                                
+                                    <option value="Joker's Knight">Joker's Knight</option>
+                                
+                                    <option value="King's Knight">King's Knight</option>
+                                
+                                    <option value="Kiwi Magician Girl">Kiwi Magician Girl</option>
+                                
+                                    <option value="Kuribabylon">Kuribabylon</option>
+                                
+                                    <option value="Kuribah">Kuribah</option>
+                                
+                                    <option value="Kuribandit">Kuribandit</option>
+                                
+                                    <option value="Kuribee">Kuribee</option>
+                                
+                                    <option value="Kuribeh">Kuribeh</option>
+                                
+                                    <option value="Kuriboh">Kuriboh</option>
+                                
+                                    <option value="Kuribohrn">Kuribohrn</option>
+                                
+                                    <option value="Kuriboo">Kuriboo</option>
+                                
+                                    <option value="LIGHT">LIGHT</option>
+                                
+                                    <option value="Legendary Knight Critias">Legendary Knight Critias</option>
+                                
+                                    <option value="Legendary Knight Hermos">Legendary Knight Hermos</option>
+                                
+                                    <option value="Legendary Knight Timaeus">Legendary Knight Timaeus</option>
+                                
+                                    <option value="Lemon Magician Girl">Lemon Magician Girl</option>
+                                
+                                    <option value="Lord Gaia the Fierce Knight">Lord Gaia the Fierce Knight</option>
+                                
+                                    <option value="Magi Magi ☆ Magician Gal">Magi Magi ☆ Magician Gal</option>
+                                
+                                    <option value="Magician of Black Chaos">Magician of Black Chaos</option>
+                                
+                                    <option value="Magician of Black Chaos MAX">Magician of Black Chaos MAX</option>
+                                
+                                    <option value="Magician of Chaos">Magician of Chaos</option>
+                                
+                                    <option value="Magician of Dark Illusion">Magician of Dark Illusion</option>
+                                
+                                    <option value="Magician's Valkyria">Magician's Valkyria</option>
+                                
+                                    <option value="Magikuriboh">Magikuriboh</option>
+                                
+                                    <option value="Magnetic Field">Magnetic Field</option>
+                                
+                                    <option value="Marshmacaron">Marshmacaron</option>
+                                
+                                    <option value="Marshmallon">Marshmallon</option>
+                                
+                                    <option value="Master of Chaos">Master of Chaos</option>
+                                
+                                    <option value="Metalhold the Moving Blockade">Metalhold the Moving Blockade</option>
+                                
+                                    <option value="Mirror Force">Mirror Force</option>
+                                
+                                    <option value="Mirror Force Dragon">Mirror Force Dragon</option>
+                                
+                                    <option value="Mirror Swordknight">Mirror Swordknight</option>
+                                
+                                    <option value="Monster Reborn">Monster Reborn</option>
+                                
+                                    <option value="Moremarshmallon">Moremarshmallon</option>
+                                
+                                    <option value="Multiply">Multiply</option>
+                                
+                                    <option value="Multiplying Kuriboh!">Multiplying Kuriboh!</option>
+                                
+                                    <option value="Mystical Celtic Sage">Mystical Celtic Sage</option>
+                                
+                                    <option value="Mystical Elf">Mystical Elf</option>
+                                
+                                    <option value="Obelisk the Tormentor">Obelisk the Tormentor</option>
+                                
+                                    <option value="Obnoxious Celtic Guard">Obnoxious Celtic Guard</option>
+                                
+                                    <option value="Old Vindictive Magician">Old Vindictive Magician</option>
+                                
+                                    <option value="Palladium Oracle Mahad">Palladium Oracle Mahad</option>
+                                
+                                    <option value="Palladium Oracle Mana">Palladium Oracle Mana</option>
+                                
+                                    <option value="Powerhold the Moving Battery">Powerhold the Moving Battery</option>
+                                
+                                    <option value="Protector Whelp of the Destruction Swordsman">Protector Whelp of the Destruction Swordsman</option>
+                                
+                                    <option value="Queen's Knight">Queen's Knight</option>
+                                
+                                    <option value="Red Gadget">Red Gadget</option>
+                                
+                                    <option value="Red-Eyes Black Dragon">Red-Eyes Black Dragon</option>
+                                
+                                    <option value="Red-Eyes Black Dragon Sword">Red-Eyes Black Dragon Sword</option>
+                                
+                                    <option value="Red-Eyes Dark Dragoon">Red-Eyes Dark Dragoon</option>
+                                
+                                    <option value="Relinkuriboh">Relinkuriboh</option>
+                                
+                                    <option value="Relinquished">Relinquished</option>
+                                
+                                    <option value="Ritual of Light and Darkness">Ritual of Light and Darkness</option>
+                                
+                                    <option value="Robot Buster Destruction Sword">Robot Buster Destruction Sword</option>
+                                
+                                    <option value="Royal Straight">Royal Straight</option>
+                                
+                                    <option value="Royal Straight Slasher">Royal Straight Slasher</option>
+                                
+                                    <option value="Sanwitch">Sanwitch</option>
+                                
+                                    <option value="Shining Sarcophagus">Shining Sarcophagus</option>
+                                
+                                    <option value="Silent Magician">Silent Magician</option>
+                                
+                                    <option value="Silent Magician LV4">Silent Magician LV4</option>
+                                
+                                    <option value="Silent Magician LV8">Silent Magician LV8</option>
+                                
+                                    <option value="Silent Magician Zero">Silent Magician Zero</option>
+                                
+                                    <option value="Silent Swordsman">Silent Swordsman</option>
+                                
+                                    <option value="Silent Swordsman LV3">Silent Swordsman LV3</option>
+                                
+                                    <option value="Silent Swordsman LV5">Silent Swordsman LV5</option>
+                                
+                                    <option value="Silent Swordsman LV7">Silent Swordsman LV7</option>
+                                
+                                    <option value="Silent Swordsman Zero">Silent Swordsman Zero</option>
+                                
+                                    <option value="Skull Archfiend of Chaos">Skull Archfiend of Chaos</option>
+                                
+                                    <option value="Skull Archfiend of Lightning">Skull Archfiend of Lightning</option>
+                                
+                                    <option value="Sky Galloping Gaia the Dragon Champion">Sky Galloping Gaia the Dragon Champion</option>
+                                
+                                    <option value="Slifer the Sky Dragon">Slifer the Sky Dragon</option>
+                                
+                                    <option value="Soldier Gaia the Fierce Knight">Soldier Gaia the Fierce Knight</option>
+                                
+                                    <option value="Sorcerer of Dark Magic">Sorcerer of Dark Magic</option>
+                                
+                                    <option value="Sphere Kuriboh">Sphere Kuriboh</option>
+                                
+                                    <option value="Stronghold the Hidden Fortress">Stronghold the Hidden Fortress</option>
+                                
+                                    <option value="Stronghold the Moving Fortress">Stronghold the Moving Fortress</option>
+                                
+                                    <option value="Summoned Skull">Summoned Skull</option>
+                                
+                                    <option value="Swift Gaia the Fierce Knight">Swift Gaia the Fierce Knight</option>
+                                
+                                    <option value="The Claw of Hermos">The Claw of Hermos</option>
+                                
+                                    <option value="The Dark Magicians">The Dark Magicians</option>
+                                
+                                    <option value="The Eye of Timaeus">The Eye of Timaeus</option>
+                                
+                                    <option value="The Fang of Critias">The Fang of Critias</option>
+                                
+                                    <option value="The Gaze of Timaeus">The Gaze of Timaeus</option>
+                                
+                                    <option value="The Winged Dragon of Ra">The Winged Dragon of Ra</option>
+                                
+                                    <option value="The Winged Dragon of Ra - Immortal Phoenix">The Winged Dragon of Ra - Immortal Phoenix</option>
+                                
+                                    <option value="The Winged Dragon of Ra - Sphere Mode">The Winged Dragon of Ra - Sphere Mode</option>
+                                
+                                    <option value="Timaeus the Knight of Destiny">Timaeus the Knight of Destiny</option>
+                                
+                                    <option value="Timaeus the United Dragon">Timaeus the United Dragon</option>
+                                
+                                    <option value="Timaeus the United Magical Dragon">Timaeus the United Magical Dragon</option>
+                                
+                                    <option value="Valkyrion the Magna Warrior">Valkyrion the Magna Warrior</option>
+                                
+                                    <option value="WATER">WATER</option>
+                                
+                                    <option value="WIND">WIND</option>
+                                
+                                    <option value="Witch of the Black Forest">Witch of the Black Forest</option>
+                                
+                                    <option value="Wizard Buster Destruction Sword">Wizard Buster Destruction Sword</option>
+                                
+                                    <option value="Yellow Gadget">Yellow Gadget</option>
+                                
+                            </select>
+                        </div>
+                        <div class="col-2 pb-2">
+                            <button type="button" class="btn btn-primary btn-block" onclick="neighbourhoodHighlight({nodes: []});">Reset Selection</button>
+                        </div>
+                    </div>
+                </div>
+            
+            
+              <div id="filter-menu" class="card-header">
+                <div class="row no-gutters">
+                  <div class="col-3 pb-2">
+                    <select
+                            class="form-select"
+                            aria-label="Default select example"
+                            onchange="updateFilter(value, 'item')"
+                            id="select-item"
+                        >
+                        <option value="">Select a network item</option>
+                        <option value="edge">edge</option>
+                        <option value="node">node</option>
+                    </select>
+                  </div>
+                  <div class="col-3 pb-2">
+                    <select
+                            class="form-select"
+                            aria-label="Default select example"
+                            onchange="updateFilter(value, 'property')"
+                            id="select-property"
+                        >
+                        <option value="">Select a property...</option>
+                    </select>
+                  </div>
+                  <div class="col-3 pb-2">
+                    <select
+                            class="form-select"
+                            aria-label="Default select example"
+                            id="select-value"
+                        >
+                        <option value="">Select value(s)...</option>
+                    </select>
+                  </div>
+                  <div class="col-1 pb-2">
+                    <button type="button" class="btn btn-primary btn-block" onclick="highlightFilter(filter);">Filter</button>
+                  </div>
+                  <div class="col-2 pb-2">
+                    <button type="button" class="btn btn-primary btn-block" onclick="clearFilter(true)">Reset Selection</button>
+                  </div>
+                </div>
+              </div>
+            
+            <div id="mynetwork" class="card-body"></div>
+        </div>
+
+        
+            <div id="loadingBar">
+              <div class="outerBorder">
+                <div id="text">0%</div>
+                <div id="border">
+                  <div id="bar"></div>
+                </div>
+              </div>
+            </div>
+        
+        
+            <div id="config"></div>
+        
+
+        <script type="text/javascript">
+
+              // initialize global variables.
+              var edges;
+              var nodes;
+              var allNodes;
+              var allEdges;
+              var nodeColors;
+              var originalNodes;
+              var network;
+              var container;
+              var options, data;
+              var filter = {
+                  item : '',
+                  property : '',
+                  value : []
+              };
+
+              
+                  new TomSelect("#select-node",{
+                      create: false,
+                      sortField: {
+                          field: "text",
+                          direction: "asc"
+                      }
+                  });
+              
+
+              
+                  // explicitly using onItemAdd and this function as we need to save multiple values
+                  let updateValueFilter = function() {
+                      return function () {
+                      filter['value'].push(arguments[0])
+                      }
+                  }
+
+                  let valueControl = new TomSelect("#select-value",{
+                      maxItems: null,
+                      valueField: 'id',
+                      labelField: 'title',
+                      searchField: 'title',
+                      create: false,
+                      sortField: {
+                          field: "text",
+                          direction: "asc"
+                      },
+                      onItemAdd: updateValueFilter()
+                  });
+
+                  let addValues = function() {
+                      return function () {
+                          // clear the current value options and add the selected attribute values
+                          // tom-select handles duplicates
+                          let selectedProperty = arguments[0];
+                          valueControl.clear();
+                          valueControl.clearOptions();
+                          filter['value'] = []
+                          if (filter['item'] === 'node') {
+                              for (let each in allNodes) {
+                                  valueControl.addOption({
+                                      id:allNodes[each][selectedProperty],
+                                      title:allNodes[each][selectedProperty]
+                                  })
+                              }
+                          }
+                          else if (filter['item'] === 'edge') {
+                              for (let each in allEdges) {
+                                  valueControl.addOption({
+                                      id:allEdges[each][selectedProperty],
+                                      title:allEdges[each][selectedProperty]
+                                  })
+                              }
+                          }
+                      }
+                  };
+
+                  let propControl = new TomSelect("#select-property",{
+                      valueField: 'id',
+                      labelField: 'title',
+                      searchField: 'title',
+                      create: false,
+                      sortField: {
+                          field: "text",
+                          direction: "asc"
+                      },
+                      onItemAdd: addValues()
+                  });
+
+                  let addProperties = function() {
+                      return function () {
+                          // loops through the selected network item and adds the attributes to dropdown
+                          // tom-select handles duplicates
+                          clearFilter(false)
+                          if (arguments[0] === 'edge') {
+                              for (let each in allEdges) {
+                                  if (allEdges.hasOwnProperty(each)) {
+                                      for (let eachProp in allEdges[each]) {
+                                          if (allEdges[each].hasOwnProperty(eachProp)) {
+                                              propControl.addOption({id: eachProp, title: eachProp})
+                                          }
+                                      }
+                                  }
+                              }
+                          }
+                          else if (arguments[0] === 'node') {
+                              for (let each in allNodes) {
+                                  if (allNodes.hasOwnProperty(each)) {
+                                      for (let eachProp in allNodes[each]) {
+                                          if (allNodes[each].hasOwnProperty(eachProp)
+                                              && (eachProp !== 'hidden' && eachProp !== 'savedLabel'
+                                                  && eachProp !== 'hiddenLabel')) {
+                                              propControl.addOption({id: eachProp, title: eachProp})
+
+                                          }
+                                      }
+                                  }
+                              }
+                          }
+                      }
+                  };
+
+                  let itemControl = new TomSelect("#select-item",{
+                      create: false,
+                      sortField:{
+                          field: "text",
+                          direction: "asc"
+                      },
+                      onItemAdd: addProperties()
+                  });
+
+                  function clearFilter(reset) {
+                      // utility function to clear all the selected filter options
+                      // if reset is set to true, the existing filter will be removed
+                      // else, only the dropdown options are cleared
+                      propControl.clear();
+                      propControl.clearOptions();
+                      valueControl.clear();
+                      valueControl.clearOptions();
+                      filter = {
+                          item : '',
+                          property : '',
+                          value : []
+                      }
+                      if (reset) {
+                          itemControl.clear();
+                          filterHighlight({nodes: []})
+                      }
+                  }
+
+                  function updateFilter(value, key) {
+                      // key could be 'item' or 'property' and value is as selected in dropdown
+                      filter[key] = value
+                  }
+
+              
+
+              // This method is responsible for drawing the graph, returns the drawn network
+              function drawGraph() {
+                  var container = document.getElementById('mynetwork');
+
+                  
+
+                  // parsing and collecting nodes and edges from the python
+                  nodes = new vis.DataSet([{"color": "purple", "font": {"size": 5}, "id": "Alpha The Electromagnet Warrior", "image": "images/AlphaTheElectromagnetWarrior.png", "label": "Alpha The Electromagnet Warrior", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Alpha The Electromagnet Warrior"}, {"color": "purple", "font": {"size": 5}, "id": "Alpha The Magnet Warrior", "image": "images/AlphaTheMagnetWarrior.png", "label": "Alpha The Magnet Warrior", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Alpha The Magnet Warrior"}, {"color": "purple", "font": {"size": 5}, "id": "Amulet Dragon", "image": "images/AmuletDragon.png", "label": "Amulet Dragon", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Amulet Dragon"}, {"color": "orange", "font": {"size": 5}, "id": "Ankuriboh", "image": "images/Ankuriboh.png", "label": "Ankuriboh", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Ankuriboh"}, {"color": "red", "font": {"size": 5}, "id": "Apple Magician Girl", "image": "images/AppleMagicianGirl.png", "label": "Apple Magician Girl", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Apple Magician Girl"}, {"color": "blue", "font": {"size": 5}, "id": "Apprentice Illusion Magician", "image": "images/ApprenticeIllusionMagician.png", "label": "Apprentice Illusion Magician", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Apprentice Illusion Magician"}, {"color": "green", "font": {"size": 5}, "id": "Arcana Extra Joker", "image": "images/ArcanaExtraJoker.png", "label": "Arcana Extra Joker", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Arcana Extra Joker"}, {"color": "purple", "font": {"size": 5}, "id": "Arcana Knight Joker", "image": "images/ArcanaKnightJoker.png", "label": "Arcana Knight Joker", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 22.5, "title": "Arcana Knight Joker"}, {"color": "green", "font": {"size": 5}, "id": "Arcana Triumph Joker", "image": "images/ArcanaTriumphJoker.png", "label": "Arcana Triumph Joker", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Arcana Triumph Joker"}, {"color": "red", "font": {"size": 5}, "id": "Archfiend\u0027s Advent", "image": "images/ArchfiendsAdvent.png", "label": "Archfiend\u0027s Advent", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Archfiend\u0027s Advent"}, {"color": "red", "font": {"size": 5}, "id": "Archfiend\u0027s Ascent", "image": "images/ArchfiendsAscent.png", "label": "Archfiend\u0027s Ascent", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Archfiend\u0027s Ascent"}, {"color": "red", "font": {"size": 5}, "id": "Archfiend\u0027s Awakening", "image": "images/ArchfiendsAwakening.png", "label": "Archfiend\u0027s Awakening", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Archfiend\u0027s Awakening"}, {"color": "red", "font": {"size": 5}, "id": "Archfiend\u0027s Call", "image": "images/ArchfiendsCall.png", "label": "Archfiend\u0027s Call", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Archfiend\u0027s Call"}, {"color": "red", "font": {"size": 5}, "id": "Archfiend\u0027s Manifestation", "image": "images/ArchfiendsManifestation.png", "label": "Archfiend\u0027s Manifestation", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Archfiend\u0027s Manifestation"}, {"color": "purple", "font": {"size": 5}, "id": "Arisen Gaia the Fierce Knight", "image": "images/ArisenGaiatheFierceKnight.png", "label": "Arisen Gaia the Fierce Knight", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 20.5, "title": "Arisen Gaia the Fierce Knight"}, {"color": "blue", "font": {"size": 5}, "id": "Beginning Knight", "image": "images/BeginningKnight.png", "label": "Beginning Knight", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Beginning Knight"}, {"color": "orange", "font": {"size": 5}, "id": "Berfomet", "image": "images/Berfomet.png", "label": "Berfomet", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Berfomet"}, {"color": "purple", "font": {"size": 5}, "id": "Berfomet the Mythical King of Phantom Beasts", "image": "images/BerfomettheMythicalKingofPhantomBeasts.png", "label": "Berfomet the Mythical King of Phantom Beasts", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Berfomet the Mythical King of Phantom Beasts"}, {"color": "red", "font": {"size": 5}, "id": "Berry Magician Girl", "image": "images/BerryMagicianGirl.png", "label": "Berry Magician Girl", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Berry Magician Girl"}, {"color": "purple", "font": {"size": 5}, "id": "Berserkion the Electromagna Warrior", "image": "images/BerserkiontheElectromagnaWarrior.png", "label": "Berserkion the Electromagna Warrior", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 20.5, "title": "Berserkion the Electromagna Warrior"}, {"color": "purple", "font": {"size": 5}, "id": "Beta The Electromagnet Warrior", "image": "images/BetaTheElectromagnetWarrior.png", "label": "Beta The Electromagnet Warrior", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Beta The Electromagnet Warrior"}, {"color": "purple", "font": {"size": 5}, "id": "Beta The Magnet Warrior", "image": "images/BetaTheMagnetWarrior.png", "label": "Beta The Magnet Warrior", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Beta The Magnet Warrior"}, {"color": "purple", "font": {"size": 5}, "id": "Big-Winged Berfomet", "image": "images/BigWingedBerfomet.png", "label": "Big-Winged Berfomet", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 18.5, "title": "Big-Winged Berfomet"}, {"color": "orange", "font": {"size": 5}, "id": "Black Chaos the Dark Chaos Magician", "image": "images/BlackChaostheDarkChaosMagician.png", "label": "Black Chaos the Dark Chaos Magician", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 20.5, "title": "Black Chaos the Dark Chaos Magician"}, {"color": "purple", "font": {"size": 5}, "id": "Black Chaos the Ultimate Magical Swordsman", "image": "images/BlackChaostheUltimateMagicalSwordsman.png", "label": "Black Chaos the Ultimate Magical Swordsman", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Black Chaos the Ultimate Magical Swordsman"}, {"color": "orange", "font": {"size": 5}, "id": "Black Luster Soldier", "image": "images/BlackLusterSoldier.png", "label": "Black Luster Soldier", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 26.5, "title": "Black Luster Soldier"}, {"color": "blue", "font": {"size": 5}, "id": "Black Luster Soldier - Envoy of the Beginning", "image": "images/BlackLusterSoldierEnvoyoftheBeginning.png", "label": "Black Luster Soldier - Envoy of the Beginning", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 22.5, "title": "Black Luster Soldier - Envoy of the Beginning"}, {"color": "blue", "font": {"size": 5}, "id": "Black Luster Soldier - Envoy of the Evening Twilight", "image": "images/BlackLusterSoldierEnvoyoftheEveningTwilight.png", "label": "Black Luster Soldier - Envoy of the Evening Twilight", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Black Luster Soldier - Envoy of the Evening Twilight"}, {"color": "green", "font": {"size": 5}, "id": "Black Luster Soldier - Legendary Swordsman", "image": "images/BlackLusterSoldierLegendarySwordsman.png", "label": "Black Luster Soldier - Legendary Swordsman", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Black Luster Soldier - Legendary Swordsman"}, {"color": "green", "font": {"size": 5}, "id": "Black Luster Soldier - Sacred Soldier", "image": "images/BlackLusterSoldierSacredSoldier.png", "label": "Black Luster Soldier - Sacred Soldier", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Black Luster Soldier - Sacred Soldier"}, {"color": "orange", "font": {"size": 5}, "id": "Black Luster Soldier - Soldier of Chaos", "image": "images/BlackLusterSoldierSoldierofChaos.png", "label": "Black Luster Soldier - Soldier of Chaos", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Black Luster Soldier - Soldier of Chaos"}, {"color": "green", "font": {"size": 5}, "id": "Black Luster Soldier - Soldier of Light and Darkness", "image": "images/BlackLusterSoldierSoldierofLightandDarkness.png", "label": "Black Luster Soldier - Soldier of Light and Darkness", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 18.5, "title": "Black Luster Soldier - Soldier of Light and Darkness"}, {"color": "green", "font": {"size": 5}, "id": "Black Luster Soldier - Super Soldier", "image": "images/BlackLusterSoldierSuperSoldier.png", "label": "Black Luster Soldier - Super Soldier", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 20.5, "title": "Black Luster Soldier - Super Soldier"}, {"color": "purple", "font": {"size": 5}, "id": "Black Skull Dragon", "image": "images/BlackSkullDragon.png", "label": "Black Skull Dragon", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Black Skull Dragon"}, {"color": "purple", "font": {"size": 5}, "id": "Blue-Eyes Ultimate Dragon", "image": "images/BlueEyesUltimateDragon.png", "label": "Blue-Eyes Ultimate Dragon", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Blue-Eyes Ultimate Dragon"}, {"color": "orange", "font": {"size": 5}, "id": "Breaker the Dark Magical Warrior", "image": "images/BreakertheDarkMagicalWarrior.png", "label": "Breaker the Dark Magical Warrior", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Breaker the Dark Magical Warrior"}, {"color": "orange", "font": {"size": 5}, "id": "Breaker the Magical Warrior", "image": "images/BreakertheMagicalWarrior.png", "label": "Breaker the Magical Warrior", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 18.5, "title": "Breaker the Magical Warrior"}, {"color": "green", "font": {"size": 5}, "id": "Buster Blader", "image": "images/BusterBlader.png", "label": "Buster Blader", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Buster Blader"}, {"color": "green", "font": {"size": 5}, "id": "Buster Blader, the Destruction Swordmaster", "image": "images/BusterBladertheDestructionSwordmaster.png", "label": "Buster Blader, the Destruction Swordmaster", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Buster Blader, the Destruction Swordmaster"}, {"color": "purple", "font": {"size": 5}, "id": "Buster Blader, the Dragon Destroyer Swordsman", "image": "images/BusterBladertheDragonDestroyerSwordsman.png", "label": "Buster Blader, the Dragon Destroyer Swordsman", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Buster Blader, the Dragon Destroyer Swordsman"}, {"color": "blue", "font": {"size": 5}, "id": "Buster Dragon", "image": "images/BusterDragon.png", "label": "Buster Dragon", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Buster Dragon"}, {"color": "blue", "font": {"size": 5}, "id": "Buster Whelp of the Destruction Swordsman", "image": "images/BusterWhelpoftheDestructionSwordsman.png", "label": "Buster Whelp of the Destruction Swordsman", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Buster Whelp of the Destruction Swordsman"}, {"color": "orange", "font": {"size": 5}, "id": "Celtic Guard of Noble Arms", "image": "images/CelticGuardofNobleArms.png", "label": "Celtic Guard of Noble Arms", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Celtic Guard of Noble Arms"}, {"color": "orange", "font": {"size": 5}, "id": "Celtic Guardian", "image": "images/CelticGuardian.png", "label": "Celtic Guardian", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Celtic Guardian"}, {"color": "green", "font": {"size": 5}, "id": "Charging Gaia the Fierce Knight", "image": "images/ChargingGaiatheFierceKnight.png", "label": "Charging Gaia the Fierce Knight", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Charging Gaia the Fierce Knight"}, {"color": "purple", "font": {"size": 5}, "id": "Chimera the Flying Mythical Beast", "image": "images/ChimeratheFlyingMythicalBeast.png", "label": "Chimera the Flying Mythical Beast", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 18.5, "title": "Chimera the Flying Mythical Beast"}, {"color": "purple", "font": {"size": 5}, "id": "Chimera the Illusion Beast", "image": "images/ChimeratheIllusionBeast.png", "label": "Chimera the Illusion Beast", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 18.5, "title": "Chimera the Illusion Beast"}, {"color": "purple", "font": {"size": 5}, "id": "Chimera the King of Phantom Beasts", "image": "images/ChimeratheKingofPhantomBeasts.png", "label": "Chimera the King of Phantom Beasts", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 20.5, "title": "Chimera the King of Phantom Beasts"}, {"color": "red", "font": {"size": 5}, "id": "Chocolate Magician Girl", "image": "images/ChocolateMagicianGirl.png", "label": "Chocolate Magician Girl", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Chocolate Magician Girl"}, {"color": "orange", "font": {"size": 5}, "id": "Clear Kuriboh", "image": "images/ClearKuriboh.png", "label": "Clear Kuriboh", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Clear Kuriboh"}, {"color": "purple", "font": {"size": 5}, "id": "Cornfield Coatl", "image": "images/CornfieldCoatl.png", "label": "Cornfield Coatl", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Cornfield Coatl"}, {"color": "orange", "font": {"size": 5}, "id": "Curse of Dragon", "image": "images/CurseofDragon.png", "label": "Curse of Dragon", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Curse of Dragon"}, {"color": "green", "font": {"size": 5}, "id": "Curse of Dragon, the Cursed Dragon", "image": "images/CurseofDragontheCursedDragon.png", "label": "Curse of Dragon, the Cursed Dragon", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Curse of Dragon, the Cursed Dragon"}, {"color": "orange", "font": {"size": 5}, "id": "Curse of Dragonfire", "image": "images/CurseofDragonfire.png", "label": "Curse of Dragonfire", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 18.5, "title": "Curse of Dragonfire"}, {"color": "magenta", "font": {"size": 5}, "id": "DARK", "image": "images/DARK.svg", "label": "DARK", "shape": "circularImage", "shapeProperties": {"useBorderWithImage": true}, "size": 19.5, "title": "DARK"}, {"color": "magenta", "font": {"size": 5}, "id": "DIVINE", "image": "images/DIVINE.svg", "label": "DIVINE", "shape": "circularImage", "shapeProperties": {"useBorderWithImage": true}, "size": 19.5, "title": "DIVINE"}, {"color": "purple", "font": {"size": 5}, "id": "Dark Cavalry", "image": "images/DarkCavalry.png", "label": "Dark Cavalry", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Dark Cavalry"}, {"color": "blue", "font": {"size": 5}, "id": "Dark Eradicator Warlock", "image": "images/DarkEradicatorWarlock.png", "label": "Dark Eradicator Warlock", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Dark Eradicator Warlock"}, {"color": "purple", "font": {"size": 5}, "id": "Dark Flare Knight", "image": "images/DarkFlareKnight.png", "label": "Dark Flare Knight", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Dark Flare Knight"}, {"color": "purple", "font": {"size": 5}, "id": "Dark Magician", "image": "images/DarkMagician.png", "label": "Dark Magician", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 42.5, "title": "Dark Magician"}, {"color": "red", "font": {"size": 5}, "id": "Dark Magician Girl", "image": "images/DarkMagicianGirl.png", "label": "Dark Magician Girl", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 34.5, "title": "Dark Magician Girl"}, {"color": "purple", "font": {"size": 5}, "id": "Dark Magician Girl the Dragon Knight", "image": "images/DarkMagicianGirltheDragonKnight.png", "label": "Dark Magician Girl the Dragon Knight", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Dark Magician Girl the Dragon Knight"}, {"color": "green", "font": {"size": 5}, "id": "Dark Magician Girl the Magician\u0027s Apprentice", "image": "images/DarkMagicianGirltheMagiciansApprentice.png", "label": "Dark Magician Girl the Magician\u0027s Apprentice", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Dark Magician Girl the Magician\u0027s Apprentice"}, {"color": "orange", "font": {"size": 5}, "id": "Dark Magician of Chaos", "image": "images/DarkMagicianofChaos.png", "label": "Dark Magician of Chaos", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Dark Magician of Chaos"}, {"color": "purple", "font": {"size": 5}, "id": "Dark Magician of Destruction", "image": "images/DarkMagicianofDestruction.png", "label": "Dark Magician of Destruction", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Dark Magician of Destruction"}, {"color": "purple", "font": {"size": 5}, "id": "Dark Magician the Dragon Knight", "image": "images/DarkMagiciantheDragonKnight.png", "label": "Dark Magician the Dragon Knight", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Dark Magician the Dragon Knight"}, {"color": "purple", "font": {"size": 5}, "id": "Dark Magician the Knight of Dragon Magic", "image": "images/DarkMagiciantheKnightofDragonMagic.png", "label": "Dark Magician the Knight of Dragon Magic", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Dark Magician the Knight of Dragon Magic"}, {"color": "green", "font": {"size": 5}, "id": "Dark Magician the Magician of Black Magic", "image": "images/DarkMagiciantheMagicianofBlackMagic.png", "label": "Dark Magician the Magician of Black Magic", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Dark Magician the Magician of Black Magic"}, {"color": "orange", "font": {"size": 5}, "id": "Dark Magician, the Pharaoh\u0027s Servant", "image": "images/DarkMagicianthePharaohsServant.png", "label": "Dark Magician, the Pharaoh\u0027s Servant", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Dark Magician, the Pharaoh\u0027s Servant"}, {"color": "purple", "font": {"size": 5}, "id": "Dark Paladin", "image": "images/DarkPaladin.png", "label": "Dark Paladin", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Dark Paladin"}, {"color": "blue", "font": {"size": 5}, "id": "Dark Sage", "image": "images/DarkSage.png", "label": "Dark Sage", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Dark Sage"}, {"color": "orange", "font": {"size": 5}, "id": "Day-Breaker the Shining Magical Warrior", "image": "images/DayBreakertheShiningMagicalWarrior.png", "label": "Day-Breaker the Shining Magical Warrior", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Day-Breaker the Shining Magical Warrior"}, {"color": "green", "font": {"size": 5}, "id": "Defender, the Magical Knight", "image": "images/DefendertheMagicalKnight.png", "label": "Defender, the Magical Knight", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Defender, the Magical Knight"}, {"color": "red", "font": {"size": 5}, "id": "Delta The Magnet Warrior", "image": "images/DeltaTheMagnetWarrior.png", "label": "Delta The Magnet Warrior", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Delta The Magnet Warrior"}, {"color": "purple", "font": {"size": 5}, "id": "Detonate", "image": "images/Detonate.png", "label": "Detonate", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Detonate"}, {"color": "purple", "font": {"size": 5}, "id": "Detonating Kuriboh", "image": "images/DetonatingKuriboh.png", "label": "Detonating Kuriboh", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Detonating Kuriboh"}, {"color": "blue", "font": {"size": 5}, "id": "Dragon Buster Destruction Sword", "image": "images/DragonBusterDestructionSword.png", "label": "Dragon Buster Destruction Sword", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Dragon Buster Destruction Sword"}, {"color": "purple", "font": {"size": 5}, "id": "Dragon Master Knight", "image": "images/DragonMasterKnight.png", "label": "Dragon Master Knight", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Dragon Master Knight"}, {"color": "purple", "font": {"size": 5}, "id": "Dragon Master Magia", "image": "images/DragonMasterMagia.png", "label": "Dragon Master Magia", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Dragon Master Magia"}, {"color": "magenta", "font": {"size": 5}, "id": "EARTH", "image": "images/EARTH.svg", "label": "EARTH", "shape": "circularImage", "shapeProperties": {"useBorderWithImage": true}, "size": 19.5, "title": "EARTH"}, {"color": "blue", "font": {"size": 5}, "id": "Ebon High Magician", "image": "images/EbonHighMagician.png", "label": "Ebon High Magician", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Ebon High Magician"}, {"color": "blue", "font": {"size": 5}, "id": "Ebon Illusion Magician", "image": "images/EbonIllusionMagician.png", "label": "Ebon Illusion Magician", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Ebon Illusion Magician"}, {"color": "blue", "font": {"size": 5}, "id": "Envoy of Chaos", "image": "images/EnvoyofChaos.png", "label": "Envoy of Chaos", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Envoy of Chaos"}, {"color": "red", "font": {"size": 5}, "id": "Epsilon The Magnet Warrior", "image": "images/EpsilonTheMagnetWarrior.png", "label": "Epsilon The Magnet Warrior", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Epsilon The Magnet Warrior"}, {"color": "blue", "font": {"size": 5}, "id": "Evening Twilight Knight", "image": "images/EveningTwilightKnight.png", "label": "Evening Twilight Knight", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Evening Twilight Knight"}, {"color": "magenta", "font": {"size": 5}, "id": "FIRE", "image": "images/FIRE.svg", "label": "FIRE", "shape": "circularImage", "shapeProperties": {"useBorderWithImage": true}, "size": 19.5, "title": "FIRE"}, {"color": "purple", "font": {"size": 5}, "id": "Flame Swordsman", "image": "images/FlameSwordsman.png", "label": "Flame Swordsman", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Flame Swordsman"}, {"color": "purple", "font": {"size": 5}, "id": "Gadget Trio", "image": "images/GadgetTrio.png", "label": "Gadget Trio", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 20.5, "title": "Gadget Trio"}, {"color": "orange", "font": {"size": 5}, "id": "Gaia Blaze, the Force of the Sun", "image": "images/GaiaBlazetheForceoftheSun.png", "label": "Gaia Blaze, the Force of the Sun", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Gaia Blaze, the Force of the Sun"}, {"color": "red", "font": {"size": 5}, "id": "Gaia Dragon, the Thunder Charger", "image": "images/GaiaDragontheThunderCharger.png", "label": "Gaia Dragon, the Thunder Charger", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Gaia Dragon, the Thunder Charger"}, {"color": "orange", "font": {"size": 5}, "id": "Gaia Drake, the Universal Force", "image": "images/GaiaDraketheUniversalForce.png", "label": "Gaia Drake, the Universal Force", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Gaia Drake, the Universal Force"}, {"color": "orange", "font": {"size": 5}, "id": "Gaia Knight, the Force of Earth", "image": "images/GaiaKnighttheForceofEarth.png", "label": "Gaia Knight, the Force of Earth", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Gaia Knight, the Force of Earth"}, {"color": "orange", "font": {"size": 5}, "id": "Gaia Prominence, the Fierce Force", "image": "images/GaiaProminencetheFierceForce.png", "label": "Gaia Prominence, the Fierce Force", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Gaia Prominence, the Fierce Force"}, {"color": "red", "font": {"size": 5}, "id": "Gaia Saber, the Lightning Shadow", "image": "images/GaiaSabertheLightningShadow.png", "label": "Gaia Saber, the Lightning Shadow", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Gaia Saber, the Lightning Shadow"}, {"color": "red", "font": {"size": 5}, "id": "Gaia Stream, the Graceful Force", "image": "images/GaiaStreamtheGracefulForce.png", "label": "Gaia Stream, the Graceful Force", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Gaia Stream, the Graceful Force"}, {"color": "red", "font": {"size": 5}, "id": "Gaia The Fierce Knight", "image": "images/GaiaTheFierceKnight.png", "label": "Gaia The Fierce Knight", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 34.5, "title": "Gaia The Fierce Knight"}, {"color": "purple", "font": {"size": 5}, "id": "Gaia the Dragon Champion", "image": "images/GaiatheDragonChampion.png", "label": "Gaia the Dragon Champion", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Gaia the Dragon Champion"}, {"color": "blue", "font": {"size": 5}, "id": "Gaia the Fierce Knight Origin", "image": "images/GaiatheFierceKnightOrigin.png", "label": "Gaia the Fierce Knight Origin", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Gaia the Fierce Knight Origin"}, {"color": "purple", "font": {"size": 5}, "id": "Gaia the Magical Knight", "image": "images/GaiatheMagicalKnight.png", "label": "Gaia the Magical Knight", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 18.5, "title": "Gaia the Magical Knight"}, {"color": "purple", "font": {"size": 5}, "id": "Gaia the Magical Knight of Dragons", "image": "images/GaiatheMagicalKnightofDragons.png", "label": "Gaia the Magical Knight of Dragons", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 18.5, "title": "Gaia the Magical Knight of Dragons"}, {"color": "purple", "font": {"size": 5}, "id": "Gaia, the Mid-Knight Sun", "image": "images/GaiatheMidKnightSun.png", "label": "Gaia, the Mid-Knight Sun", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Gaia, the Mid-Knight Sun"}, {"color": "purple", "font": {"size": 5}, "id": "Gaia, the Polar Knight", "image": "images/GaiathePolarKnight.png", "label": "Gaia, the Polar Knight", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Gaia, the Polar Knight"}, {"color": "purple", "font": {"size": 5}, "id": "Gamma The Electromagnet Warrior", "image": "images/GammaTheElectromagnetWarrior.png", "label": "Gamma The Electromagnet Warrior", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Gamma The Electromagnet Warrior"}, {"color": "purple", "font": {"size": 5}, "id": "Gamma The Magnet Warrior", "image": "images/GammaTheMagnetWarrior.png", "label": "Gamma The Magnet Warrior", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Gamma The Magnet Warrior"}, {"color": "orange", "font": {"size": 5}, "id": "Gandora the Dragon of Destruction", "image": "images/GandoratheDragonofDestruction.png", "label": "Gandora the Dragon of Destruction", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 20.5, "title": "Gandora the Dragon of Destruction"}, {"color": "orange", "font": {"size": 5}, "id": "Gandora-G the Dragon of Destruction", "image": "images/GandoraGtheDragonofDestruction.png", "label": "Gandora-G the Dragon of Destruction", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Gandora-G the Dragon of Destruction"}, {"color": "green", "font": {"size": 5}, "id": "Gandora-X the Dragon of Demolition", "image": "images/GandoraXtheDragonofDemolition.png", "label": "Gandora-X the Dragon of Demolition", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Gandora-X the Dragon of Demolition"}, {"color": "orange", "font": {"size": 5}, "id": "Gazelle the King of Mythical Beasts", "image": "images/GazelletheKingofMythicalBeasts.png", "label": "Gazelle the King of Mythical Beasts", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Gazelle the King of Mythical Beasts"}, {"color": "orange", "font": {"size": 5}, "id": "Gazelle the King of Mythical Claws", "image": "images/GazelletheKingofMythicalClaws.png", "label": "Gazelle the King of Mythical Claws", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Gazelle the King of Mythical Claws"}, {"color": "orange", "font": {"size": 5}, "id": "Gigarays Gandora the Dragon of Destruction", "image": "images/GigaraysGandoratheDragonofDestruction.png", "label": "Gigarays Gandora the Dragon of Destruction", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Gigarays Gandora the Dragon of Destruction"}, {"color": "purple", "font": {"size": 5}, "id": "Goddess Bow", "image": "images/GoddessBow.png", "label": "Goddess Bow", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Goddess Bow"}, {"color": "purple", "font": {"size": 5}, "id": "Green Gadget", "image": "images/GreenGadget.png", "label": "Green Gadget", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Green Gadget"}, {"color": "purple", "font": {"size": 5}, "id": "Griffore", "image": "images/Griffore.png", "label": "Griffore", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Griffore"}, {"color": "purple", "font": {"size": 5}, "id": "Gurifoh", "image": "images/Gurifoh.png", "label": "Gurifoh", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 18.5, "title": "Gurifoh"}, {"color": "purple", "font": {"size": 5}, "id": "Holactie the Creator of Light", "image": "images/HolactietheCreatorofLight.png", "label": "Holactie the Creator of Light", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 18.5, "title": "Holactie the Creator of Light"}, {"color": "orange", "font": {"size": 5}, "id": "Illusion of Chaos", "image": "images/IllusionofChaos.png", "label": "Illusion of Chaos", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Illusion of Chaos"}, {"color": "red", "font": {"size": 5}, "id": "Imperial Bower", "image": "images/ImperialBower.png", "label": "Imperial Bower", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Imperial Bower"}, {"color": "purple", "font": {"size": 5}, "id": "Imperion Magnum the Superconductive Battlebot", "image": "images/ImperionMagnumtheSuperconductiveBattlebot.png", "label": "Imperion Magnum the Superconductive Battlebot", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Imperion Magnum the Superconductive Battlebot"}, {"color": "purple", "font": {"size": 5}, "id": "Jack\u0027s Knight", "image": "images/JacksKnight.png", "label": "Jack\u0027s Knight", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Jack\u0027s Knight"}, {"color": "red", "font": {"size": 5}, "id": "Joker\u0027s Knight", "image": "images/JokersKnight.png", "label": "Joker\u0027s Knight", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Joker\u0027s Knight"}, {"color": "purple", "font": {"size": 5}, "id": "King\u0027s Knight", "image": "images/KingsKnight.png", "label": "King\u0027s Knight", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "King\u0027s Knight"}, {"color": "red", "font": {"size": 5}, "id": "Kiwi Magician Girl", "image": "images/KiwiMagicianGirl.png", "label": "Kiwi Magician Girl", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Kiwi Magician Girl"}, {"color": "purple", "font": {"size": 5}, "id": "Kuribabylon", "image": "images/Kuribabylon.png", "label": "Kuribabylon", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 24.5, "title": "Kuribabylon"}, {"color": "purple", "font": {"size": 5}, "id": "Kuribah", "image": "images/Kuribah.png", "label": "Kuribah", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Kuribah"}, {"color": "green", "font": {"size": 5}, "id": "Kuribandit", "image": "images/Kuribandit.png", "label": "Kuribandit", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Kuribandit"}, {"color": "purple", "font": {"size": 5}, "id": "Kuribee", "image": "images/Kuribee.png", "label": "Kuribee", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Kuribee"}, {"color": "purple", "font": {"size": 5}, "id": "Kuribeh", "image": "images/Kuribeh.png", "label": "Kuribeh", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Kuribeh"}, {"color": "purple", "font": {"size": 5}, "id": "Kuriboh", "image": "images/Kuriboh.png", "label": "Kuriboh", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 32.5, "title": "Kuriboh"}, {"color": "purple", "font": {"size": 5}, "id": "Kuribohrn", "image": "images/Kuribohrn.png", "label": "Kuribohrn", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 18.5, "title": "Kuribohrn"}, {"color": "purple", "font": {"size": 5}, "id": "Kuriboo", "image": "images/Kuriboo.png", "label": "Kuriboo", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Kuriboo"}, {"color": "magenta", "font": {"size": 5}, "id": "LIGHT", "image": "images/LIGHT.svg", "label": "LIGHT", "shape": "circularImage", "shapeProperties": {"useBorderWithImage": true}, "size": 19.5, "title": "LIGHT"}, {"color": "orange", "font": {"size": 5}, "id": "Legendary Knight Critias", "image": "images/LegendaryKnightCritias.png", "label": "Legendary Knight Critias", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Legendary Knight Critias"}, {"color": "orange", "font": {"size": 5}, "id": "Legendary Knight Hermos", "image": "images/LegendaryKnightHermos.png", "label": "Legendary Knight Hermos", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Legendary Knight Hermos"}, {"color": "orange", "font": {"size": 5}, "id": "Legendary Knight Timaeus", "image": "images/LegendaryKnightTimaeus.png", "label": "Legendary Knight Timaeus", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Legendary Knight Timaeus"}, {"color": "red", "font": {"size": 5}, "id": "Lemon Magician Girl", "image": "images/LemonMagicianGirl.png", "label": "Lemon Magician Girl", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Lemon Magician Girl"}, {"color": "orange", "font": {"size": 5}, "id": "Lord Gaia the Fierce Knight", "image": "images/LordGaiatheFierceKnight.png", "label": "Lord Gaia the Fierce Knight", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Lord Gaia the Fierce Knight"}, {"color": "blue", "font": {"size": 5}, "id": "Magi Magi \u2606 Magician Gal", "image": "images/MagiMagiMagicianGal.png", "label": "Magi Magi \u2606 Magician Gal", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Magi Magi \u2606 Magician Gal"}, {"color": "orange", "font": {"size": 5}, "id": "Magician of Black Chaos", "image": "images/MagicianofBlackChaos.png", "label": "Magician of Black Chaos", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 24.5, "title": "Magician of Black Chaos"}, {"color": "orange", "font": {"size": 5}, "id": "Magician of Black Chaos MAX", "image": "images/MagicianofBlackChaosMAX.png", "label": "Magician of Black Chaos MAX", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Magician of Black Chaos MAX"}, {"color": "blue", "font": {"size": 5}, "id": "Magician of Chaos", "image": "images/MagicianofChaos.png", "label": "Magician of Chaos", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Magician of Chaos"}, {"color": "blue", "font": {"size": 5}, "id": "Magician of Dark Illusion", "image": "images/MagicianofDarkIllusion.png", "label": "Magician of Dark Illusion", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 18.5, "title": "Magician of Dark Illusion"}, {"color": "orange", "font": {"size": 5}, "id": "Magician\u0027s Valkyria", "image": "images/MagiciansValkyria.png", "label": "Magician\u0027s Valkyria", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Magician\u0027s Valkyria"}, {"color": "purple", "font": {"size": 5}, "id": "Magikuriboh", "image": "images/Magikuriboh.png", "label": "Magikuriboh", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Magikuriboh"}, {"color": "red", "font": {"size": 5}, "id": "Magnetic Field", "image": "images/MagneticField.png", "label": "Magnetic Field", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 22.5, "title": "Magnetic Field"}, {"color": "green", "font": {"size": 5}, "id": "Marshmacaron", "image": "images/Marshmacaron.png", "label": "Marshmacaron", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Marshmacaron"}, {"color": "green", "font": {"size": 5}, "id": "Marshmallon", "image": "images/Marshmallon.png", "label": "Marshmallon", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Marshmallon"}, {"color": "purple", "font": {"size": 5}, "id": "Master of Chaos", "image": "images/MasterofChaos.png", "label": "Master of Chaos", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Master of Chaos"}, {"color": "green", "font": {"size": 5}, "id": "Metalhold the Moving Blockade", "image": "images/MetalholdtheMovingBlockade.png", "label": "Metalhold the Moving Blockade", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Metalhold the Moving Blockade"}, {"color": "purple", "font": {"size": 5}, "id": "Mirror Force", "image": "images/MirrorForce.png", "label": "Mirror Force", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Mirror Force"}, {"color": "purple", "font": {"size": 5}, "id": "Mirror Force Dragon", "image": "images/MirrorForceDragon.png", "label": "Mirror Force Dragon", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Mirror Force Dragon"}, {"color": "purple", "font": {"size": 5}, "id": "Mirror Swordknight", "image": "images/MirrorSwordknight.png", "label": "Mirror Swordknight", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Mirror Swordknight"}, {"color": "purple", "font": {"size": 5}, "id": "Monster Reborn", "image": "images/MonsterReborn.png", "label": "Monster Reborn", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Monster Reborn"}, {"color": "green", "font": {"size": 5}, "id": "Moremarshmallon", "image": "images/Moremarshmallon.png", "label": "Moremarshmallon", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 18.5, "title": "Moremarshmallon"}, {"color": "purple", "font": {"size": 5}, "id": "Multiply", "image": "images/Multiply.png", "label": "Multiply", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Multiply"}, {"color": "purple", "font": {"size": 5}, "id": "Multiplying Kuriboh!", "image": "images/MultiplyingKuriboh.png", "label": "Multiplying Kuriboh!", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Multiplying Kuriboh!"}, {"color": "purple", "font": {"size": 5}, "id": "Mystical Celtic Sage", "image": "images/MysticalCelticSage.png", "label": "Mystical Celtic Sage", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 18.5, "title": "Mystical Celtic Sage"}, {"color": "purple", "font": {"size": 5}, "id": "Mystical Elf", "image": "images/MysticalElf.png", "label": "Mystical Elf", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Mystical Elf"}, {"color": "purple", "font": {"size": 5}, "id": "Obelisk the Tormentor", "image": "images/ObelisktheTormentor.png", "label": "Obelisk the Tormentor", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Obelisk the Tormentor"}, {"color": "orange", "font": {"size": 5}, "id": "Obnoxious Celtic Guard", "image": "images/ObnoxiousCelticGuard.png", "label": "Obnoxious Celtic Guard", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Obnoxious Celtic Guard"}, {"color": "blue", "font": {"size": 5}, "id": "Old Vindictive Magician", "image": "images/OldVindictiveMagician.png", "label": "Old Vindictive Magician", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Old Vindictive Magician"}, {"color": "blue", "font": {"size": 5}, "id": "Palladium Oracle Mahad", "image": "images/PalladiumOracleMahad.png", "label": "Palladium Oracle Mahad", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Palladium Oracle Mahad"}, {"color": "blue", "font": {"size": 5}, "id": "Palladium Oracle Mana", "image": "images/PalladiumOracleMana.png", "label": "Palladium Oracle Mana", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Palladium Oracle Mana"}, {"color": "green", "font": {"size": 5}, "id": "Powerhold the Moving Battery", "image": "images/PowerholdtheMovingBattery.png", "label": "Powerhold the Moving Battery", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Powerhold the Moving Battery"}, {"color": "green", "font": {"size": 5}, "id": "Protector Whelp of the Destruction Swordsman", "image": "images/ProtectorWhelpoftheDestructionSwordsman.png", "label": "Protector Whelp of the Destruction Swordsman", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Protector Whelp of the Destruction Swordsman"}, {"color": "purple", "font": {"size": 5}, "id": "Queen\u0027s Knight", "image": "images/QueensKnight.png", "label": "Queen\u0027s Knight", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 18.5, "title": "Queen\u0027s Knight"}, {"color": "purple", "font": {"size": 5}, "id": "Red Gadget", "image": "images/RedGadget.png", "label": "Red Gadget", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Red Gadget"}, {"color": "purple", "font": {"size": 5}, "id": "Red-Eyes Black Dragon", "image": "images/RedEyesBlackDragon.png", "label": "Red-Eyes Black Dragon", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 18.5, "title": "Red-Eyes Black Dragon"}, {"color": "purple", "font": {"size": 5}, "id": "Red-Eyes Black Dragon Sword", "image": "images/RedEyesBlackDragonSword.png", "label": "Red-Eyes Black Dragon Sword", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Red-Eyes Black Dragon Sword"}, {"color": "purple", "font": {"size": 5}, "id": "Red-Eyes Dark Dragoon", "image": "images/RedEyesDarkDragoon.png", "label": "Red-Eyes Dark Dragoon", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Red-Eyes Dark Dragoon"}, {"color": "purple", "font": {"size": 5}, "id": "Relinkuriboh", "image": "images/Relinkuriboh.png", "label": "Relinkuriboh", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Relinkuriboh"}, {"color": "purple", "font": {"size": 5}, "id": "Relinquished", "image": "images/Relinquished.png", "label": "Relinquished", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Relinquished"}, {"color": "red", "font": {"size": 5}, "id": "Ritual of Light and Darkness", "image": "images/RitualofLightandDarkness.png", "label": "Ritual of Light and Darkness", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 22.5, "title": "Ritual of Light and Darkness"}, {"color": "blue", "font": {"size": 5}, "id": "Robot Buster Destruction Sword", "image": "images/RobotBusterDestructionSword.png", "label": "Robot Buster Destruction Sword", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Robot Buster Destruction Sword"}, {"color": "red", "font": {"size": 5}, "id": "Royal Straight", "image": "images/RoyalStraight.png", "label": "Royal Straight", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 24.5, "title": "Royal Straight"}, {"color": "red", "font": {"size": 5}, "id": "Royal Straight Slasher", "image": "images/RoyalStraightSlasher.png", "label": "Royal Straight Slasher", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Royal Straight Slasher"}, {"color": "purple", "font": {"size": 5}, "id": "Sanwitch", "image": "images/Sanwitch.png", "label": "Sanwitch", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Sanwitch"}, {"color": "red", "font": {"size": 5}, "id": "Shining Sarcophagus", "image": "images/ShiningSarcophagus.png", "label": "Shining Sarcophagus", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 30.5, "title": "Shining Sarcophagus"}, {"color": "blue", "font": {"size": 5}, "id": "Silent Magician", "image": "images/SilentMagician.png", "label": "Silent Magician", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Silent Magician"}, {"color": "blue", "font": {"size": 5}, "id": "Silent Magician LV4", "image": "images/SilentMagicianLV4.png", "label": "Silent Magician LV4", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Silent Magician LV4"}, {"color": "blue", "font": {"size": 5}, "id": "Silent Magician LV8", "image": "images/SilentMagicianLV8.png", "label": "Silent Magician LV8", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Silent Magician LV8"}, {"color": "green", "font": {"size": 5}, "id": "Silent Magician Zero", "image": "images/SilentMagicianZero.png", "label": "Silent Magician Zero", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Silent Magician Zero"}, {"color": "blue", "font": {"size": 5}, "id": "Silent Swordsman", "image": "images/SilentSwordsman.png", "label": "Silent Swordsman", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Silent Swordsman"}, {"color": "blue", "font": {"size": 5}, "id": "Silent Swordsman LV3", "image": "images/SilentSwordsmanLV3.png", "label": "Silent Swordsman LV3", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Silent Swordsman LV3"}, {"color": "blue", "font": {"size": 5}, "id": "Silent Swordsman LV5", "image": "images/SilentSwordsmanLV5.png", "label": "Silent Swordsman LV5", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Silent Swordsman LV5"}, {"color": "blue", "font": {"size": 5}, "id": "Silent Swordsman LV7", "image": "images/SilentSwordsmanLV7.png", "label": "Silent Swordsman LV7", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Silent Swordsman LV7"}, {"color": "green", "font": {"size": 5}, "id": "Silent Swordsman Zero", "image": "images/SilentSwordsmanZero.png", "label": "Silent Swordsman Zero", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Silent Swordsman Zero"}, {"color": "red", "font": {"size": 5}, "id": "Skull Archfiend of Chaos", "image": "images/SkullArchfiendofChaos.png", "label": "Skull Archfiend of Chaos", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Skull Archfiend of Chaos"}, {"color": "orange", "font": {"size": 5}, "id": "Skull Archfiend of Lightning", "image": "images/SkullArchfiendofLightning.png", "label": "Skull Archfiend of Lightning", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Skull Archfiend of Lightning"}, {"color": "purple", "font": {"size": 5}, "id": "Sky Galloping Gaia the Dragon Champion", "image": "images/SkyGallopingGaiatheDragonChampion.png", "label": "Sky Galloping Gaia the Dragon Champion", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Sky Galloping Gaia the Dragon Champion"}, {"color": "purple", "font": {"size": 5}, "id": "Slifer the Sky Dragon", "image": "images/SlifertheSkyDragon.png", "label": "Slifer the Sky Dragon", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Slifer the Sky Dragon"}, {"color": "purple", "font": {"size": 5}, "id": "Soldier Gaia the Fierce Knight", "image": "images/SoldierGaiatheFierceKnight.png", "label": "Soldier Gaia the Fierce Knight", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Soldier Gaia the Fierce Knight"}, {"color": "blue", "font": {"size": 5}, "id": "Sorcerer of Dark Magic", "image": "images/SorcererofDarkMagic.png", "label": "Sorcerer of Dark Magic", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Sorcerer of Dark Magic"}, {"color": "purple", "font": {"size": 5}, "id": "Sphere Kuriboh", "image": "images/SphereKuriboh.png", "label": "Sphere Kuriboh", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Sphere Kuriboh"}, {"color": "orange", "font": {"size": 5}, "id": "Stronghold the Hidden Fortress", "image": "images/StrongholdtheHiddenFortress.png", "label": "Stronghold the Hidden Fortress", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Stronghold the Hidden Fortress"}, {"color": "green", "font": {"size": 5}, "id": "Stronghold the Moving Fortress", "image": "images/StrongholdtheMovingFortress.png", "label": "Stronghold the Moving Fortress", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 18.5, "title": "Stronghold the Moving Fortress"}, {"color": "red", "font": {"size": 5}, "id": "Summoned Skull", "image": "images/SummonedSkull.png", "label": "Summoned Skull", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 28.5, "title": "Summoned Skull"}, {"color": "orange", "font": {"size": 5}, "id": "Swift Gaia the Fierce Knight", "image": "images/SwiftGaiatheFierceKnight.png", "label": "Swift Gaia the Fierce Knight", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 20.5, "title": "Swift Gaia the Fierce Knight"}, {"color": "purple", "font": {"size": 5}, "id": "The Claw of Hermos", "image": "images/TheClawofHermos.png", "label": "The Claw of Hermos", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 18.5, "title": "The Claw of Hermos"}, {"color": "purple", "font": {"size": 5}, "id": "The Dark Magicians", "image": "images/TheDarkMagicians.png", "label": "The Dark Magicians", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "The Dark Magicians"}, {"color": "orange", "font": {"size": 5}, "id": "The Eye of Timaeus", "image": "images/TheEyeofTimaeus.png", "label": "The Eye of Timaeus", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "The Eye of Timaeus"}, {"color": "orange", "font": {"size": 5}, "id": "The Fang of Critias", "image": "images/TheFangofCritias.png", "label": "The Fang of Critias", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "The Fang of Critias"}, {"color": "orange", "font": {"size": 5}, "id": "The Gaze of Timaeus", "image": "images/TheGazeofTimaeus.png", "label": "The Gaze of Timaeus", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "The Gaze of Timaeus"}, {"color": "orange", "font": {"size": 5}, "id": "The Winged Dragon of Ra", "image": "images/TheWingedDragonofRa.png", "label": "The Winged Dragon of Ra", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 18.5, "title": "The Winged Dragon of Ra"}, {"color": "orange", "font": {"size": 5}, "id": "The Winged Dragon of Ra - Immortal Phoenix", "image": "images/TheWingedDragonofRaImmortalPhoenix.png", "label": "The Winged Dragon of Ra - Immortal Phoenix", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "The Winged Dragon of Ra - Immortal Phoenix"}, {"color": "orange", "font": {"size": 5}, "id": "The Winged Dragon of Ra - Sphere Mode", "image": "images/TheWingedDragonofRaSphereMode.png", "label": "The Winged Dragon of Ra - Sphere Mode", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "The Winged Dragon of Ra - Sphere Mode"}, {"color": "purple", "font": {"size": 5}, "id": "Timaeus the Knight of Destiny", "image": "images/TimaeustheKnightofDestiny.png", "label": "Timaeus the Knight of Destiny", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 18.5, "title": "Timaeus the Knight of Destiny"}, {"color": "purple", "font": {"size": 5}, "id": "Timaeus the United Dragon", "image": "images/TimaeustheUnitedDragon.png", "label": "Timaeus the United Dragon", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 24.5, "title": "Timaeus the United Dragon"}, {"color": "purple", "font": {"size": 5}, "id": "Timaeus the United Magical Dragon", "image": "images/TimaeustheUnitedMagicalDragon.png", "label": "Timaeus the United Magical Dragon", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Timaeus the United Magical Dragon"}, {"color": "purple", "font": {"size": 5}, "id": "Valkyrion the Magna Warrior", "image": "images/ValkyriontheMagnaWarrior.png", "label": "Valkyrion the Magna Warrior", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 20.5, "title": "Valkyrion the Magna Warrior"}, {"color": "magenta", "font": {"size": 5}, "id": "WATER", "image": "images/WATER.svg", "label": "WATER", "shape": "circularImage", "shapeProperties": {"useBorderWithImage": true}, "size": 19.5, "title": "WATER"}, {"color": "magenta", "font": {"size": 5}, "id": "WIND", "image": "images/WIND.svg", "label": "WIND", "shape": "circularImage", "shapeProperties": {"useBorderWithImage": true}, "size": 19.5, "title": "WIND"}, {"color": "purple", "font": {"size": 5}, "id": "Witch of the Black Forest", "image": "images/WitchoftheBlackForest.png", "label": "Witch of the Black Forest", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Witch of the Black Forest"}, {"color": "blue", "font": {"size": 5}, "id": "Wizard Buster Destruction Sword", "image": "images/WizardBusterDestructionSword.png", "label": "Wizard Buster Destruction Sword", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 16.5, "title": "Wizard Buster Destruction Sword"}, {"color": "purple", "font": {"size": 5}, "id": "Yellow Gadget", "image": "images/YellowGadget.png", "label": "Yellow Gadget", "shape": "image", "shapeProperties": {"useBorderWithImage": true}, "size": 14.5, "title": "Yellow Gadget"}]);
+                  edges = new vis.DataSet([{"arrows": "to", "color": "orange", "from": "Dark Magician", "smooth": false, "title": "evolving", "to": "Dark Magician, the Pharaoh\u0027s Servant"}, {"arrows": "to", "color": "orange", "from": "Black Luster Soldier", "smooth": false, "title": "evolving", "to": "Black Luster Soldier - Soldier of Chaos"}, {"arrows": "to", "color": "orange", "from": "Black Luster Soldier", "smooth": false, "title": "evolving", "to": "Black Luster Soldier - Super Soldier"}, {"arrows": "to", "color": "orange", "from": "Black Luster Soldier", "smooth": false, "title": "evolving", "to": "Black Luster Soldier - Envoy of the Beginning"}, {"arrows": "to", "color": "orange", "from": "Magician of Black Chaos", "smooth": false, "title": "evolving", "to": "Black Chaos the Dark Chaos Magician"}, {"arrows": "to", "color": "orange", "from": "Black Chaos the Dark Chaos Magician", "smooth": false, "title": "evolving", "to": "Magician of Black Chaos MAX"}, {"arrows": "to", "color": "orange", "from": "Magician of Black Chaos", "smooth": false, "title": "evolving", "to": "Dark Magician of Chaos"}, {"arrows": "to", "color": "orange", "from": "Magician of Dark Illusion", "smooth": false, "title": "evolving", "to": "Illusion of Chaos"}, {"arrows": "to", "color": "orange", "from": "Gandora the Dragon of Destruction", "smooth": false, "title": "evolving", "to": "Gandora-G the Dragon of Destruction"}, {"arrows": "to", "color": "orange", "from": "Gandora the Dragon of Destruction", "smooth": false, "title": "evolving", "to": "Gigarays Gandora the Dragon of Destruction"}, {"arrows": "to", "color": "orange", "from": "Summoned Skull", "smooth": false, "title": "evolving", "to": "Skull Archfiend of Lightning"}, {"arrows": "to", "color": "orange", "from": "Kuriboh", "smooth": false, "title": "evolving", "to": "Clear Kuriboh"}, {"arrows": "to", "color": "orange", "from": "Kuribohrn", "smooth": false, "title": "evolving", "to": "Ankuriboh"}, {"arrows": "to", "color": "orange", "from": "The Winged Dragon of Ra - Sphere Mode", "smooth": false, "title": "evolving", "to": "The Winged Dragon of Ra"}, {"arrows": "to", "color": "orange", "from": "The Winged Dragon of Ra", "smooth": false, "title": "evolving", "to": "The Winged Dragon of Ra - Immortal Phoenix"}, {"arrows": "to", "color": "orange", "from": "Celtic Guardian", "smooth": false, "title": "evolving", "to": "Obnoxious Celtic Guard"}, {"arrows": "to", "color": "orange", "from": "Obnoxious Celtic Guard", "smooth": false, "title": "evolving", "to": "Celtic Guard of Noble Arms"}, {"arrows": "to", "color": "orange", "from": "Stronghold the Moving Fortress", "smooth": false, "title": "evolving", "to": "Stronghold the Hidden Fortress"}, {"arrows": "to", "color": "orange", "from": "The Eye of Timaeus", "smooth": false, "title": "evolving", "to": "The Gaze of Timaeus"}, {"arrows": "to", "color": "orange", "from": "The Gaze of Timaeus", "smooth": false, "title": "evolving", "to": "Timaeus the United Dragon"}, {"arrows": "to", "color": "orange", "from": "Timaeus the United Dragon", "smooth": false, "title": "evolving", "to": "Legendary Knight Timaeus"}, {"arrows": "to", "color": "orange", "from": "The Claw of Hermos", "smooth": false, "title": "evolving", "to": "Legendary Knight Hermos"}, {"arrows": "to", "color": "orange", "from": "The Fang of Critias", "smooth": false, "title": "evolving", "to": "Legendary Knight Critias"}, {"arrows": "to", "color": "orange", "from": "Gaia The Fierce Knight", "smooth": false, "title": "evolving", "to": "Gaia the Magical Knight"}, {"arrows": "to", "color": "orange", "from": "Gaia The Fierce Knight", "smooth": false, "title": "evolving", "to": "Swift Gaia the Fierce Knight"}, {"arrows": "to", "color": "orange", "from": "Swift Gaia the Fierce Knight", "smooth": false, "title": "evolving", "to": "Lord Gaia the Fierce Knight"}, {"arrows": "to", "color": "orange", "from": "Gaia Blaze, the Force of the Sun", "smooth": false, "title": "evolving", "to": "Gaia Prominence, the Fierce Force"}, {"arrows": "to", "color": "orange", "from": "Gaia Knight, the Force of Earth", "smooth": false, "title": "evolving", "to": "Gaia Drake, the Universal Force"}, {"arrows": "to", "color": "orange", "from": "Curse of Dragon", "smooth": false, "title": "evolving", "to": "Curse of Dragonfire"}, {"arrows": "to", "color": "orange", "from": "Gazelle the King of Mythical Beasts", "smooth": false, "title": "evolving", "to": "Gazelle the King of Mythical Claws"}, {"arrows": "to", "color": "orange", "from": "Berfomet", "smooth": false, "title": "evolving", "to": "Big-Winged Berfomet"}, {"arrows": "to", "color": "orange", "from": "Chimera the Flying Mythical Beast", "smooth": false, "title": "evolving", "to": "Chimera the King of Phantom Beasts"}, {"arrows": "to", "color": "orange", "from": "Breaker the Magical Warrior", "smooth": false, "title": "evolving", "to": "Breaker the Dark Magical Warrior"}, {"arrows": "to", "color": "orange", "from": "Breaker the Magical Warrior", "smooth": false, "title": "evolving", "to": "Day-Breaker the Shining Magical Warrior"}, {"arrows": "to", "color": "orange", "from": "Magician\u0027s Valkyria", "smooth": false, "title": "evolving", "to": "Dark Magician Girl"}, {"arrows": "to", "color": "blue", "from": "Palladium Oracle Mana", "smooth": false, "title": "aging", "to": "Apprentice Illusion Magician"}, {"arrows": "to", "color": "blue", "from": "Apprentice Illusion Magician", "smooth": false, "title": "aging", "to": "Dark Magician Girl"}, {"arrows": "to", "color": "blue", "from": "Dark Magician Girl", "smooth": false, "title": "aging", "to": "Magi Magi \u2606 Magician Gal"}, {"arrows": "to", "color": "blue", "from": "Magi Magi \u2606 Magician Gal", "smooth": false, "title": "aging", "to": "Old Vindictive Magician"}, {"arrows": "to", "color": "blue", "from": "Palladium Oracle Mahad", "smooth": false, "title": "aging", "to": "Magician of Dark Illusion"}, {"arrows": "to", "color": "blue", "from": "Magician of Dark Illusion", "smooth": false, "title": "aging", "to": "Dark Magician"}, {"arrows": "to", "color": "blue", "from": "Dark Magician", "smooth": false, "title": "aging", "to": "Dark Eradicator Warlock"}, {"arrows": "to", "color": "blue", "from": "Dark Eradicator Warlock", "smooth": false, "title": "aging", "to": "Magician of Chaos"}, {"arrows": "to", "color": "blue", "from": "Magician of Chaos", "smooth": false, "title": "aging", "to": "Magician of Black Chaos"}, {"arrows": "to", "color": "blue", "from": "Magician of Black Chaos", "smooth": false, "title": "aging", "to": "Sorcerer of Dark Magic"}, {"arrows": "to", "color": "blue", "from": "Sorcerer of Dark Magic", "smooth": false, "title": "aging", "to": "Dark Sage"}, {"arrows": "to", "color": "blue", "from": "Ebon Illusion Magician", "smooth": false, "title": "aging", "to": "Ebon High Magician"}, {"arrows": "to", "color": "blue", "from": "Gaia The Fierce Knight", "smooth": false, "title": "aging", "to": "Black Luster Soldier"}, {"arrows": "to", "color": "blue", "from": "Gaia the Fierce Knight Origin", "smooth": false, "title": "aging", "to": "Gaia The Fierce Knight"}, {"arrows": "to", "color": "blue", "from": "Arisen Gaia the Fierce Knight", "smooth": false, "title": "aging", "to": "Black Luster Soldier - Envoy of the Beginning"}, {"arrows": "to", "color": "blue", "from": "Envoy of Chaos", "smooth": false, "title": "aging", "to": "Black Luster Soldier - Super Soldier"}, {"arrows": "to", "color": "blue", "from": "Evening Twilight Knight", "smooth": false, "title": "aging", "to": "Black Luster Soldier - Envoy of the Evening Twilight"}, {"arrows": "to", "color": "blue", "from": "Beginning Knight", "smooth": false, "title": "aging", "to": "Black Luster Soldier - Envoy of the Beginning"}, {"arrows": "to", "color": "blue", "from": "Silent Magician LV4", "smooth": false, "title": "aging", "to": "Silent Magician LV8"}, {"arrows": "to", "color": "blue", "from": "Silent Magician LV8", "smooth": false, "title": "aging", "to": "Silent Magician"}, {"arrows": "to", "color": "blue", "from": "Silent Swordsman LV3", "smooth": false, "title": "aging", "to": "Silent Swordsman LV5"}, {"arrows": "to", "color": "blue", "from": "Silent Swordsman LV5", "smooth": false, "title": "aging", "to": "Silent Swordsman LV7"}, {"arrows": "to", "color": "blue", "from": "Silent Swordsman LV7", "smooth": false, "title": "aging", "to": "Silent Swordsman"}, {"arrows": "to", "color": "blue", "from": "Buster Whelp of the Destruction Swordsman", "smooth": false, "title": "aging", "to": "Dragon Buster Destruction Sword"}, {"arrows": "to", "color": "blue", "from": "Dragon Buster Destruction Sword", "smooth": false, "title": "aging", "to": "Wizard Buster Destruction Sword"}, {"arrows": "to", "color": "blue", "from": "Wizard Buster Destruction Sword", "smooth": false, "title": "aging", "to": "Robot Buster Destruction Sword"}, {"arrows": "to", "color": "blue", "from": "Robot Buster Destruction Sword", "smooth": false, "title": "aging", "to": "Buster Dragon"}, {"arrows": "none", "color": "green", "from": "Dark Magician", "smooth": false, "title": "counterparts", "to": "Dark Magician the Magician of Black Magic"}, {"arrows": "none", "color": "green", "from": "Dark Magician Girl", "smooth": false, "title": "counterparts", "to": "Dark Magician Girl the Magician\u0027s Apprentice"}, {"arrows": "none", "color": "green", "from": "Black Luster Soldier - Sacred Soldier", "smooth": false, "title": "counterparts", "to": "Black Luster Soldier - Envoy of the Beginning"}, {"arrows": "none", "color": "green", "from": "Black Luster Soldier - Envoy of the Beginning", "smooth": false, "title": "counterparts", "to": "Black Luster Soldier - Envoy of the Evening Twilight"}, {"arrows": "none", "color": "green", "from": "Ebon Illusion Magician", "smooth": false, "title": "counterparts", "to": "Illusion of Chaos"}, {"arrows": "none", "color": "green", "from": "Black Luster Soldier - Soldier of Light and Darkness", "smooth": false, "title": "counterparts", "to": "Black Luster Soldier - Super Soldier"}, {"arrows": "none", "color": "green", "from": "Black Luster Soldier - Super Soldier", "smooth": false, "title": "counterparts", "to": "Black Luster Soldier - Legendary Swordsman"}, {"arrows": "none", "color": "green", "from": "Gandora the Dragon of Destruction", "smooth": false, "title": "counterparts", "to": "Gandora-X the Dragon of Demolition"}, {"arrows": "none", "color": "green", "from": "Kuribabylon", "smooth": false, "title": "counterparts", "to": "Kuribandit"}, {"arrows": "none", "color": "green", "from": "Silent Swordsman", "smooth": false, "title": "counterparts", "to": "Silent Swordsman Zero"}, {"arrows": "none", "color": "green", "from": "Silent Magician", "smooth": false, "title": "counterparts", "to": "Silent Magician Zero"}, {"arrows": "none", "color": "green", "from": "Metalhold the Moving Blockade", "smooth": false, "title": "counterparts", "to": "Stronghold the Moving Fortress"}, {"arrows": "none", "color": "green", "from": "Stronghold the Moving Fortress", "smooth": false, "title": "counterparts", "to": "Powerhold the Moving Battery"}, {"arrows": "none", "color": "green", "from": "Arcana Extra Joker", "smooth": false, "title": "counterparts", "to": "Arcana Knight Joker"}, {"arrows": "none", "color": "green", "from": "Arcana Knight Joker", "smooth": false, "title": "counterparts", "to": "Arcana Triumph Joker"}, {"arrows": "none", "color": "green", "from": "Arisen Gaia the Fierce Knight", "smooth": false, "title": "counterparts", "to": "Charging Gaia the Fierce Knight"}, {"arrows": "none", "color": "green", "from": "Charging Gaia the Fierce Knight", "smooth": false, "title": "counterparts", "to": "Swift Gaia the Fierce Knight"}, {"arrows": "none", "color": "green", "from": "Curse of Dragonfire", "smooth": false, "title": "counterparts", "to": "Curse of Dragon, the Cursed Dragon"}, {"arrows": "none", "color": "green", "from": "Buster Blader, the Destruction Swordmaster", "smooth": false, "title": "counterparts", "to": "Buster Blader"}, {"arrows": "none", "color": "green", "from": "Breaker the Magical Warrior", "smooth": false, "title": "counterparts", "to": "Defender, the Magical Knight"}, {"arrows": "none", "color": "green", "from": "Protector Whelp of the Destruction Swordsman", "smooth": false, "title": "counterparts", "to": "Buster Whelp of the Destruction Swordsman"}, {"arrows": "none", "color": "green", "from": "Marshmacaron", "smooth": false, "title": "counterparts", "to": "Moremarshmallon"}, {"arrows": "none", "color": "green", "from": "Moremarshmallon", "smooth": false, "title": "counterparts", "to": "Marshmallon"}, {"arrows": "none", "closed": "complete", "color": "magenta", "from": "LIGHT", "smooth": false, "title": "complete", "to": "DARK"}, {"arrows": "none", "closed": "complete", "color": "magenta", "from": "LIGHT", "smooth": false, "title": "complete", "to": "EARTH"}, {"arrows": "none", "closed": "complete", "color": "magenta", "from": "LIGHT", "smooth": false, "title": "complete", "to": "WATER"}, {"arrows": "none", "closed": "complete", "color": "magenta", "from": "LIGHT", "smooth": false, "title": "complete", "to": "FIRE"}, {"arrows": "none", "closed": "complete", "color": "magenta", "from": "LIGHT", "smooth": false, "title": "complete", "to": "WIND"}, {"arrows": "none", "closed": "complete", "color": "magenta", "from": "LIGHT", "smooth": false, "title": "complete", "to": "DIVINE"}, {"arrows": "none", "closed": "complete", "color": "magenta", "from": "DARK", "smooth": false, "title": "complete", "to": "EARTH"}, {"arrows": "none", "closed": "complete", "color": "magenta", "from": "DARK", "smooth": false, "title": "complete", "to": "WATER"}, {"arrows": "none", "closed": "complete", "color": "magenta", "from": "DARK", "smooth": false, "title": "complete", "to": "FIRE"}, {"arrows": "none", "closed": "complete", "color": "magenta", "from": "DARK", "smooth": false, "title": "complete", "to": "WIND"}, {"arrows": "none", "closed": "complete", "color": "magenta", "from": "DARK", "smooth": false, "title": "complete", "to": "DIVINE"}, {"arrows": "none", "closed": "complete", "color": "magenta", "from": "EARTH", "smooth": false, "title": "complete", "to": "WATER"}, {"arrows": "none", "closed": "complete", "color": "magenta", "from": "EARTH", "smooth": false, "title": "complete", "to": "FIRE"}, {"arrows": "none", "closed": "complete", "color": "magenta", "from": "EARTH", "smooth": false, "title": "complete", "to": "WIND"}, {"arrows": "none", "closed": "complete", "color": "magenta", "from": "EARTH", "smooth": false, "title": "complete", "to": "DIVINE"}, {"arrows": "none", "closed": "complete", "color": "magenta", "from": "WATER", "smooth": false, "title": "complete", "to": "FIRE"}, {"arrows": "none", "closed": "complete", "color": "magenta", "from": "WATER", "smooth": false, "title": "complete", "to": "WIND"}, {"arrows": "none", "closed": "complete", "color": "magenta", "from": "WATER", "smooth": false, "title": "complete", "to": "DIVINE"}, {"arrows": "none", "closed": "complete", "color": "magenta", "from": "FIRE", "smooth": false, "title": "complete", "to": "WIND"}, {"arrows": "none", "closed": "complete", "color": "magenta", "from": "FIRE", "smooth": false, "title": "complete", "to": "DIVINE"}, {"arrows": "none", "closed": "complete", "color": "magenta", "from": "WIND", "smooth": false, "title": "complete", "to": "DIVINE"}, {"arrows": "to", "color": "purple", "from": "Dark Magician Girl", "smooth": true, "title": "fusion", "to": "The Dark Magicians"}, {"arrows": "to", "color": "purple", "from": "Dark Magician", "smooth": true, "title": "fusion", "to": "The Dark Magicians"}, {"arrows": "to", "color": "purple", "from": "Dark Magician", "smooth": true, "title": "fusion", "to": "Dark Paladin"}, {"arrows": "to", "color": "purple", "from": "Buster Blader", "smooth": true, "title": "fusion", "to": "Dark Paladin"}, {"arrows": "to", "color": "purple", "from": "Dark Magician", "smooth": true, "title": "fusion", "to": "Dark Cavalry"}, {"arrows": "to", "color": "purple", "from": "Gaia The Fierce Knight", "smooth": true, "title": "fusion", "to": "Dark Cavalry"}, {"arrows": "to", "color": "purple", "from": "Dark Magician", "smooth": true, "title": "fusion", "to": "Red-Eyes Dark Dragoon"}, {"arrows": "to", "color": "purple", "from": "Red-Eyes Black Dragon", "smooth": true, "title": "fusion", "to": "Red-Eyes Dark Dragoon"}, {"arrows": "to", "color": "purple", "from": "Dark Magician", "smooth": true, "title": "fusion", "to": "Master of Chaos"}, {"arrows": "to", "color": "purple", "from": "Black Luster Soldier", "smooth": true, "title": "fusion", "to": "Master of Chaos"}, {"arrows": "to", "color": "purple", "from": "Dark Magician", "smooth": true, "title": "fusion", "to": "Dark Magician the Knight of Dragon Magic"}, {"arrows": "to", "color": "purple", "from": "Gaia the Magical Knight of Dragons", "smooth": true, "title": "fusion", "to": "Dark Magician the Knight of Dragon Magic"}, {"arrows": "to", "color": "purple", "from": "Dark Magician", "smooth": true, "title": "fusion", "to": "Dark Flare Knight"}, {"arrows": "to", "color": "purple", "from": "Flame Swordsman", "smooth": true, "title": "fusion", "to": "Dark Flare Knight"}, {"arrows": "to", "color": "purple", "from": "Magician of Black Chaos", "smooth": true, "title": "fusion", "to": "Dragon Master Magia"}, {"arrows": "to", "color": "purple", "from": "Blue-Eyes Ultimate Dragon", "smooth": true, "title": "fusion", "to": "Dragon Master Magia"}, {"arrows": "to", "color": "purple", "from": "Black Luster Soldier", "smooth": true, "title": "fusion", "to": "Dragon Master Knight"}, {"arrows": "to", "color": "purple", "from": "Blue-Eyes Ultimate Dragon", "smooth": true, "title": "fusion", "to": "Dragon Master Knight"}, {"arrows": "to", "color": "purple", "from": "Gaia The Fierce Knight", "smooth": true, "title": "fusion", "to": "Gaia the Dragon Champion"}, {"arrows": "to", "color": "purple", "from": "Curse of Dragon", "smooth": true, "title": "fusion", "to": "Gaia the Dragon Champion"}, {"arrows": "to", "color": "purple", "from": "Swift Gaia the Fierce Knight", "smooth": true, "title": "fusion", "to": "Sky Galloping Gaia the Dragon Champion"}, {"arrows": "to", "color": "purple", "from": "Curse of Dragonfire", "smooth": true, "title": "fusion", "to": "Sky Galloping Gaia the Dragon Champion"}, {"arrows": "to", "color": "purple", "from": "Gaia the Magical Knight", "smooth": true, "title": "fusion", "to": "Gaia the Magical Knight of Dragons"}, {"arrows": "to", "color": "purple", "from": "Curse of Dragon, the Cursed Dragon", "smooth": true, "title": "fusion", "to": "Gaia the Magical Knight of Dragons"}, {"arrows": "to", "color": "purple", "from": "Summoned Skull", "smooth": true, "title": "fusion", "to": "Black Skull Dragon"}, {"arrows": "to", "color": "purple", "from": "Red-Eyes Black Dragon", "smooth": true, "title": "fusion", "to": "Black Skull Dragon"}, {"arrows": "to", "color": "purple", "from": "Kuriboh", "smooth": true, "title": "fusion", "to": "Sanwitch"}, {"arrows": "to", "color": "purple", "from": "Witch of the Black Forest", "smooth": true, "title": "fusion", "to": "Sanwitch"}, {"arrows": "to", "color": "purple", "from": "Valkyrion the Magna Warrior", "smooth": true, "title": "fusion", "to": "Imperion Magnum the Superconductive Battlebot"}, {"arrows": "to", "color": "purple", "from": "Berserkion the Electromagna Warrior", "smooth": true, "title": "fusion", "to": "Imperion Magnum the Superconductive Battlebot"}, {"arrows": "to", "color": "purple", "from": "King\u0027s Knight", "smooth": true, "title": "fusion", "to": "Arcana Knight Joker"}, {"arrows": "to", "color": "purple", "from": "Queen\u0027s Knight", "smooth": true, "title": "fusion", "to": "Arcana Knight Joker"}, {"arrows": "to", "color": "purple", "from": "Jack\u0027s Knight", "smooth": true, "title": "fusion", "to": "Arcana Knight Joker"}, {"arrows": "to", "color": "purple", "from": "Buster Blader, the Destruction Swordmaster", "smooth": true, "title": "fusion", "to": "Buster Blader, the Dragon Destroyer Swordsman"}, {"arrows": "to", "color": "purple", "from": "Buster Dragon", "smooth": true, "title": "fusion", "to": "Buster Blader, the Dragon Destroyer Swordsman"}, {"arrows": "to", "color": "purple", "from": "Legendary Knight Timaeus", "smooth": true, "title": "fusion", "to": "Timaeus the Knight of Destiny"}, {"arrows": "to", "color": "purple", "from": "Legendary Knight Hermos", "smooth": true, "title": "fusion", "to": "Timaeus the Knight of Destiny"}, {"arrows": "to", "color": "purple", "from": "Legendary Knight Critias", "smooth": true, "title": "fusion", "to": "Timaeus the Knight of Destiny"}, {"arrows": "to", "color": "purple", "from": "Gazelle the King of Mythical Beasts", "smooth": true, "title": "fusion", "to": "Chimera the Flying Mythical Beast"}, {"arrows": "to", "color": "purple", "from": "Berfomet", "smooth": true, "title": "fusion", "to": "Chimera the Flying Mythical Beast"}, {"arrows": "to", "color": "purple", "from": "Chimera the King of Phantom Beasts", "smooth": true, "title": "fusion", "to": "Chimera the Illusion Beast"}, {"arrows": "to", "color": "purple", "from": "Cornfield Coatl", "smooth": true, "title": "fusion", "to": "Chimera the Illusion Beast"}, {"arrows": "to", "color": "purple", "from": "Mirror Swordknight", "smooth": true, "title": "fusion", "to": "Chimera the Illusion Beast"}, {"arrows": "to", "color": "purple", "from": "Big-Winged Berfomet", "smooth": true, "title": "fusion", "to": "Berfomet the Mythical King of Phantom Beasts"}, {"arrows": "to", "color": "purple", "from": "Mirror Swordknight", "smooth": true, "title": "fusion", "to": "Berfomet the Mythical King of Phantom Beasts"}, {"arrows": "to", "color": "purple", "from": "Gazelle the King of Mythical Claws", "smooth": true, "title": "fusion", "to": "Chimera the King of Phantom Beasts"}, {"arrows": "to", "color": "purple", "from": "Big-Winged Berfomet", "smooth": true, "title": "fusion", "to": "Chimera the King of Phantom Beasts"}, {"arrows": "to", "color": "purple", "from": "Dark Magician Girl", "smooth": true, "title": "The Eye of Timaeus", "to": "Dark Magician Girl the Dragon Knight"}, {"arrows": "to", "color": "purple", "from": "Timaeus the United Dragon", "smooth": true, "title": "The Eye of Timaeus", "to": "Dark Magician Girl the Dragon Knight"}, {"arrows": "to", "color": "purple", "from": "Dark Magician", "smooth": true, "title": "The Eye of Timaeus", "to": "Amulet Dragon"}, {"arrows": "to", "color": "purple", "from": "Timaeus the United Dragon", "smooth": true, "title": "The Eye of Timaeus", "to": "Amulet Dragon"}, {"arrows": "to", "color": "purple", "from": "Dark Magician", "smooth": true, "title": "The Eye of Timaeus", "to": "Timaeus the United Magical Dragon"}, {"arrows": "to", "color": "purple", "from": "Timaeus the United Dragon", "smooth": true, "title": "The Eye of Timaeus", "to": "Timaeus the United Magical Dragon"}, {"arrows": "to", "color": "purple", "from": "Dark Magician", "smooth": true, "title": "The Eye of Timaeus", "to": "Dark Magician the Dragon Knight"}, {"arrows": "to", "color": "purple", "from": "Timaeus the United Dragon", "smooth": true, "title": "The Eye of Timaeus", "to": "Dark Magician the Dragon Knight"}, {"arrows": "to", "color": "purple", "from": "Queen\u0027s Knight", "smooth": true, "title": "The Claw of Hermos", "to": "Goddess Bow"}, {"arrows": "to", "color": "purple", "from": "The Claw of Hermos", "smooth": true, "title": "The Claw of Hermos", "to": "Goddess Bow"}, {"arrows": "to", "color": "purple", "from": "Red-Eyes Black Dragon", "smooth": true, "title": "The Claw of Hermos", "to": "Red-Eyes Black Dragon Sword"}, {"arrows": "to", "color": "purple", "from": "The Claw of Hermos", "smooth": true, "title": "The Claw of Hermos", "to": "Red-Eyes Black Dragon Sword"}, {"arrows": "to", "color": "purple", "from": "Mirror Force", "smooth": true, "title": "The Fang of Critias", "to": "Mirror Force Dragon"}, {"arrows": "to", "color": "purple", "from": "The Fang of Critias", "smooth": true, "title": "The Fang of Critias", "to": "Mirror Force Dragon"}, {"arrows": "to", "color": "purple", "from": "Kuriboh", "smooth": true, "title": "combination", "to": "Gurifoh"}, {"arrows": "to", "color": "purple", "from": "Griffore", "smooth": true, "title": "combination", "to": "Gurifoh"}, {"arrows": "to", "color": "purple", "from": "Kuriboh", "smooth": true, "title": "combination", "to": "Kuribabylon"}, {"arrows": "to", "color": "purple", "from": "Kuribah", "smooth": true, "title": "combination", "to": "Kuribabylon"}, {"arrows": "to", "color": "purple", "from": "Kuribee", "smooth": true, "title": "combination", "to": "Kuribabylon"}, {"arrows": "to", "color": "purple", "from": "Kuribeh", "smooth": true, "title": "combination", "to": "Kuribabylon"}, {"arrows": "to", "color": "purple", "from": "Kuriboo", "smooth": true, "title": "combination", "to": "Kuribabylon"}, {"arrows": "to", "color": "purple", "from": "Kuriboh", "smooth": true, "title": "combination", "to": "Kuribohrn"}, {"arrows": "to", "color": "purple", "from": "Monster Reborn", "smooth": true, "title": "combination", "to": "Kuribohrn"}, {"arrows": "to", "color": "purple", "from": "Kuriboh", "smooth": true, "title": "combination", "to": "Relinkuriboh"}, {"arrows": "to", "color": "purple", "from": "Relinquished", "smooth": true, "title": "combination", "to": "Relinkuriboh"}, {"arrows": "to", "color": "purple", "from": "Kuriboh", "smooth": true, "title": "combination", "to": "Detonating Kuriboh"}, {"arrows": "to", "color": "purple", "from": "Detonate", "smooth": true, "title": "combination", "to": "Detonating Kuriboh"}, {"arrows": "to", "color": "purple", "from": "Kuriboh", "smooth": true, "title": "combination", "to": "Multiplying Kuriboh!"}, {"arrows": "to", "color": "purple", "from": "Multiply", "smooth": true, "title": "combination", "to": "Multiplying Kuriboh!"}, {"arrows": "to", "color": "purple", "from": "Kuriboh", "smooth": true, "title": "combination", "to": "Magikuriboh"}, {"arrows": "to", "color": "purple", "from": "Dark Magician", "smooth": true, "title": "combination", "to": "Magikuriboh"}, {"arrows": "to", "color": "purple", "from": "Kuriboh", "smooth": true, "title": "combination", "to": "Sphere Kuriboh"}, {"arrows": "to", "color": "purple", "from": "The Winged Dragon of Ra - Sphere Mode", "smooth": true, "title": "combination", "to": "Sphere Kuriboh"}, {"arrows": "to", "color": "purple", "from": "Celtic Guardian", "smooth": true, "title": "combination", "to": "Mystical Celtic Sage"}, {"arrows": "to", "color": "purple", "from": "Mystical Elf", "smooth": true, "title": "combination", "to": "Mystical Celtic Sage"}, {"arrows": "to", "color": "purple", "from": "Green Gadget", "smooth": true, "title": "combination", "to": "Gadget Trio"}, {"arrows": "to", "color": "purple", "from": "Red Gadget", "smooth": true, "title": "combination", "to": "Gadget Trio"}, {"arrows": "to", "color": "purple", "from": "Yellow Gadget", "smooth": true, "title": "combination", "to": "Gadget Trio"}, {"arrows": "to", "color": "purple", "from": "The Winged Dragon of Ra", "smooth": true, "title": "combination", "to": "Holactie the Creator of Light"}, {"arrows": "to", "color": "purple", "from": "Slifer the Sky Dragon", "smooth": true, "title": "combination", "to": "Holactie the Creator of Light"}, {"arrows": "to", "color": "purple", "from": "Obelisk the Tormentor", "smooth": true, "title": "combination", "to": "Holactie the Creator of Light"}, {"arrows": "to", "color": "purple", "from": "Alpha The Magnet Warrior", "smooth": true, "title": "combination", "to": "Valkyrion the Magna Warrior"}, {"arrows": "to", "color": "purple", "from": "Beta The Magnet Warrior", "smooth": true, "title": "combination", "to": "Valkyrion the Magna Warrior"}, {"arrows": "to", "color": "purple", "from": "Gamma The Magnet Warrior", "smooth": true, "title": "combination", "to": "Valkyrion the Magna Warrior"}, {"arrows": "to", "color": "purple", "from": "Alpha The Electromagnet Warrior", "smooth": true, "title": "combination", "to": "Berserkion the Electromagna Warrior"}, {"arrows": "to", "color": "purple", "from": "Beta The Electromagnet Warrior", "smooth": true, "title": "combination", "to": "Berserkion the Electromagna Warrior"}, {"arrows": "to", "color": "purple", "from": "Gamma The Electromagnet Warrior", "smooth": true, "title": "combination", "to": "Berserkion the Electromagna Warrior"}, {"arrows": "to", "color": "purple", "from": "Magician of Black Chaos", "smooth": true, "title": "combination", "to": "Dark Magician of Destruction"}, {"arrows": "to", "color": "purple", "from": "Gandora the Dragon of Destruction", "smooth": true, "title": "combination", "to": "Dark Magician of Destruction"}, {"arrows": "to", "color": "purple", "from": "Black Luster Soldier - Soldier of Light and Darkness", "smooth": true, "title": "combination", "to": "Black Chaos the Ultimate Magical Swordsman"}, {"arrows": "to", "color": "purple", "from": "Black Chaos the Dark Chaos Magician", "smooth": true, "title": "combination", "to": "Black Chaos the Ultimate Magical Swordsman"}, {"arrows": "to", "color": "purple", "from": "Gaia the Magical Knight", "smooth": true, "title": "combination", "to": "Soldier Gaia the Fierce Knight"}, {"arrows": "to", "color": "purple", "from": "Black Luster Soldier", "smooth": true, "title": "combination", "to": "Soldier Gaia the Fierce Knight"}, {"arrows": "to", "color": "purple", "from": "Gaia, the Mid-Knight Sun", "smooth": true, "title": "combination", "to": "Arisen Gaia the Fierce Knight"}, {"arrows": "to", "color": "purple", "from": "Gaia, the Polar Knight", "smooth": true, "title": "combination", "to": "Arisen Gaia the Fierce Knight"}, {"arrows": "to", "color": "red", "from": "Shining Sarcophagus", "smooth": false, "title": "archtype", "to": "Dark Magician the Magician of Black Magic"}, {"arrows": "to", "color": "red", "from": "Shining Sarcophagus", "smooth": false, "title": "archtype", "to": "Dark Magician Girl the Magician\u0027s Apprentice"}, {"arrows": "to", "color": "red", "from": "Shining Sarcophagus", "smooth": false, "title": "archtype", "to": "Archfiend\u0027s Advent"}, {"arrows": "to", "color": "red", "from": "Shining Sarcophagus", "smooth": false, "title": "archtype", "to": "Gandora-G the Dragon of Destruction"}, {"arrows": "to", "color": "red", "from": "Shining Sarcophagus", "smooth": false, "title": "archtype", "to": "Gadget Trio"}, {"arrows": "to", "color": "red", "from": "Shining Sarcophagus", "smooth": false, "title": "archtype", "to": "Silent Magician Zero"}, {"arrows": "to", "color": "red", "from": "Shining Sarcophagus", "smooth": false, "title": "archtype", "to": "Silent Swordsman Zero"}, {"arrows": "to", "color": "red", "from": "Shining Sarcophagus", "smooth": false, "title": "archtype", "to": "Stronghold the Hidden Fortress"}, {"arrows": "to", "color": "red", "from": "Shining Sarcophagus", "smooth": false, "title": "archtype", "to": "Moremarshmallon"}, {"arrows": "to", "color": "red", "from": "Ritual of Light and Darkness", "smooth": false, "title": "archtype", "to": "Black Luster Soldier - Soldier of Light and Darkness"}, {"arrows": "to", "color": "red", "from": "Ritual of Light and Darkness", "smooth": false, "title": "archtype", "to": "Black Chaos the Dark Chaos Magician"}, {"arrows": "to", "color": "red", "from": "Ritual of Light and Darkness", "smooth": false, "title": "archtype", "to": "Mystical Celtic Sage"}, {"arrows": "to", "color": "red", "from": "Ritual of Light and Darkness", "smooth": false, "title": "archtype", "to": "Skull Archfiend of Chaos"}, {"arrows": "to", "color": "red", "from": "Ritual of Light and Darkness", "smooth": false, "title": "archtype", "to": "Gurifoh"}, {"arrows": "to", "color": "red", "from": "Magnetic Field", "smooth": false, "title": "archtype", "to": "Alpha The Magnet Warrior"}, {"arrows": "to", "color": "red", "from": "Magnetic Field", "smooth": false, "title": "archtype", "to": "Beta The Magnet Warrior"}, {"arrows": "to", "color": "red", "from": "Magnetic Field", "smooth": false, "title": "archtype", "to": "Gamma The Magnet Warrior"}, {"arrows": "to", "color": "red", "from": "Magnetic Field", "smooth": false, "title": "archtype", "to": "Delta The Magnet Warrior"}, {"arrows": "to", "color": "red", "from": "Magnetic Field", "smooth": false, "title": "archtype", "to": "Epsilon The Magnet Warrior"}, {"arrows": "to", "color": "red", "from": "Royal Straight", "smooth": false, "title": "archtype", "to": "Royal Straight Slasher"}, {"arrows": "to", "color": "red", "from": "Royal Straight", "smooth": false, "title": "archtype", "to": "King\u0027s Knight"}, {"arrows": "to", "color": "red", "from": "Royal Straight", "smooth": false, "title": "archtype", "to": "Queen\u0027s Knight"}, {"arrows": "to", "color": "red", "from": "Royal Straight", "smooth": false, "title": "archtype", "to": "Jack\u0027s Knight"}, {"arrows": "to", "color": "red", "from": "Royal Straight", "smooth": false, "title": "archtype", "to": "Joker\u0027s Knight"}, {"arrows": "to", "color": "red", "from": "Royal Straight", "smooth": false, "title": "archtype", "to": "Imperial Bower"}, {"arrows": "to", "color": "red", "from": "Summoned Skull", "smooth": false, "title": "archtype", "to": "Archfiend\u0027s Awakening"}, {"arrows": "to", "color": "red", "from": "Summoned Skull", "smooth": false, "title": "archtype", "to": "Archfiend\u0027s Manifestation"}, {"arrows": "to", "color": "red", "from": "Summoned Skull", "smooth": false, "title": "archtype", "to": "Archfiend\u0027s Call"}, {"arrows": "to", "color": "red", "from": "Summoned Skull", "smooth": false, "title": "archtype", "to": "Archfiend\u0027s Ascent"}, {"arrows": "to", "color": "red", "from": "Summoned Skull", "smooth": false, "title": "archtype", "to": "Archfiend\u0027s Advent"}, {"arrows": "to", "color": "red", "from": "Summoned Skull", "smooth": false, "title": "archtype", "to": "Skull Archfiend of Chaos"}, {"arrows": "to", "color": "red", "from": "Gaia The Fierce Knight", "smooth": false, "title": "archtype", "to": "Gaia Saber, the Lightning Shadow"}, {"arrows": "to", "color": "red", "from": "Gaia The Fierce Knight", "smooth": false, "title": "archtype", "to": "Gaia Dragon, the Thunder Charger"}, {"arrows": "to", "color": "red", "from": "Gaia The Fierce Knight", "smooth": false, "title": "archtype", "to": "Gaia Knight, the Force of Earth"}, {"arrows": "to", "color": "red", "from": "Gaia The Fierce Knight", "smooth": false, "title": "archtype", "to": "Gaia Blaze, the Force of the Sun"}, {"arrows": "to", "color": "red", "from": "Gaia The Fierce Knight", "smooth": false, "title": "archtype", "to": "Gaia Stream, the Graceful Force"}, {"arrows": "to", "color": "red", "from": "Dark Magician Girl", "smooth": false, "title": "archtype", "to": "Berry Magician Girl"}, {"arrows": "to", "color": "red", "from": "Dark Magician Girl", "smooth": false, "title": "archtype", "to": "Lemon Magician Girl"}, {"arrows": "to", "color": "red", "from": "Dark Magician Girl", "smooth": false, "title": "archtype", "to": "Apple Magician Girl"}, {"arrows": "to", "color": "red", "from": "Dark Magician Girl", "smooth": false, "title": "archtype", "to": "Chocolate Magician Girl"}, {"arrows": "to", "color": "red", "from": "Dark Magician Girl", "smooth": false, "title": "archtype", "to": "Kiwi Magician Girl"}]);
+
+                  nodeColors = {};
+                  allNodes = nodes.get({ returnType: "Object" });
+                  for (nodeId in allNodes) {
+                    nodeColors[nodeId] = allNodes[nodeId].color;
+                  }
+                  allEdges = edges.get({ returnType: "Object" });
+                  // adding nodes and edges to the graph
+                  data = {nodes: nodes, edges: edges};
+
+                  var options = {
+    "configure": {
+        "enabled": true,
+        "filter": [
+            "physics",
+            "interaction",
+            "layout"
+        ]
+    },
+    "edges": {
+        "color": {
+            "inherit": true
+        },
+        "smooth": {
+            "enabled": true,
+            "type": "dynamic"
+        }
+    },
+    "interaction": {
+        "dragNodes": true,
+        "hideEdgesOnDrag": false,
+        "hideNodesOnDrag": false,
+        "navigationButtons": true
+    },
+    "physics": {
+        "enabled": true,
+        "stabilization": {
+            "enabled": true,
+            "fit": true,
+            "iterations": 1000,
+            "onlyDynamicEdges": false,
+            "updateInterval": 50
+        }
+    }
+};
+
+                  
+
+
+                  
+                  // if this network requires displaying the configure window,
+                  // put it in its div
+                  options.configure["container"] = document.getElementById("config");
+                  
+
+                  network = new vis.Network(container, data, options);
+
+                  
+
+                  
+                    network.on("selectNode", neighbourhoodHighlight);
+                  
+
+                  
+
+
+                  
+                      network.on("stabilizationProgress", function(params) {
+                          document.getElementById('loadingBar').removeAttribute("style");
+                          var maxWidth = 496;
+                          var minWidth = 20;
+                          var widthFactor = params.iterations/params.total;
+                          var width = Math.max(minWidth,maxWidth * widthFactor);
+                          document.getElementById('bar').style.width = width + 'px';
+                          document.getElementById('text').innerHTML = Math.round(widthFactor*100) + '%';
+                      });
+                      network.once("stabilizationIterationsDone", function() {
+                          document.getElementById('text').innerHTML = '100%';
+                          document.getElementById('bar').style.width = '496px';
+                          document.getElementById('loadingBar').style.opacity = 0;
+                          // really clean the dom element
+                          setTimeout(function () {document.getElementById('loadingBar').style.display = 'none';}, 500);
+                      });
+                  
+
+                  return network;
+
+              }
+              drawGraph();
+        </script>
+    </body>
+</html>

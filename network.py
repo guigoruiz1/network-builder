@@ -2,6 +2,7 @@
 
 import yaml
 import os
+import sys
 import argparse
 from pyvis.options import Options
 from pyvis.network import Network
@@ -595,11 +596,6 @@ def build_network(yaml_path: str) -> Network:
     net = Network(**config.get("network"))
     net.options = get_options()
 
-    # Add script directory to parh for imageManager import fallback
-    self_dir = os.path.dirname(os.path.abspath(__file__))
-    if self_dir not in sys.path:
-        sys.path.append(self_dir) 
-    
     if config.get("download_images", False):
         try:
             from imageManager import download
@@ -611,8 +607,10 @@ def build_network(yaml_path: str) -> Network:
             print(f"[Error] Exception during image downloading: {e}")
 
     for item in sorted(node_info.keys()):
-        node_info[item]["title"] = item # Maybe remove
-        if "image" in node_info[item]["shape"]: # Only assign image for image-type nodes
+        node_info[item]["title"] = item  # Maybe remove
+        if (
+            "image" in node_info[item]["shape"]
+        ):  # Only assign image for image-type nodes
             try:
                 from imageManager import filename
 
@@ -623,7 +621,9 @@ def build_network(yaml_path: str) -> Network:
             except ImportError as e:
                 print(f"[Warning] Could not import 'filename' from imageManager: {e}")
             except Exception as e:
-                print(f"[Error] Exception assigning image filename for node '{item}': {e}")
+                print(
+                    f"[Error] Exception assigning image filename for node '{item}': {e}"
+                )
 
         net.add_node(item, **node_info[item])
 
@@ -660,11 +660,17 @@ if __name__ == "__main__":
         help="Path to the network YAML file.",
     )
     args = parser.parse_args()
+
+    # Add script directory to parh for imageManager import fallback
+    self_dir = os.path.dirname(os.path.abspath(__file__))
+    if self_dir not in sys.path:
+        sys.path.append(self_dir)
+
     net = build_network(args.yaml_file)
 
     base_name = os.path.splitext(os.path.basename(args.yaml_file))[0]
     output_path = os.path.abspath(f"{base_name}.html")
 
-    net.set_template("./template.html")
+    net.set_template(f"{self_dir}/template.html")
     net.save_graph(output_path)
     print("Network saved to:", output_path)

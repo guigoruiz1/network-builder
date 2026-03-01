@@ -1,6 +1,6 @@
 # Network Builder - Relationship Visualisation Tool
 
-You can see a live example [here](https://ruizbad.com/network-builder/example/example.html).
+See a [basic example](https://ruizbad.com/network-builder/example/example.html) and a [Yu-Gi-Oh! card network](https://ruizbad.com/network-builder/yugioh/yugi.html) to explore what this tool can create!
 
 ## Overview
 
@@ -236,7 +236,7 @@ Image handling is pluggable. The code expects an `imageManager` module that expo
 - `imageManager.download(names, config)`: download or prepare images for the provided names.
 - `imageManager.filename(name)`: return the filename or path to use for a given node name.
 
-The script will attempt to import `download` and `filename` from `imageManager` and will print a warning if these are not available or raise errors if the functions fail at runtime. Implement these functions to support remote APIs, local caching, resizing or format conversion. When `config.download_images` is true, the script will call `imageManager.download(...)` before adding nodes.
+The script imports `download` and `filename` from `imageManager` (or prints a warning if unavailable). Implement these functions to support remote APIs, local caching, resizing, or format conversion. If `config.download_images` is true, the script calls `imageManager.download(...)` once for all nodes. For nodes with image shapes, the script calls `imageManager.filename()` to retrieve their image paths.
 
 ---
 
@@ -279,7 +279,7 @@ Keep these keys at block or entry level as required; they will be removed before
 python network.py network.yaml
 ```
 
-The output HTML file will be named after your YAML file (e.g., `network.yaml` produces `network.html`) and saved in the current directory. You can override the output filename if desired. Open it in a browser to explore the interactive visualisation.
+The output HTML file will be named after your YAML file (e.g., `network.yaml` produces `network.html`) and saved in the current directory. Open it in a browser to explore the interactive visualisation.
 
 3. Use as a module:
 
