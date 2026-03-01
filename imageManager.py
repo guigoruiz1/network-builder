@@ -94,6 +94,24 @@ def _sanitize_name(name):
     return re.sub(r"[^\w]", "", name)
 
 
+def _move_download(result, card_name):
+    """
+    Move a successfully downloaded file to the path expected by filename().
+
+    Args:
+        result (dict): A download_media result dict with keys "file_name" and "success".
+        card_name (str): The card name used to derive the destination path.
+    """
+    src = os.path.join(base_path, result["file_name"])
+    _, ext = os.path.splitext(result["file_name"])
+    dst = os.path.join(base_path, _sanitize_name(card_name) + ext)
+    if src != dst and os.path.exists(src):
+        try:
+            os.rename(src, dst)
+        except OSError as e:
+            print(f"[WARN] Could not rename '{src}' to '{dst}': {e}")
+
+
 def _crop_section(
     im,
     *,
@@ -307,7 +325,8 @@ def _download_images_yugiquery(names):
         failed = []
         if results is not None:
             for name, result in zip(remaining, results):
-                if isinstance(result, dict) and result.get("status") == "success":
+                if isinstance(result, dict) and result.get("success"):
+                    _move_download(result, name)
                     succeeded.append(name)
                 else:
                     failed.append(name)
@@ -326,22 +345,19 @@ def _download_images_yugiquery(names):
         if file_names:
             results = asyncio.run(download_media(*file_names, output_path=base_path))
             if results is not None and len(results) > 0:
-                succeeded = [
-                    r
-                    for r in results
-                    if isinstance(r, dict) and r.get("status") == "success"
-                ]
-                failed = [
-                    r
-                    for r in results
-                    if isinstance(r, dict) and r.get("status") == "failed"
-                ]
+                succeeded_count = 0
+                for name, result in zip(remaining, results):
+                    if isinstance(result, dict) and result.get("success"):
+                        _move_download(result, name)
+                        featured_cards.append(name)
+                        succeeded_count += 1
+                    else:
+                        print(
+                            f"[WARN] Failed to download: {result.get('file_name') if isinstance(result, dict) else '?'}"
+                        )
                 print(
-                    f"Downloaded {len(succeeded)}/{len(results)} images using yugiquery [featured]"
+                    f"Downloaded {succeeded_count}/{len(results)} images using yugiquery [featured]"
                 )
-                for result in failed:
-                    print(f"[WARN] Failed to download: {result.get('file_name')}")
-            featured_cards = list(remaining)
         else:
             for name in remaining:
                 print(f"[WARN] No image found for '{name}'")
