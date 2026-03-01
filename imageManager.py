@@ -8,6 +8,7 @@ import glob
 import hashlib
 from tqdm.auto import tqdm
 
+# --- Global parameters ---
 
 sizes = {
     "ref": (690, 1000),
@@ -17,17 +18,51 @@ sizes = {
 
 base_path = "images"
 
+# --- Mandatory functions for network script ---
+
+
+def download(names, config):
+    """
+    Function to download images. The user is free to implement this as they see fit.
+    The saved images should be named in a way that is consistent with the return value of `filename(name)`.
+    In this example, we download YU-GI-OH card images.
+
+    Args:
+        names (Iterable[str]): Node names for which to download images.
+        config (Any): Optional configuration object with user-defined parameters from the calling context.
+
+    returns:
+        None
+    """
+
+    if "sizes" in config and isinstance(config["sizes"], dict):
+        global sizes
+        for key in config["sizes"]:
+            if key in sizes:
+                sizes[key] = config["sizes"][key]
+
+    # Try to use yugiquery
+    try:
+        _download_images_yugiquery(names)
+    except:
+        print(
+            "[WARN] yugiquery utilities unavailable, falling back to direct API method"
+        )
+        _download_images_fallback(names)
+
 
 def filename(name):
     """
-    Sanitize a card name for use as a filename by removing all non-alphanumeric characters.
+    Converts a passed name into a filename path.
+    Must be consistent with the naming scheme used in `download()`.
+    Returns None if no file exists.
 
     Args:
         name (str): Card name to sanitize.
     Returns:
         str: Path to the filename with the chosen or detected extension.
     """
-    base = f"{base_path}/{sanitize_name(name)}"
+    base = f"{base_path}/{_sanitize_name(name)}"
 
     def path_for(e):
         return f"{base}.{e}"
@@ -45,9 +80,12 @@ def filename(name):
     return None
 
 
-def sanitize_name(name):
+# --- Internal functions ---
+
+
+def _sanitize_name(name):
     """
-    Sanitize a card name for use as a filename by removing all non-alphanumeric characters.
+    Sanitize a name for use as a filename by removing all non-alphanumeric characters.
 
     Args:
         name (str): Card name to sanitize.
@@ -192,7 +230,7 @@ def _download_images_fallback(names):
         if existing and os.path.exists(existing):
             continue
 
-        sanitized = sanitize_name(name)
+        sanitized = _sanitize_name(name)
         found = False
         for image_title in [
             f"{sanitized}-MADU-EN-VG-artwork.png",
@@ -204,7 +242,7 @@ def _download_images_fallback(names):
             img_obj = _fetch_image(image_url, session, headers)
             if img_obj is not None:
                 ext = image_title.split(".")[-1].lower()
-                save_image(img_obj, sanitized, ext)
+                _save_image(img_obj, sanitized, ext)
                 found = True
                 break
 
@@ -215,13 +253,13 @@ def _download_images_fallback(names):
                 img_obj = _crop_section(img_obj, out_size=None)
                 if img_obj is not None:
                     ext = image_url.split(".")[-1].lower()
-                    save_image(img_obj, sanitized, ext)
+                    _save_image(img_obj, sanitized, ext)
             else:
                 print(f"[WARN] No image found for '{name}'")
 
 
-def save_image(img_obj, name, ext):
-    file_path = f"{base_path}/{sanitize_name(name)}.{ext}"
+def _save_image(img_obj, name, ext):
+    file_path = f"{base_path}/{_sanitize_name(name)}.{ext}"
     if ext == "svg" and isinstance(img_obj, BytesIO):
         with open(file_path, "wb") as f:
             f.write(img_obj.getvalue())
@@ -231,73 +269,57 @@ def save_image(img_obj, name, ext):
         print(f"[WARN] Unrecognized image object for '{name}'")
 
 
-def download(names, config):
+def _download_images_yugiquery(names):
     """
-    Download and crop card images from Yugipedia.
-    Attempts yugiquery utilities first (async + featured images), falls back to direct API.
+    Download and crop card images using yugiquery utilities (async + featured images).
     Saves images to images/<Card_Name>.jpg. Skips existing files.
 
     Args:
         names (Iterable[str]): Card names to download.
         config (Config): Configuration object for cropping.
     """
-    if "sizes" in config and isinstance(config["sizes"], dict):
-        global sizes
-        for key in config["sizes"]:
-            if key in sizes:
-                sizes[key] = config["sizes"][key]
+    from yugiquery.utils.api import fetch_featured_images, download_media
+    from yugiquery.utils.image import crop_section as yugiquery_crop
 
-    # Try to use yugiquery
-    try:
-        from yugiquery.utils.api import fetch_featured_images, download_media
-        from yugiquery.utils.image import crop_section as yugiquery_crop
+    # Fetch the featured image filenames
+    file_names = fetch_featured_images(*names)
 
-        # Fetch the featured image filenames
-        file_names = fetch_featured_images(*names)
+    # Download them (only if we got filenames)
+    if file_names:
+        results = asyncio.run(download_media(*file_names, output_path=base_path))
 
-        # Download them (only if we got filenames)
-        if file_names:
-            results = asyncio.run(download_media(*file_names, output_path=base_path))
+        # Print download results
+        if results is not None and len(results) > 0:
+            succeeded = [
+                r
+                for r in results
+                if isinstance(r, dict) and r.get("status") == "success"
+            ]
+            failed = [
+                r
+                for r in results
+                if isinstance(r, dict) and r.get("status") == "failed"
+            ]
+            print(f"Downloaded {len(succeeded)}/{len(results)} images using yugiquery")
+            if failed:
+                for result in failed:
+                    print(f"[WARN] Failed to download: {result.get('file_name')}")
 
-            # Print download results
-            if results is not None and len(results) > 0:
-                succeeded = [
-                    r
-                    for r in results
-                    if isinstance(r, dict) and r.get("status") == "success"
-                ]
-                failed = [
-                    r
-                    for r in results
-                    if isinstance(r, dict) and r.get("status") == "failed"
-                ]
-                print(
-                    f"Downloaded {len(succeeded)}/{len(results)} images using yugiquery"
-                )
-                if failed:
-                    for result in failed:
-                        print(f"[WARN] Failed to download: {result.get('file_name')}")
-
-            # Crop the downloaded images
-            for name in names:
-                file_path = filename(name)
-                if file_path is not None and os.path.exists(file_path):
-                    try:
-                        with Image.open(file_path) as img:
-                            cropped_img = yugiquery_crop(
-                                img,
-                                ref=sizes["ref"],
-                                offset=sizes["offset"],
-                                crop_size=sizes["crop"],
-                                out_size=None,
-                            )
-                            cropped_img.save(file_path)
-                    except Exception as e:
-                        print(f"[WARN] Failed to crop image for '{name}': {e}")
-        else:
-            print("[WARN] No image filenames found")
-    except:
-        print(
-            "[WARN] yugiquery utilities unavailable, falling back to direct API method"
-        )
-        _download_images_fallback(names)
+        # Crop the downloaded images
+        for name in names:
+            file_path = filename(name)
+            if file_path is not None and os.path.exists(file_path):
+                try:
+                    with Image.open(file_path) as img:
+                        cropped_img = yugiquery_crop(
+                            img,
+                            ref=sizes["ref"],
+                            offset=sizes["offset"],
+                            crop_size=sizes["crop"],
+                            out_size=None,
+                        )
+                        cropped_img.save(file_path)
+                except Exception as e:
+                    print(f"[WARN] Failed to crop image for '{name}': {e}")
+    else:
+        print("[WARN] No image filenames found")
