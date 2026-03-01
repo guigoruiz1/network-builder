@@ -94,6 +94,24 @@ def _sanitize_name(name):
     return re.sub(r"[^\w]", "", name)
 
 
+def _move_download(result, card_name):
+    """
+    Move a successfully downloaded file to the path expected by filename().
+
+    Args:
+        result (dict): A download_media result dict with keys "file_name" and "success".
+        card_name (str): The card name used to derive the destination path.
+    """
+    src = os.path.join(base_path, result["file_name"])
+    _, ext = os.path.splitext(result["file_name"])
+    dst = os.path.join(base_path, _sanitize_name(card_name) + ext)
+    if src != dst and os.path.exists(src):
+        try:
+            os.rename(src, dst)
+        except OSError as e:
+            print(f"[WARN] Could not rename '{src}' to '{dst}': {e}")
+
+
 def _crop_section(
     im,
     *,
@@ -273,53 +291,103 @@ def _download_images_yugiquery(names):
     """
     Download and crop card images using yugiquery utilities (async + featured images).
     Saves images to images/<Card_Name>.jpg. Skips existing files.
+    Processes files pattern by pattern, prioritizing specific naming patterns
+    and retrying downloads for failed files with the next pattern sequentially.
 
     Args:
         names (Iterable[str]): Card names to download.
         config (Config): Configuration object for cropping.
     """
-    from yugiquery.utils.api import fetch_featured_images, download_media
-    from yugiquery.utils.image import crop_section as yugiquery_crop
+    from yugiquery.utils.api import fetch_page_images, download_media
 
-    # Fetch the featured image filenames
-    file_names = fetch_featured_images(*names)
+    # Patterns to try in priority order ({name} is replaced with the sanitized card name)
+    patterns = [
+        "{name}-MADU-EN-VG-artwork.png",
+        "{name}-OW.png",
+        "{name}.svg",
+    ]
 
-    # Download them (only if we got filenames)
-    if file_names:
+    # Skip cards that already have a downloaded image
+    remaining = [name for name in names if filename(name) is None]
+
+    for pattern in patterns:
+        if not remaining:
+            break
+
+        # Generate filenames for all remaining cards using this pattern
+        file_names = [pattern.format(name=_sanitize_name(name)) for name in remaining]
+
+        # Download all files for this pattern in one call
         results = asyncio.run(download_media(*file_names, output_path=base_path))
 
-        # Print download results
-        if results is not None and len(results) > 0:
-            succeeded = [
-                r
-                for r in results
-                if isinstance(r, dict) and r.get("status") == "success"
-            ]
-            failed = [
-                r
-                for r in results
-                if isinstance(r, dict) and r.get("status") == "failed"
-            ]
-            print(f"Downloaded {len(succeeded)}/{len(results)} images using yugiquery")
-            if failed:
-                for result in failed:
-                    print(f"[WARN] Failed to download: {result.get('file_name')}")
+        succeeded = []
+        failed = []
+        if results is not None:
+            for name, result in zip(remaining, results):
+                if isinstance(result, dict) and result.get("success"):
+                    _move_download(result, name)
+                    succeeded.append(name)
+                else:
+                    failed.append(name)
+        else:
+            failed = list(remaining)
 
-        # Crop the downloaded images
-        for name in names:
-            file_path = filename(name)
-            if file_path is not None and os.path.exists(file_path):
-                try:
-                    with Image.open(file_path) as img:
-                        cropped_img = yugiquery_crop(
-                            img,
-                            ref=sizes["ref"],
-                            offset=sizes["offset"],
-                            crop_size=sizes["crop"],
-                            out_size=None,
+        print(
+            f"Downloaded {len(succeeded)}/{len(remaining)} images using yugiquery [{pattern}]"
+        )
+        remaining = failed
+
+    # For still-remaining cards, use fetch_page_images as final fallback
+    featured_cards = []
+    if remaining:
+        image_files = fetch_page_images(*remaining)
+        if image_files is not None and len(image_files) > 0:
+            results = asyncio.run(
+                download_media(*image_files.tolist(), output_path=base_path)
+            )
+            if results is not None and len(results) > 0:
+                succeeded_count = 0
+                # Build a mapping from sanitized-lowercase card name to original card name
+                sanitized_to_card = {
+                    _sanitize_name(card_name).lower(): card_name
+                    for card_name in remaining
+                }
+                assigned = set()
+                for result in results:
+                    if not (isinstance(result, dict) and result.get("success")):
+                        print(
+                            f"[WARN] Failed to download: {result.get('file_name') if isinstance(result, dict) else '?'}"
                         )
-                        cropped_img.save(file_path)
-                except Exception as e:
-                    print(f"[WARN] Failed to crop image for '{name}': {e}")
-    else:
-        print("[WARN] No image filenames found")
+                        continue
+                    file_base = _sanitize_name(
+                        os.path.splitext(result["file_name"])[0]
+                    ).lower()
+                    for san, card_name in sanitized_to_card.items():
+                        if card_name in assigned:
+                            continue
+                        if file_base.startswith(san):
+                            _move_download(result, card_name)
+                            featured_cards.append(card_name)
+                            assigned.add(card_name)
+                            succeeded_count += 1
+                            break
+                print(
+                    f"Downloaded {succeeded_count}/{len(remaining)} images using yugiquery [featured]"
+                )
+                for name in remaining:
+                    if name not in assigned:
+                        print(f"[WARN] No image found for '{name}'")
+        else:
+            for name in remaining:
+                print(f"[WARN] No image found for '{name}'")
+
+    # Crop only featured images
+    for name in featured_cards:
+        file_path = filename(name)
+        if file_path is not None and os.path.exists(file_path):
+            try:
+                with Image.open(file_path) as img:
+                    cropped_img = _crop_section(img)
+                    cropped_img.save(file_path)
+            except Exception as e:
+                print(f"[WARN] Failed to crop image for '{name}': {e}")
