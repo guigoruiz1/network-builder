@@ -33,7 +33,7 @@ def filename(name):
     Returns:
         str: Path to the filename.
     """
-    file_name = re.sub(r"[^\w]", "", name) + ".jpg"
+    file_name = "images/" + re.sub(r"[^\w]", "", name) + ".jpg"
     if os.path.exists(file_name)
         return file_name
         
