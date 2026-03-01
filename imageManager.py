@@ -22,19 +22,23 @@ def download(names, config):
     return
 
 
+DEFAULT_IMAGE = "images/default.jpg"
+
+
 def filename(name):
     """
     Converts a passed name into a filename path.
     Must be consistent with the naming scheme used in `download()`.
-    Should return None if no file exists.
+    Returns the image path if the file exists, otherwise returns DEFAULT_IMAGE.
 
     Args:
         name (str): Node name.
     Returns:
-        str: Path to the filename.
+        str: Path to the filename, or DEFAULT_IMAGE if no matching file is found.
     """
-    file_name = "images/" + re.sub(r"[^\w]", "", name) + ".jpg"
-    if os.path.exists(file_name):
-        return file_name
+    if name and name.strip():
+        file_name = "images/" + re.sub(r"[^\w]", "", name) + ".jpg"
+        if os.path.exists(file_name):
+            return file_name
 
-    return None
+    return DEFAULT_IMAGE

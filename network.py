@@ -614,9 +614,7 @@ def build_network(yaml_path: str) -> Network:
             try:
                 from imageManager import filename
 
-                file_name = filename(item)
-                if file_name:
-                    node_info[item]["image"] = file_name
+                node_info[item]["image"] = filename(item)
 
             except ImportError as e:
                 print(f"[Warning] Could not import 'filename' from imageManager: {e}")
