@@ -671,6 +671,10 @@ if __name__ == "__main__":
     base_name = os.path.splitext(os.path.basename(args.yaml_file))[0]
     output_path = os.path.abspath(f"{base_name}.html")
 
-    net.set_template(f"{self_dir}/template.html")
+    # Add template if it exists in the script path. If not set, pyvis will use its default template.
+    template_path = os.path.join(self_dir, "template.html")
+    if os.path.exists(template_path):
+        net.set_template(template_path)
+
     net.save_graph(output_path)
     print("Network saved to:", output_path)
