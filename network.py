@@ -595,6 +595,11 @@ def build_network(yaml_path: str) -> Network:
     net = Network(**config.get("network"))
     net.options = get_options()
 
+    # Add script directory to parh for imageManager import fallback
+    self_dir = os.path.dirname(os.path.abspath(__file__))
+    if self_dir not in sys.path:
+        sys.path.append(self_dir) 
+    
     if config.get("download_images", False):
         try:
             from imageManager import download
@@ -606,19 +611,19 @@ def build_network(yaml_path: str) -> Network:
             print(f"[Error] Exception during image downloading: {e}")
 
     for item in sorted(node_info.keys()):
-        node_info[item]["title"] = item
+        node_info[item]["title"] = item # Maybe remove
+        if "image" in node_info[item]["shape"]: # Only assign image for image-type nodes
+            try:
+                from imageManager import filename
 
-        try:
-            from imageManager import filename
+                file_name = filename(item)
+                if file_name:
+                    node_info[item]["image"] = file_name
 
-            file_name = filename(item)
-            if file_name:
-                node_info[item]["image"] = file_name
-
-        except ImportError as e:
-            print(f"[Warning] Could not import 'filename' from imageManager: {e}")
-        except Exception as e:
-            print(f"[Error] Exception assigning image filename for node '{item}': {e}")
+            except ImportError as e:
+                print(f"[Warning] Could not import 'filename' from imageManager: {e}")
+            except Exception as e:
+                print(f"[Error] Exception assigning image filename for node '{item}': {e}")
 
         net.add_node(item, **node_info[item])
 
