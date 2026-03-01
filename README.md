@@ -1,4 +1,4 @@
-# Network Builder - Relationship Visualization Tool
+# Network Builder - Relationship Visualisation Tool
 
 You can see a live example [here](https://ruizbad.com/network-builder/example/example.html).
 
@@ -199,7 +199,7 @@ Key options:
 
 ### Script default config
 
-For convenience the script supplies a default config when none is provided:
+For convenience, the script supplies a default config when none is provided:
 ```yaml
 node:
   scale_factor: 0
@@ -220,18 +220,18 @@ network:
 download_images: False
 ```
 
-Note about `edge` vs `edges` and pyvis options
+Note about `edge` vs `edges` and pyvis options.
 
 - Use `edge` (singular) in `config` and in block/entry mappings for per-edge attribute defaults (colour, width, arrows, etc.).
 - Use `edges` (plural) in `config` to configure the pyvis Options `edges` sub-object (this controls pyvis rendering options, not per-edge attributes).
 
-Also supported as top-level keys and mapped straight to pyvis Options sub-objects are: `physics`, `layout`, `interaction` and `configure`. These keys are forwarded to `get_options()` which applies them to the `Options` object used by pyvis.
+Also supported as top-level keys and mapped straight to pyvis Options sub-objects are: `physics`, `layout`, `interaction` and `configure`. These keys are forwarded to `get_options()`, which applies them to the `Options` object used by pyvis.
 
 ---
 
 ## 4. Image handling
 
-Image handling is pluggable. The code expects an `imageManager` module that exposes two functions. A template `imageManager` module is provided as a starting point; you can customize it to fit your needs:
+Image handling is pluggable. The code expects an `imageManager` module that exposes two functions. A template `imageManager` module is provided as a starting point; you can customise it to fit your needs:
 
 - `imageManager.download(names, config)`: download or prepare images for the provided names.
 - `imageManager.filename(name)`: return the filename or path to use for a given node name.
@@ -263,7 +263,7 @@ The script consumes (pops) the following keys from `node`/`edge` mappings; these
 - `node.scale_factor`
 - `node.recolor`
 - `node.table`
-- `edge.closed` — when true on a linear/list entry the list is treated as a closed circuit (the last node connects back to the first).
+- `edge.closed` — when true on a linear/list entry, the list is treated as a closed circuit (the last node connects back to the first).
 
 Keep these keys at block or entry level as required; they will be removed before pyvis receives node/edge attributes.
 
@@ -303,4 +303,4 @@ You may further modify the returned `net` object before saving or displaying.
 
 --- 
 
-For further customisation consult the script's inline comments and the [pyvis](https://github.com/WestHealth/pyvis) documentation.
+For further customisation, consult the script's inline comments and the [pyvis](https://github.com/WestHealth/pyvis) documentation.
