@@ -65,44 +65,44 @@ def download(names, config):
         _download_images_fallback(names)
 
 
-def filename(name, ext=None):
+def filename(name, ext=None) -> str:
     """
     Converts a passed name into a filename path.
     Must be consistent with the naming scheme used in `download()`.
-    Returns None if no file exists.
+    Returns edxpected path if no file exists.
 
     Args:
         name (str): Card name.
         ext (str, optional): File extension.
-            - If None: returns existing file path or None
+            - If None: returns existing or expected file path
             - If "": returns just the sanitized name (no path, no ext)
             - Otherwise: returns path with that extension
 
     Returns:
-        str or None: File path, sanitized name, or None if file doesn't exist.
+        str: File path or sanitised name for the given name and extension.
     """
     sanitized = re.sub(r"[^\w]", "", name)
     base = os.path.join(base_path, sanitized)
 
-    # Return just the sanitized name (no path)
     if ext == "":
         return sanitized
 
-    # Specific extension requested
     if ext is not None:
         return f"{base}.{ext}"
 
-    # No extension specified - look for existing file
-    pref_exts = ["jpg", "jpeg", "png", "svg"]
     matches = glob.glob(f"{base}.*")
-    if matches:
-        for e in pref_exts:
-            for m in matches:
-                if m.lower().endswith(f".{e}"):
-                    return m
-        return matches[0]
+    if not matches:
+        return f"{base}.png"
 
-    return None
+    pref_exts = ("jpg", "jpeg", "png", "svg")
+    lower_matches = [(m, m.lower()) for m in matches]
+
+    for preferred_ext in pref_exts:
+        for original_path, lower_path in lower_matches:
+            if lower_path.endswith(f".{preferred_ext}"):
+                return original_path
+
+    return matches[0]
 
 
 # --- Internal functions ---

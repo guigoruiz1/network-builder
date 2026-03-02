@@ -333,7 +333,7 @@ config:
         size: 15
         # group: "attributes"
   buttons:
-    show: True
+    show: False
     # filter: True
   node:
     scale_factor: 2
@@ -350,8 +350,9 @@ config:
   network:
     filter_menu: True
     directed: True
-    height: "80vh"
+    height: "82vh"
     heading: "Yu-Gi-Oh! Card Relationship Network"
+    cdn_resources: "in_line" # "in_line", "remote", or "local"
   interaction:
     navigationButtons: True
-  download_images: True
+  download_images: False

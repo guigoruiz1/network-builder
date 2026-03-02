@@ -79,6 +79,7 @@ config:
     width: "100%"
     select_menu: False
     heading: "Example"
+    cdn_resources: "in_line" # "in_line", "remote", or "local"
   interaction:
     navigationButtons: True
   download_images: False

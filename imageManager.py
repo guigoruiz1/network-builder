@@ -22,11 +22,11 @@ def download(names, config):
     return
 
 
-def filename(name):
+def filename(name) -> str:
     """
     Converts a passed name into a filename path.
     Must be consistent with the naming scheme used in `download()`.
-    Should return None if no file exists.
+    Should return expected path if no file exists.
 
     Args:
         name (str): Node name.
@@ -34,7 +34,5 @@ def filename(name):
         str: Path to the filename.
     """
     file_name = "images/" + re.sub(r"[^\w]", "", name) + ".jpg"
-    if os.path.exists(file_name):
-        return file_name
 
-    return None
+    return file_name

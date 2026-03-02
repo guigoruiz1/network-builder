@@ -28,7 +28,12 @@ class Config:
             "show": False,
             "filter": ["physics", "interaction", "layout"],
         },
-        "network": {"height": "85vh", "select_menu": True, "directed": True},
+        "network": {
+            "height": "85vh",
+            "select_menu": True,
+            "directed": True,
+            "cdn_resources": "in_line",
+        },
         "download_images": False,
     }
 
@@ -609,14 +614,12 @@ def build_network(yaml_path: str) -> Network:
     for item in sorted(node_info.keys()):
         node_info[item]["title"] = item  # Maybe remove
         if (
-            "image" in node_info[item]["shape"]
+            "image" in node_info[item]["shape"].lower()
         ):  # Only assign image for image-type nodes
             try:
                 from imageManager import filename
 
-                file_name = filename(item)
-                if file_name:
-                    node_info[item]["image"] = file_name
+                node_info[item]["image"] = filename(item)
 
             except ImportError as e:
                 print(f"[Warning] Could not import 'filename' from imageManager: {e}")
@@ -665,17 +668,19 @@ if __name__ == "__main__":
     if cwd not in sys.path:
         sys.path.insert(0, cwd)
 
-    self_dir = os.path.dirname(os.path.abspath(__file__))
-
     net = build_network(args.yaml_file)
+
+    # Add template if it exists. If not set, pyvis will use its default template.
+    template_path = os.path.join(os.getcwd(), "templates")
+    if not os.path.exists(template_path):
+        self_path = os.path.dirname(os.path.abspath(__file__))
+        template_path = os.path.join(self_path, "templates")
+
+    if os.path.exists(template_path):
+        net.set_template_dir(template_path)
 
     base_name = os.path.splitext(os.path.basename(args.yaml_file))[0]
     output_path = os.path.abspath(f"{base_name}.html")
-
-    # Add template if it exists in the script path. If not set, pyvis will use its default template.
-    template_path = os.path.join(self_dir, "template.html")
-    if os.path.exists(template_path):
-        net.set_template(template_path)
 
     net.save_graph(output_path)
     print("Network saved to:", output_path)
