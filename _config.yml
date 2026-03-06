@@ -3,6 +3,9 @@ author:
   name: Guilherme Ruiz
   email: "guilherme.guigoruiz@gmail.com"
 
+description: >
+  Builds interactive network visualisations from a compact YAML description using pyvis and renders them using vis.js.
+
 # Build settings
 show_excerpts: false
 
