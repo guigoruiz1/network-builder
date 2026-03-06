@@ -1,0 +1,31 @@
+title: Network Builder
+author:
+  name: Guilherme Ruiz
+  email: "guilherme.guigoruiz@gmail.com"
+
+# Build settings
+show_excerpts: false
+
+# theme: minima
+remote_theme: jekyll/minima
+
+minima:
+  skin: auto
+  social_links:
+    - title: Author GitHub
+      icon: github
+      url: "https://github.com/guigoruiz1"
+    - title: Author LinkedIn
+      icon: linkedin
+      url: "https://www.linkedin.com/in/guigoruiz1"
+
+plugins:
+  - jekyll-feed
+  - jekyll-seo-tag
+  - jekyll-remote-theme
+
+header_pages:
+  - example/example.html
+
+exclude:
+  - "*.py"
