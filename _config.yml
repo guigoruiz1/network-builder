@@ -31,4 +31,4 @@ header_pages:
   - example/example.html
 
 exclude:
-  - "*.py"
+  - "**/*.py"
