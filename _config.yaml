@@ -1,0 +1,37 @@
+title: Network Builder
+author:
+  name: Guilherme Ruiz
+  email: "guilherme.guigoruiz@gmail.com"
+
+description: >
+  Builds interactive network visualisations from a compact YAML description using pyvis and renders them using vis.js.
+
+# Build settings
+show_excerpts: false
+
+# theme: minima
+remote_theme: jekyll/minima
+
+minima:
+  skin: auto
+  social_links:
+    - title: Author GitHub
+      icon: github
+      url: "https://github.com/guigoruiz1"
+    - title: Author LinkedIn
+      icon: linkedin
+      url: "https://www.linkedin.com/in/guigoruiz1"
+
+plugins:
+  - jekyll-feed
+  - jekyll-seo-tag
+  - jekyll-remote-theme
+  - jekyll-redirect-from
+
+header_pages:
+  - example/index.md
+  - repo_link.md
+
+exclude:
+  - "**/*.py"
+  - template*/

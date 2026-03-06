@@ -1,6 +1,8 @@
+<!-- No Title -->
+
 # Network Builder - Relationship Visualisation Tool
 
-See a [basic example](https://ruizbad.com/network-builder/example/example.html) and a [Yu-Gi-Oh! card network](https://ruizbad.com/network-builder/yugioh/yugi.html) to explore what this tool can create!
+See a [basic example](https://ruizbad.com/network-builder/example/) and a <a href="https://ruizbad.com/network-builder/yugioh/yugi.html" target="_blank" rel="noopener noreferrer">Yu-Gi-Oh! card network</a> to explore what this tool can create!
 
 ## Overview
 

@@ -75,7 +75,7 @@ config:
       spring_strength: 0.015
       damping: 0.5
   network:
-    height: "90vh"
+    height: "80vh"
     width: "100%"
     select_menu: False
     heading: "Example"

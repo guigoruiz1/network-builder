@@ -1,3 +1,20 @@
+#!/usr/bin/env python3
+
+# -*- coding: utf-8 -*-
+
+# Build interactive relationship networks from YAML configuration files.
+
+# This module provides comprehensive utilities for creating, styling, and visualizing
+# dynamic network graphs using pyvis. Supports linear, branching, and clique patterns with
+# flexible node/edge customization through configuration-driven architecture.
+
+# Copyright (c) 2026 Guilherme Ruiz
+
+# @Author:   Guilherme Ruiz
+# @Email:    57478888+guigoruiz1@users.noreply.github.com
+# @Created:  2026-03-02 00:48:45
+# @Modified: 2026-03-02 00:49:07
+
 # --- Imports ---
 
 import yaml
@@ -677,7 +694,10 @@ if __name__ == "__main__":
         template_path = os.path.join(self_path, "templates")
 
     if os.path.exists(template_path):
-        net.set_template_dir(template_path)
+        net.set_template_dir(
+            template_directory=template_path,
+            template_file="template.html",
+        )
 
     base_name = os.path.splitext(os.path.basename(args.yaml_file))[0]
     output_path = os.path.abspath(f"{base_name}.html")

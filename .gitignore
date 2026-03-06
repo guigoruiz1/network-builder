@@ -62,7 +62,7 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
+# lib/ # Lib must be in the repository templates folder
 lib64/
 parts/
 sdist/
