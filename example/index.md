@@ -19,7 +19,7 @@ This page shows an example network and its source YAML. You can also <a href="{{
   onload="resizeIframe(this)"
 ></iframe>
 </div>
-</br>
+  
 
 ## Input YAML
 
