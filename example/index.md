@@ -1,31 +1,34 @@
 ---
-layout: page
+layout: base
 title: Example
 permalink: /example/
 ---
 
 This page shows an example network and its source YAML. You can also <a href="{{ '/example/example.html' | relative_url }}" target="_blank" rel="noopener noreferrer">view the network in full screen</a>.
 
-<div style="display: grid; grid-template-columns: 1fr; gap: 1rem;">
-  <section>
-    <h2>Output Network</h2>
-    <iframe
-      id="network-iframe"
-      src="{{ '/example/example.html' | relative_url }}"
-      title="Network output"
-      style="width: 100%; min-height: 520px; border: 1px solid #ccc; border-radius: 6px;"
-      loading="lazy"
-      onload="resizeIframe(this)"
-    ></iframe>
-  </section>
 
-  <section>
-    <h2>Input YAML</h2>
+## Output Network
+
+<div>
+<iframe
+  id="network-iframe"
+  src="{{ '/example/example.html' | relative_url }}"
+  title="Network output"
+  style="width: 100%; min-height: 520px; border: 1px solid #ccc; border-radius: 6px;"
+  loading="lazy"
+  onload="resizeIframe(this)"
+></iframe>
+</div>
+</br>
+
+## Input YAML
+
+<div style="overflow: auto;">
 {% highlight yaml %}
 {% include_relative example.yaml %}
 {% endhighlight %}
-  </section>
 </div>
+
 
 <script>
 function resizeIframe(iframe) {
